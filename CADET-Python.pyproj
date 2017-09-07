@@ -25,6 +25,9 @@
     </Compile>
     <Compile Include="Cadet_Python.py" />
     <Compile Include="Cadet_Python_Scoop.py" />
+    <Compile Include="common.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="CSTR.py">
       <SubType>Code</SubType>
     </Compile>
