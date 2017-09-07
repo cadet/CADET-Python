@@ -20,6 +20,9 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="cadet.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Cadet_Python.py" />
     <Compile Include="Cadet_Python_Scoop.py" />
     <Compile Include="CSTR.py">
