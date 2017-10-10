@@ -35,6 +35,24 @@ def main():
     simulation.save()
     simulation.run()
     simulation.load()
+
+    #read sensitivity data
+
+    #sensitivity of protein 1 to nu 1
+    s1 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_001
+
+    #sensitivity of protein 2 to nu 1
+    s2 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_002
+
+    #sensitivity of protein 1 to nu 2
+    s3 = simulation.root.output.sensitivity.param_001.unit_001.sens_column_outlet_comp_001
+
+    #sensitivity of protein 1 to sigma 1
+    s4 = simulation.root.output.sensitivity.param_002.unit_001.sens_column_outlet_comp_001
+
+    #sensitivity of protein 1 to lambda
+    s5 = simulation.root.output.sensitivity.param_003.unit_001.sens_column_outlet_comp_001
+
     plotSimulation(simulation)
 
 def createSimulation(simulation):
@@ -99,6 +117,51 @@ def createSimulation(simulation):
     root.input.solver.sections.nsec = 3
     root.input.solver.sections.section_continuity = [0, 0]
     root.input.solver.sections.section_times = [0.0, 10.0, 90.0, 1500.0]
+
+    #sensitivities
+    root.input.sensitivity.nsens = 4
+    root.input.sensitivity.sens_method = 'AD1'
+
+    #nu1 (sensitivity to protein 1 nu)
+    root.input.sensitivity.param_000.sens_abstol = 1e-8
+    root.input.sensitivity.param_000.sens_boundphase = 0
+    root.input.sensitivity.param_000.sens_comp = 1
+    root.input.sensitivity.param_000.sens_factor = 1.0
+    root.input.sensitivity.param_000.sens_name = "SMA_NU"
+    root.input.sensitivity.param_000.sens_reaction = -1
+    root.input.sensitivity.param_000.sens_section = -1
+    root.input.sensitivity.param_000.sens_unit = 1
+
+    #nu2
+    root.input.sensitivity.param_001.sens_abstol = 1e-8
+    root.input.sensitivity.param_001.sens_boundphase = 0
+    root.input.sensitivity.param_001.sens_comp = 2
+    root.input.sensitivity.param_001.sens_factor = 1.0
+    root.input.sensitivity.param_001.sens_name = "SMA_NU"
+    root.input.sensitivity.param_001.sens_reaction = -1
+    root.input.sensitivity.param_001.sens_section = -1
+    root.input.sensitivity.param_001.sens_unit = 1
+    
+    #sigma1
+    root.input.sensitivity.param_002.sens_abstol = 1e-8
+    root.input.sensitivity.param_002.sens_boundphase = 0
+    root.input.sensitivity.param_002.sens_comp = 1
+    root.input.sensitivity.param_002.sens_factor = 1.0
+    root.input.sensitivity.param_002.sens_name = "SMA_SIGMA"
+    root.input.sensitivity.param_002.sens_reaction = -1
+    root.input.sensitivity.param_002.sens_section = -1
+    root.input.sensitivity.param_002.sens_unit = 1
+
+    #lambda
+    root.input.sensitivity.param_003.sens_abstol = 1e-8
+    root.input.sensitivity.param_003.sens_boundphase = -1
+    root.input.sensitivity.param_003.sens_comp = -1
+    root.input.sensitivity.param_003.sens_factor = 1.0
+    root.input.sensitivity.param_003.sens_name = "SMA_LAMBDA"
+    root.input.sensitivity.param_003.sens_reaction = -1
+    root.input.sensitivity.param_003.sens_section = -1
+    root.input.sensitivity.param_003.sens_unit = 1
+
 
 def plotSimulation(simulation):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=[16, 8])

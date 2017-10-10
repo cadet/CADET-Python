@@ -33,11 +33,7 @@ class Cadet():
             recursively_save(h5file, '/', self.root)
 
     def run(self, timeout = None):
-        if self.cadet_path is not None:
-            subprocess.run([self.cadet_path, self.filename], timeout = timeout)
-        else:
-            import sys
-            sys.exit("cadet_path is None and must be set to the path where cadet-cli is located in order to run simulations")
+        subprocess.run([self.cadet_path, self.filename], timeout = timeout)
 
     def __str__(self):
         temp = []
@@ -140,7 +136,7 @@ def recursively_save( h5file, path, dic):
         # other types cannot be saved and will result in an error
         else:
             #print(item)
-            raise ValueError('Cannot save %s type.' % type(item))
+            raise ValueError('Cannot save %s key with %s type.' % (key, type(item)))
 
 
 

@@ -1,117 +1,29 @@
 #!/usr/bin/env python3.6
 
-# Everything in here is based on CADET3.pdf in the same directory
-# 
+#Basic 4-zone SMB setup
 
-# Basic Python CADET file based interface compatible with CADET 3.0 and 3.1
-# Some additional fields have been added so that the generated simulations will also
-# work in 3.1 and where those differences are I have noted them.
-# This whole file follows the CADET pdf documentation. I have broken the system up into many
-# functions in order to make it simpler and to make code reuse easier.
-
-# Normally the main function is placed at the bottom of the file but I have placed it at the top so that
-# This interface is more like a tutorial and can be read from the top down and any given function
-# can be drilled into to learn more about it.
-
-# The core part of python with CADET is HDF5 and numpy
-import h5py
 import numpy as np
 import math
 
-#used to run CADET
-import subprocess
-import io
+from cadet import Cadet
+Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/MS_SMKL_RELEASE/bin/cadet-cli.exe"
 
 #use to render results
 import matplotlib.pyplot as plt
-
-#location of the cadet binary
-#cadet_location = "C:\\Users\\kosh_000\\cadet_build\\CADET-dev\\MS_MKL_RELEASE\\bin\\cadet-cli.exe"
-cadet_location = "C:\\Users\\kosh_000\\cadet_build\\CADET-dev\\MS_SMKL_DEBUG\\bin\\cadet-cli.exe"
-
-# Helper functions that make it easier to set the values in the HDF5 file
-# In the CADET pdf file each value in the hdf5 file has a type. The functions
-# below match those types.
 
 #number of columns in a cycle
 cycle_size = 4
 
 #number of cycles
-cycles = 17
+cycles = 7
 
 #number of times flows have to be expanded for a 4-zone model
 repeat_size = int(cycle_size/4)
 
-def set_int(node, nameH5, value):
-    "set one or more integers in the hdf5 file"
-    data = np.array(value, dtype="i4")
-    if node.get(nameH5, None) is not None:
-        del node[nameH5]
-    node.create_dataset(nameH5, data=data, maxshape=tuple(None for i in range(data.ndim)), fillvalue=[0])
-
-def set_double(node, nameH5, value):
-    "set one or more doubles in the hdf5 file"
-    data = np.array(value, dtype="f8")
-    if node.get(nameH5, None) is not None:
-        del node[nameH5]
-    node.create_dataset(nameH5, data=data, maxshape=tuple(None for i in range(data.ndim)), fillvalue=[0])
-
-def set_string(node, nameH5, value):
-    "set a string value in the hdf5 file"
-    if isinstance(value, list):
-        dtype = 'S' + str(len(value[0])+1)
-    else:
-        dtype = 'S' + str(len(value)+1)
-    data = np.array(value, dtype=dtype)
-    if node.get(nameH5, None) is not None:
-        del node[nameH5]
-    node.create_dataset(nameH5, data=data)
-
-
-def main():
-    filename = "SMB.h5"
-    createSimulation(filename)
-    print("Simulated Created")
-    runSimulation(filename)
-    print("Simulation Run")
-    plotSimulation(filename)
-
-def createSimulation(filename):
-    with h5py.File(filename, 'w') as f:
-        createInput(f)
-
-def createInput(f):
-    input = f.create_group("input")
-    createModel(input)
-    createReturn(input)
-    createSolver(input)
-
-def createModel(input):
-    model = input.create_group("model")
-    set_int(model, 'NUNITS', 8)
-
-    # Part of CADET 3.1
-    solver = model.create_group('solver')
-    set_int(solver, 'GS_TYPE', 1)
-    set_int(solver, 'MAX_KRYLOV', 0)
-    set_int(solver, 'MAX_RESTARTS', 0)
-    set_double(solver, 'SCHUR_SAFETY', 1.0e-8)
-
-    createConnections(model)
-    createInlet(model)
-    createOutlet(model)
-    createColumn(model)
-    
-
-def createConnections(model):
-    connections = model.create_group("connections")
-    set_int(connections, 'NSWITCHES', 4)
-    createSwitch(connections)
-
-def gen_connections(units, step, flows, flows_static):
+def gen_connections(units, cycle_size, size, step, flows, flows_static):
     temp = []
-    connections = zip(units, np.roll(units,-1), flows)
-    io = np.roll(units, step)[[0, repeat_size*2, repeat_size-1, repeat_size*3-1]]
+    connections = list(zip(units, np.roll(units,-1), flows))
+    io = np.roll(units, step)[[0, size*2, size-1, size*3-1]]
     ios = list(zip([0, 1, 2, 3], io))
 
     for connection in connections:
@@ -125,199 +37,183 @@ def gen_connections(units, step, flows, flows_static):
     for io in ios[2:]:
         temp.append([io[1], io[0], -1, -1, flows_static[idx]])
         idx+=1;
+    return np.array(temp)
+
+def expand_flow(seq, inlet1, inlet2, number):
+    "expand the flows for smb, this is more complex since we need link values"
+    temp = []
+    temp.extend([seq[3] + inlet1] * (number-1))
+    temp.append(seq[0])
+
+    temp.extend([seq[0]] * (number-1))
+    temp.append(seq[1])
+
+    temp.extend([seq[1] + inlet2] * (number-1))
+    temp.append(seq[2])
+
+    temp.extend([seq[2]] * (number-1))
+    temp.append(seq[3])
+
     return temp
 
-def createSwitch(connections):
-    """Create SMB switches. We only need to create the switches needed for one cycle. CADET will cycle the switches on its own as needed"""
-    flows = [7.66E-07, 7.66E-07, 8.08E-07, 8.08E-07]
-    flows_static = np.array([0.98e-7, 1.96e-7, 1.4e-7, 1.54e-7])
+def main():
+    smb = Cadet()
+    smb.filename  = 'F:/temp/SMB.h5'
+    createSimulation(smb)
+    print("Simulated Created")
+    smb.save()
+    smb.run()
+    smb.load()
+    print("Simulation Run")
+    plotSimulation(smb)
+
+def createSimulation(simulation):
+    simulation.root.input.model.nunits = 4 + cycle_size
+
+    simulation.root.input.model.solver.gs_type = 1
+    simulation.root.input.model.solver.max_krylov = 0
+    simulation.root.input.model.solver.max_restarts = 0
+    simulation.root.input.model.solver.schur_safety = 1e-8
+
+
+    #setup connections
+    simulation.root.input.model.connections.nswitches = cycle_size
 
     units = range(4, 4+cycle_size)
 
+    flows = expand_flow([7.66E-07, 7.66E-07, 8.08E-07, 8.08E-07], 0.98e-7, 1.96e-07, repeat_size)
+    flows_static = np.array([0.98e-7, 1.96e-7, 1.4e-7, 1.54e-7])
+
     for i in range(cycle_size):
-        switch_000 = connections.create_group("switch_%03d" % i)
+        simulation.root.input.model.connections["switch_%03d" % i].section = i
+        simulation.root.input.model.connections["switch_%03d" % i].connections = gen_connections(units, cycle_size, repeat_size, -i, np.array(list(np.roll(flows, i))), flows_static )
 
-        #Connect all of Inlet [0] to Column [1] and Column [1] to Outlet [2]
-        set_double(switch_000, 'CONNECTIONS', gen_connections(units, -i, np.array(list(np.roll(flows, i))), flows_static ))
-        set_int(switch_000, 'SECTION', i)
-
-def createInlet(model):
-    inlet = model.create_group("unit_000")
-
-    set_string(inlet, 'INLET_TYPE', 'PIECEWISE_CUBIC_POLY')
-    set_int(inlet, 'NCOMP', 2)
-    set_string(inlet, 'UNIT_TYPE', 'INLET')
+    #setup inlets
+    simulation.root.input.model.unit_000.inlet_type = 'PIECEWISE_CUBIC_POLY'
+    simulation.root.input.model.unit_000.ncomp = 2
+    simulation.root.input.model.unit_000.unit_type = 'INLET'
 
     for i in range(cycle_size):
         #section
-        section = inlet.create_group("sec_%03d" % i)
+        simulation.root.input.model.unit_000["sec_%03d" % i].const_coeff = [0.55/180.16, 0.55/180.16]
+        simulation.root.input.model.unit_000["sec_%03d" % i].lin_coeff = [0.0, 0.0]
+        simulation.root.input.model.unit_000["sec_%03d" % i].quad_coeff = [0.0, 0.0]
+        simulation.root.input.model.unit_000["sec_%03d" % i].cube_coeff = [0.0, 0.0]
 
-        set_double(section, 'CONST_COEFF', [0.55/180.16, 0.55/180.16])
-        #set_double(section, 'CONST_COEFF', [0.00305284191829485, 0.00305284191829485])
-        set_double(section, 'CUBE_COEFF', [0, 0])
-        set_double(section, 'LIN_COEFF', [0, 0])
-        set_double(section, 'QUAD_COEFF', [0, 0])
-
-    inlet = model.create_group("unit_001")
-
-    set_string(inlet, 'INLET_TYPE', 'PIECEWISE_CUBIC_POLY')
-    set_int(inlet, 'NCOMP', 2)
-    set_string(inlet, 'UNIT_TYPE', 'INLET')
+    simulation.root.input.model.unit_001.inlet_type = 'PIECEWISE_CUBIC_POLY'
+    simulation.root.input.model.unit_001.ncomp = 2
+    simulation.root.input.model.unit_001.unit_type = 'INLET'
 
     for i in range(cycle_size):
         #section
-        section = inlet.create_group("sec_%03d" % i)
+        simulation.root.input.model.unit_001["sec_%03d" % i].const_coeff = [0.0, 0.0]
+        simulation.root.input.model.unit_001["sec_%03d" % i].lin_coeff = [0.0, 0.0]
+        simulation.root.input.model.unit_001["sec_%03d" % i].quad_coeff = [0.0, 0.0]
+        simulation.root.input.model.unit_001["sec_%03d" % i].cube_coeff = [0.0, 0.0]
 
-        set_double(section, 'CONST_COEFF', [0, 0])
-        set_double(section, 'CUBE_COEFF', [0, 0])
-        set_double(section, 'LIN_COEFF', [0, 0])
-        set_double(section, 'QUAD_COEFF', [0, 0])
-
-def createColumn(model):
-
+    #create columns
     for unit in range(4, 4 + cycle_size):
 
-        column = model.create_group("unit_%03d" % unit)
+        simulation.root.input.model["unit_%03d" % unit].unit_type = 'GENERAL_RATE_MODEL'
 
-        set_string(column, 'UNIT_TYPE', 'GENERAL_RATE_MODEL')
-        set_int(column, 'NCOMP', 2)
-        set_double(column, 'CROSS_SECTION_AREA', math.pi * (0.02**2)/4.0)
-        set_double(column, 'COL_DISPERSION', 3.8148e-20)
-        set_double(column, 'COL_LENGTH', 0.25)
-        set_double(column, 'COL_POROSITY', 0.83)
-        #set_double(column, 'FILM_DIFFUSION', [1.6e4, 1.6e4])
-        set_double(column, 'INIT_C', [0.0, 0.0])
-        set_double(column, 'INIT_Q', [0.0, 0.0])
-        #set_double(column, 'PAR_DIFFUSION', [5e-5, 5e-5])
-        set_double(column, 'FILM_DIFFUSION', [100, 100])
-        set_double(column, 'PAR_DIFFUSION', [1.6e4, 1.6e4])
+        col = simulation.root.input.model["unit_%03d" % unit]
 
-        set_double(column, 'PAR_RADIUS', 0.0005)
-        set_double(column, 'PAR_POROSITY', 0.000001)
-        set_double(column, 'PAR_SURFDIFFUSION', [0.0, 0.0])
-        set_string(column, 'ADSORPTION_MODEL', 'LINEAR')
-        set_double(column, "VELOCITY", 1.0)
+        col.ncomp = 2
+        col.cross_section_area = math.pi * (0.02**2)/4.0
+        col.col_dispersion = 3.8148e-20
+        col.col_length = 0.25
+        col.col_porosity = 0.83
+        col.init_c = [0.0, 0.0]
+        col.init_q = [0.0, 0.0]
+        col.film_diffusion = [100.0, 100.0]
+        col.par_diffusion = [1.6e4, 1.6e4]
+        col.par_radius = 0.0005
+        col.par_porosity = 0.000001
+        col.par_surfdiffusion = [0.0, 0.0]
+        col.adsorption_model = 'LINEAR'
+        col.velocity = 1.0
 
-        createAdsorption(column)
-        createDiscretization(column)
+        col.adsorption.is_kinetic = 0
+        col.adsorption.lin_ka = [5.72, 7.7]
+        col.adsorption.lin_kd = [1.0, 1.0]
 
-def createAdsorption(column):
-    ads = column.create_group('adsorption')
+        col.discretization.gs_type = 1
+        col.discretization.max_krylov = 0
+        col.discretization.max_restarts = 0
+        col.discretization.nbound = [1, 1]
+        col.discretization.ncol = 40
+        col.discretization.npar = 1
+        col.discretization.par_disc_type = 'EQUIDISTANT_PAR'
+        col.discretization.par_disc_vector = [0.0, 0.5, 1.0]
+        col.discretization.reconstruction = 'WENO'
+        col.discretization.schur_safety = 1e-8
+        col.discretization.use_analytic_jacobian = 1
 
-    set_int(ads, 'IS_KINETIC', 0)
-    set_double(ads, 'LIN_KA', [5.72, 7.7])
-    set_double(ads, 'LIN_KD', [1, 1])
+        col.discretization.weno.boundary_model = 0
+        col.discretization.weno.weno_eps = 1e-12
+        col.discretization.weno.weno_order = 3
 
-def createDiscretization(column):
-    disc = column.create_group('discretization')
+    #create outlets
+    simulation.root.input.model.unit_002.ncomp = 2
+    simulation.root.input.model.unit_002.unit_type = 'OUTLET'
 
-    set_int(disc, 'GS_TYPE', 1)
-    set_int(disc, 'MAX_KRYLOV', 0)
-    set_int(disc, 'MAX_RESTARTS', 0)
-    set_int(disc, 'NBOUND', [1, 1])
-    set_int(disc, 'NCOL', 40)
-    set_int(disc, 'NPAR', 1)
-    set_string(disc, 'PAR_DISC_TYPE', 'EQUIDISTANT_PAR')
-    set_double(disc, 'SCHUR_SAFETY', 1.0e-8)
-    set_int(disc, 'USE_ANALYTIC_JACOBIAN',  1)
+    simulation.root.input.model.unit_003.ncomp = 2
+    simulation.root.input.model.unit_003.unit_type = 'OUTLET'
 
-    createWENO(disc)
+    #create output information
 
-def createWENO(disc):
-    weno = disc.create_group("weno")
-    set_int(weno, 'BOUNDARY_MODEL', 0)
-    set_double(weno, 'WENO_EPS', 1e-12)
-    set_int(weno, 'WENO_ORDER', 3)
+    simulation.root.input['return'].write_solution_times = 1
 
-def createOutlet(model):
-    outlet = model.create_group('unit_002')
-    set_int(outlet, 'NCOMP', 2)
-    set_string(outlet, 'UNIT_TYPE', 'OUTLET')
+    ret = simulation.root.input['return']
 
-    outlet = model.create_group('unit_003')
-    set_int(outlet, 'NCOMP', 2)
-    set_string(outlet, 'UNIT_TYPE', 'OUTLET')
+    ret.write_solution_last = 1
 
-def createReturn(input):
-    ret = input.create_group('return')
+    ret.unit_002.write_sens_column = 0
+    ret.unit_002.write_sens_column_inlet = 0
+    ret.unit_002.write_sens_column_outlet = 0
+    ret.unit_002.write_sens_flux = 0
+    ret.unit_002.write_sens_particle = 0
 
-    set_int(ret, 'WRITE_SOLUTION_TIMES', 1)
-    set_int(ret, 'WRITE_SOLUTION_LAST', 1)
+    ret.unit_002.write_solution_column = 0
+    ret.unit_002.write_solution_column_inlet = 1
+    ret.unit_002.write_solution_column_outlet = 1
+    ret.unit_002.write_solution_flux = 0
+    ret.unit_002.write_solution_particle = 0
 
-    createColumnOutput(ret)
+    ret.unit_003.write_sens_column = 0
+    ret.unit_003.write_sens_column_inlet = 0
+    ret.unit_003.write_sens_column_outlet = 0
+    ret.unit_003.write_sens_flux = 0
+    ret.unit_003.write_sens_particle = 0
 
-def createColumnOutput(ret):
-    column = ret.create_group('unit_002')
-
-    set_int(column, 'WRITE_SENS_COLUMN', 0)
-    set_int(column, 'WRITE_SENS_COLUMN_INLET', 0)
-    set_int(column, 'WRITE_SENS_COLUMN_OUTLET', 0)
-    set_int(column, 'WRITE_SENS_FLUX', 0)
-    set_int(column, 'WRITE_SENS_PARTICLE', 0)
-
-    set_int(column, 'WRITE_SOLUTION_COLUMN', 0)
-    set_int(column, 'WRITE_SOLUTION_COLUMN_INLET', 1)
-    set_int(column, 'WRITE_SOLUTION_COLUMN_OUTLET', 1)
-    set_int(column, 'WRITE_SOLUTION_FLUX', 0)
-    set_int(column, 'WRITE_SOLUTION_PARTICLE', 0)
-
-    column = ret.create_group('unit_003')
-
-    set_int(column, 'WRITE_SENS_COLUMN', 0)
-    set_int(column, 'WRITE_SENS_COLUMN_INLET', 0)
-    set_int(column, 'WRITE_SENS_COLUMN_OUTLET', 0)
-    set_int(column, 'WRITE_SENS_FLUX', 0)
-    set_int(column, 'WRITE_SENS_PARTICLE', 0)
-
-    set_int(column, 'WRITE_SOLUTION_COLUMN', 0)
-    set_int(column, 'WRITE_SOLUTION_COLUMN_INLET', 1)
-    set_int(column, 'WRITE_SOLUTION_COLUMN_OUTLET', 1)
-    set_int(column, 'WRITE_SOLUTION_FLUX', 0)
-    set_int(column, 'WRITE_SOLUTION_PARTICLE', 0)
+    ret.unit_003.write_solution_column = 0
+    ret.unit_003.write_solution_column_inlet = 1
+    ret.unit_003.write_solution_column_outlet = 1
+    ret.unit_003.write_solution_flux = 0
+    ret.unit_003.write_solution_particle = 0
     
-def createSolver(input):
-    solver = input.create_group("solver")
-    set_int(solver, 'NTHREADS', 0)
-    set_double(solver, 'USER_SOLUTION_TIMES', np.linspace(0, cycles*180*4, 1000*cycle_size*cycles))
+    simulation.root.input.solver.nthreads = 0
+    simulation.root.input.solver.user_solution_times = np.linspace(0, cycles*180*4, 1000*cycle_size*cycles)
+    simulation.root.input.solver.sections.nsec = cycle_size*cycles
+    simulation.root.input.solver.sections.section_continuity = [0] * (cycle_size*cycles -1)
+    simulation.root.input.solver.sections.section_times = [float(i) * 180*4.0/cycle_size for i in range(cycle_size*cycles+1)]
 
-    createSections(solver)
-    createTimeIntegrator(solver)
+    simulation.root.input.solver.time_integrator.abstol = 1e-10
+    simulation.root.input.solver.time_integrator.algtol = 1e-10
+    simulation.root.input.solver.time_integrator.init_step_size = 1e-14
+    simulation.root.input.solver.time_integrator.max_steps = 1e6
+    simulation.root.input.solver.time_integrator.reltol = 1e-6
 
-def createSections(solver):
-    sections = solver.create_group("sections")
-    set_int(sections, 'NSEC', cycle_size*cycles)
-    set_int(sections, 'SECTION_CONTINUITY', [0] * (cycle_size*cycles -1))
-    set_double(sections, 'SECTION_TIMES', [float(i) * 180*4.0/cycle_size for i in range(cycle_size*cycles+1)])
 
-def createTimeIntegrator(solver):
-    time_integrator = solver.create_group("time_integrator")
-    set_double(time_integrator, 'ABSTOL', 1e-10)
-    set_double(time_integrator, 'ALGTOL', 1e-10)
-    set_double(time_integrator, 'INIT_STEP_SIZE', 1e-14)
-    set_int(time_integrator, 'MAX_STEPS', 5e6)
-    set_double(time_integrator, 'RELTOL', 1e-6)
+def plotSimulation(simulation):
+    solution_times = simulation.root.output.solution.solution_times
 
-def runSimulation(filename):
-    proc = subprocess.Popen([cadet_location, filename], bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
-    proc.wait()
-    print("CADET Output")
-    print(stdout)
-    print("CADET Errors")
-    print(stderr)
+    e_0 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_000
+    e_1 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_001
 
-def plotSimulation(filename):
-    with h5py.File(filename, 'r') as h5:
-        plotOutlet(h5)
+    r_0 = simulation.root.output.solution.unit_003.solution_column_outlet_comp_000
+    r_1 = simulation.root.output.solution.unit_003.solution_column_outlet_comp_001
 
-def plotOutlet(h5):
-    solution_times = np.array(h5['/output/solution/SOLUTION_TIMES'].value)
-        
-    e_0 = np.array(h5['/output/solution/unit_002/SOLUTION_COLUMN_OUTLET_COMP_000'].value)
-    e_1 = np.array(h5['/output/solution/unit_002/SOLUTION_COLUMN_OUTLET_COMP_001'].value)
-    
-    r_0 = np.array(h5['/output/solution/unit_003/SOLUTION_COLUMN_OUTLET_COMP_000'].value)
-    r_1 = np.array(h5['/output/solution/unit_003/SOLUTION_COLUMN_OUTLET_COMP_001'].value)
 
     fig = plt.figure(figsize=[10, 2*10])
 
