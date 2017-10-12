@@ -53,6 +53,14 @@ def main():
     #sensitivity of protein 1 to lambda
     s5 = simulation.root.output.sensitivity.param_003.unit_001.sens_column_outlet_comp_001
 
+    #Sensitvity of first species to loads of all species (except salt)
+    s6 = simulation.root.output.sensitivity.param_004.unit_001.sens_column_outlet_comp_001
+
+    #Sensitvity of first species to velocity
+    s7 = simulation.root.output.sensitivity.param_005.unit_001.sens_column_outlet_comp_001
+
+
+
     plotSimulation(simulation)
 
 def createSimulation(simulation):
@@ -95,9 +103,12 @@ def createSimulation(simulation):
     root.input.model.unit_001.par_porosity = 0.75
     root.input.model.unit_001.par_radius = 4.5e-5
     root.input.model.unit_001.par_surfdiffusion = [0.0, 0.0, 0.0, 0.0]
-    root.input.model.unit_001.cross_section_area = 4700.352526439483
     root.input.model.unit_001.unit_type = 'GENERAL_RATE_MODEL'
-    root.input.model.unit_001.velocity = 1
+
+    #root.input.model.unit_001.velocity = 1
+    #root.input.model.unit_001.cross_section_area = 4700.352526439483
+    root.input.model.unit_001.velocity = 5.75e-4
+
 
     root.input.model.unit_001.adsorption.is_kinetic = 0
     root.input.model.unit_001.adsorption.sma_ka = [0.0, 35.5, 1.59, 7.7]
@@ -119,7 +130,7 @@ def createSimulation(simulation):
     root.input.solver.sections.section_times = [0.0, 10.0, 90.0, 1500.0]
 
     #sensitivities
-    root.input.sensitivity.nsens = 4
+    root.input.sensitivity.nsens = 6
     root.input.sensitivity.sens_method = 'AD1'
 
     #nu1 (sensitivity to protein 1 nu)
@@ -161,6 +172,26 @@ def createSimulation(simulation):
     root.input.sensitivity.param_003.sens_reaction = -1
     root.input.sensitivity.param_003.sens_section = -1
     root.input.sensitivity.param_003.sens_unit = 1
+
+    #Sensitvity of first species to loads of all species (except salt)
+    root.input.sensitivity.param_004.sens_abstol = [1e-8, 1e-8, 1e-8]
+    root.input.sensitivity.param_004.sens_boundphase = [-1, -1, -1]
+    root.input.sensitivity.param_004.sens_comp = [1, 2, 3]
+    root.input.sensitivity.param_004.sens_factor = [1.0, 1.0, 1.0]
+    root.input.sensitivity.param_004.sens_name = ["CONST_COEFF", "CONST_COEFF", "CONST_COEFF"]
+    root.input.sensitivity.param_004.sens_reaction = [-1, -1, -1]
+    root.input.sensitivity.param_004.sens_section = [0, 0, 0]
+    root.input.sensitivity.param_004.sens_unit = [0, 0, 0]
+
+    #Sensitvity of first species to velocity
+    root.input.sensitivity.param_005.sens_abstol = 1e-8
+    root.input.sensitivity.param_005.sens_boundphase = -1
+    root.input.sensitivity.param_005.sens_comp = -1
+    root.input.sensitivity.param_005.sens_factor = 1.0
+    root.input.sensitivity.param_005.sens_name = "VELOCITY"
+    root.input.sensitivity.param_005.sens_reaction = -1
+    root.input.sensitivity.param_005.sens_section = -1
+    root.input.sensitivity.param_005.sens_unit = 1
 
 
 def plotSimulation(simulation):

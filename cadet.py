@@ -89,7 +89,7 @@ def recursively_save( h5file, path, dic):
             raise ValueError("dict keys must be strings to save to hdf5")
         #handle   int, float, string and ndarray of int32, int64, float64
         if isinstance(item, str):
-            h5file[path + key.upper()] = numpy.array(item, dtype='S' + str(len(item)+1))
+            h5file[path + key.upper()] = numpy.array(item, dtype='S')
         
         elif isinstance(item, int):
             h5file[path + key.upper()] = numpy.array(item, dtype=numpy.int32)
@@ -129,6 +129,9 @@ def recursively_save( h5file, path, dic):
         
         elif isinstance(item, bytes):
             h5file[path + key.upper()] = item
+
+        elif isinstance(item, list) and all(isinstance(i, str) for i in item):
+            h5file[path + key.upper()] = numpy.array(item, dtype="S")
 
         # save dictionaries
         elif isinstance(item, dict):
