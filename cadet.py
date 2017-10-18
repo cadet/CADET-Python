@@ -108,6 +108,9 @@ def recursively_save( h5file, path, dic):
         
         elif isinstance(item, numpy.ndarray) and item.dtype == numpy.int64:
             h5file[path + key.upper()] = item.astype(numpy.int32)
+
+        elif isinstance(item, numpy.ndarray) and item.dtype.kind == 'S':
+            h5file[path + key.upper()] = item
         
         elif isinstance(item, list) and all(isinstance(i, int) for i in item):
             h5file[path + key.upper()] = numpy.array(item, dtype=numpy.int32)
@@ -139,7 +142,7 @@ def recursively_save( h5file, path, dic):
         # other types cannot be saved and will result in an error
         else:
             #print(item)
-            raise ValueError('Cannot save %s key with %s type.' % (key, type(item)))
+            raise ValueError('Cannot save %s/%s key with %s type.' % (path, key.upper(), type(item)))
 
 
 
