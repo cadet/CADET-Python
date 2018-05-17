@@ -5,3 +5,8 @@
 /.vs
 *.h5
 /__pycache__
+/fix_h5.py
+/HICWang.py
+/Pilot_Bypass_noBT_noC.py
+/Test.py
+/test_lwe.py

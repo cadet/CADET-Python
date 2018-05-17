@@ -6,7 +6,7 @@ import numpy as np
 import math
 
 from cadet import Cadet
-Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/MS_SMKL_RELEASE/bin/cadet-cli.exe"
+Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/cadet-cli.exe"
 
 #use to render results
 import matplotlib.pyplot as plt
@@ -208,11 +208,11 @@ def createSimulation(simulation):
 def plotSimulation(simulation):
     solution_times = simulation.root.output.solution.solution_times
 
-    e_0 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_000
-    e_1 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_001
+    e_0 = simulation.root.output.solution.unit_002.solution_outlet_comp_000
+    e_1 = simulation.root.output.solution.unit_002.solution_outlet_comp_001
 
-    r_0 = simulation.root.output.solution.unit_003.solution_column_outlet_comp_000
-    r_1 = simulation.root.output.solution.unit_003.solution_column_outlet_comp_001
+    r_0 = simulation.root.output.solution.unit_003.solution_outlet_comp_000
+    r_1 = simulation.root.output.solution.unit_003.solution_outlet_comp_001
 
 
     fig = plt.figure(figsize=[10, 2*10])

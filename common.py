@@ -50,4 +50,4 @@ root.input.solver.time_integrator.init_step_size = 1e-6
 root.input.solver.time_integrator.max_steps = 1000000
 root.input.solver.time_integrator.reltol = 1e-10
 
-root.input.solver.nthreads = 1
+root.input.solver.nthreads = 0

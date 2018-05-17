@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>Cadet_Python.py</StartupFile>
+    <StartupFile>SMB.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -31,13 +31,26 @@
     <Compile Include="CSTR.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="fix_h5.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HICWang.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MSSMA.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MSSMA2.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Pilot_Bypass_noBT_noC.py" />
     <Compile Include="SMB.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Test.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="test_lwe.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

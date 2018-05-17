@@ -21,7 +21,7 @@ import numpy
 from cadet import Cadet
 import common
 
-Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/MS_SMKL_RELEASE/bin/cadet-cli.exe"
+Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/cadet-cli.exe"
 
 
 # Helper functions that make it easier to set the values in the HDF5 file
@@ -30,7 +30,7 @@ Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/MS_SMKL_RELEASE/bin/cade
 
 def main():
     simulation = Cadet(common.common.root)
-    simulation.filename = "LWE.h5"
+    simulation.filename = "f:/temp/LWE.h5"
     createSimulation(simulation)
     simulation.save()
     simulation.run()
@@ -39,25 +39,25 @@ def main():
     #read sensitivity data
 
     #sensitivity of protein 1 to nu 1
-    s1 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_001
+    #s1 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_001
 
     #sensitivity of protein 2 to nu 1
-    s2 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_002
+    #s2 = simulation.root.output.sensitivity.param_000.unit_001.sens_column_outlet_comp_002
 
     #sensitivity of protein 1 to nu 2
-    s3 = simulation.root.output.sensitivity.param_001.unit_001.sens_column_outlet_comp_001
+    #s3 = simulation.root.output.sensitivity.param_001.unit_001.sens_column_outlet_comp_001
 
     #sensitivity of protein 1 to sigma 1
-    s4 = simulation.root.output.sensitivity.param_002.unit_001.sens_column_outlet_comp_001
+    #s4 = simulation.root.output.sensitivity.param_002.unit_001.sens_column_outlet_comp_001
 
     #sensitivity of protein 1 to lambda
-    s5 = simulation.root.output.sensitivity.param_003.unit_001.sens_column_outlet_comp_001
+    #s5 = simulation.root.output.sensitivity.param_003.unit_001.sens_column_outlet_comp_001
 
     #Sensitvity of first species to loads of all species (except salt)
-    s6 = simulation.root.output.sensitivity.param_004.unit_001.sens_column_outlet_comp_001
+    #s6 = simulation.root.output.sensitivity.param_004.unit_001.sens_column_outlet_comp_001
 
     #Sensitvity of first species to velocity
-    s7 = simulation.root.output.sensitivity.param_005.unit_001.sens_column_outlet_comp_001
+    #s7 = simulation.root.output.sensitivity.param_005.unit_001.sens_column_outlet_comp_001
 
 
 
@@ -67,6 +67,7 @@ def createSimulation(simulation):
     root = simulation.root
 
     root.input.model.nunits = 3
+    root.input.model.unit_001.discretization.use_analytic_jacobian = 1
 
     root.input.model.connections.nswitches = 1
     root.input.model.connections.switch_000.section = 0
@@ -99,11 +100,11 @@ def createSimulation(simulation):
     root.input.model.unit_001.init_c = [50.0, 0.0, 0.0, 0.0]
     root.input.model.unit_001.init_q = [1200.0, 0.0, 0.0, 0.0]
     root.input.model.unit_001.ncomp = 4
-    root.input.model.unit_001.par_diffusion = [7e-10, 6.07e-11, 6.07e-11, 6.07e-11]
+    root.input.model.unit_001.par_diffusion = [7e-9, 6.07e-9, 6.07e-9, 6.07e-9]
     root.input.model.unit_001.par_porosity = 0.75
     root.input.model.unit_001.par_radius = 4.5e-5
     root.input.model.unit_001.par_surfdiffusion = [0.0, 0.0, 0.0, 0.0]
-    root.input.model.unit_001.unit_type = 'GENERAL_RATE_MODEL'
+    root.input.model.unit_001.unit_type = 'LUMPED_RATE_MODEL_WITH_PORES'
 
     #root.input.model.unit_001.velocity = 1
     #root.input.model.unit_001.cross_section_area = 4700.352526439483
@@ -118,8 +119,8 @@ def createSimulation(simulation):
     root.input.model.unit_001.adsorption.sma_sigma = [0.0, 11.83, 10.6, 10.0]
 
     root.input.model.unit_001.discretization.nbound = [1, 1, 1, 1]
-    root.input.model.unit_001.discretization.ncol = 10
-    root.input.model.unit_001.discretization.npar = 4
+    root.input.model.unit_001.discretization.ncol = 100
+    root.input.model.unit_001.discretization.npar = 5
 
     root.input.model.unit_002.ncomp = 4
     root.input.model.unit_002.unit_type = 'OUTLET'
@@ -130,68 +131,68 @@ def createSimulation(simulation):
     root.input.solver.sections.section_times = [0.0, 10.0, 90.0, 1500.0]
 
     #sensitivities
-    root.input.sensitivity.nsens = 6
+    root.input.sensitivity.nsens = 0
     root.input.sensitivity.sens_method = 'AD1'
 
     #nu1 (sensitivity to protein 1 nu)
-    root.input.sensitivity.param_000.sens_abstol = 1e-8
-    root.input.sensitivity.param_000.sens_boundphase = 0
-    root.input.sensitivity.param_000.sens_comp = 1
-    root.input.sensitivity.param_000.sens_factor = 1.0
-    root.input.sensitivity.param_000.sens_name = "SMA_NU"
-    root.input.sensitivity.param_000.sens_reaction = -1
-    root.input.sensitivity.param_000.sens_section = -1
-    root.input.sensitivity.param_000.sens_unit = 1
+    #root.input.sensitivity.param_000.sens_abstol = 1e-8
+    #root.input.sensitivity.param_000.sens_boundphase = 0
+    #root.input.sensitivity.param_000.sens_comp = 1
+    #root.input.sensitivity.param_000.sens_factor = 1.0
+    #root.input.sensitivity.param_000.sens_name = "SMA_NU"
+    #root.input.sensitivity.param_000.sens_reaction = -1
+    #root.input.sensitivity.param_000.sens_section = -1
+    #root.input.sensitivity.param_000.sens_unit = 1
 
     #nu2
-    root.input.sensitivity.param_001.sens_abstol = 1e-8
-    root.input.sensitivity.param_001.sens_boundphase = 0
-    root.input.sensitivity.param_001.sens_comp = 2
-    root.input.sensitivity.param_001.sens_factor = 1.0
-    root.input.sensitivity.param_001.sens_name = "SMA_NU"
-    root.input.sensitivity.param_001.sens_reaction = -1
-    root.input.sensitivity.param_001.sens_section = -1
-    root.input.sensitivity.param_001.sens_unit = 1
+    #root.input.sensitivity.param_001.sens_abstol = 1e-8
+    #root.input.sensitivity.param_001.sens_boundphase = 0
+    #root.input.sensitivity.param_001.sens_comp = 2
+    #root.input.sensitivity.param_001.sens_factor = 1.0
+    #root.input.sensitivity.param_001.sens_name = "SMA_NU"
+    #root.input.sensitivity.param_001.sens_reaction = -1
+    #root.input.sensitivity.param_001.sens_section = -1
+    #root.input.sensitivity.param_001.sens_unit = 1
     
     #sigma1
-    root.input.sensitivity.param_002.sens_abstol = 1e-8
-    root.input.sensitivity.param_002.sens_boundphase = 0
-    root.input.sensitivity.param_002.sens_comp = 1
-    root.input.sensitivity.param_002.sens_factor = 1.0
-    root.input.sensitivity.param_002.sens_name = "SMA_SIGMA"
-    root.input.sensitivity.param_002.sens_reaction = -1
-    root.input.sensitivity.param_002.sens_section = -1
-    root.input.sensitivity.param_002.sens_unit = 1
+    #root.input.sensitivity.param_002.sens_abstol = 1e-8
+    #root.input.sensitivity.param_002.sens_boundphase = 0
+    #root.input.sensitivity.param_002.sens_comp = 1
+    #root.input.sensitivity.param_002.sens_factor = 1.0
+    #root.input.sensitivity.param_002.sens_name = "SMA_SIGMA"
+    #root.input.sensitivity.param_002.sens_reaction = -1
+    #root.input.sensitivity.param_002.sens_section = -1
+    #root.input.sensitivity.param_002.sens_unit = 1
 
     #lambda
-    root.input.sensitivity.param_003.sens_abstol = 1e-8
-    root.input.sensitivity.param_003.sens_boundphase = -1
-    root.input.sensitivity.param_003.sens_comp = -1
-    root.input.sensitivity.param_003.sens_factor = 1.0
-    root.input.sensitivity.param_003.sens_name = "SMA_LAMBDA"
-    root.input.sensitivity.param_003.sens_reaction = -1
-    root.input.sensitivity.param_003.sens_section = -1
-    root.input.sensitivity.param_003.sens_unit = 1
+    #root.input.sensitivity.param_003.sens_abstol = 1e-8
+    #root.input.sensitivity.param_003.sens_boundphase = -1
+    #root.input.sensitivity.param_003.sens_comp = -1
+    #root.input.sensitivity.param_003.sens_factor = 1.0
+    #root.input.sensitivity.param_003.sens_name = "SMA_LAMBDA"
+    #root.input.sensitivity.param_003.sens_reaction = -1
+    #root.input.sensitivity.param_003.sens_section = -1
+    #root.input.sensitivity.param_003.sens_unit = 1
 
     #Sensitvity of first species to loads of all species (except salt)
-    root.input.sensitivity.param_004.sens_abstol = [1e-8, 1e-8, 1e-8]
-    root.input.sensitivity.param_004.sens_boundphase = [-1, -1, -1]
-    root.input.sensitivity.param_004.sens_comp = [1, 2, 3]
-    root.input.sensitivity.param_004.sens_factor = [1.0, 1.0, 1.0]
-    root.input.sensitivity.param_004.sens_name = ["CONST_COEFF", "CONST_COEFF", "CONST_COEFF"]
-    root.input.sensitivity.param_004.sens_reaction = [-1, -1, -1]
-    root.input.sensitivity.param_004.sens_section = [0, 0, 0]
-    root.input.sensitivity.param_004.sens_unit = [0, 0, 0]
+    #root.input.sensitivity.param_004.sens_abstol = [1e-8, 1e-8, 1e-8]
+    #root.input.sensitivity.param_004.sens_boundphase = [-1, -1, -1]
+    #root.input.sensitivity.param_004.sens_comp = [1, 2, 3]
+    #root.input.sensitivity.param_004.sens_factor = [1.0, 1.0, 1.0]
+    #root.input.sensitivity.param_004.sens_name = ["CONST_COEFF", "CONST_COEFF", "CONST_COEFF"]
+    #root.input.sensitivity.param_004.sens_reaction = [-1, -1, -1]
+    #root.input.sensitivity.param_004.sens_section = [0, 0, 0]
+    #root.input.sensitivity.param_004.sens_unit = [0, 0, 0]
 
     #Sensitvity of first species to velocity
-    root.input.sensitivity.param_005.sens_abstol = 1e-8
-    root.input.sensitivity.param_005.sens_boundphase = -1
-    root.input.sensitivity.param_005.sens_comp = -1
-    root.input.sensitivity.param_005.sens_factor = 1.0
-    root.input.sensitivity.param_005.sens_name = "VELOCITY"
-    root.input.sensitivity.param_005.sens_reaction = -1
-    root.input.sensitivity.param_005.sens_section = -1
-    root.input.sensitivity.param_005.sens_unit = 1
+    #root.input.sensitivity.param_005.sens_abstol = 1e-8
+    #root.input.sensitivity.param_005.sens_boundphase = -1
+    #root.input.sensitivity.param_005.sens_comp = -1
+    #root.input.sensitivity.param_005.sens_factor = 1.0
+    #root.input.sensitivity.param_005.sens_name = "VELOCITY"
+    #root.input.sensitivity.param_005.sens_reaction = -1
+    #root.input.sensitivity.param_005.sens_section = -1
+    #root.input.sensitivity.param_005.sens_unit = 1
 
 
 def plotSimulation(simulation):
@@ -204,10 +205,10 @@ def plotSimulation(simulation):
 def plotInlet(axis, simulation):
     solution_times = simulation.root.output.solution.solution_times
 
-    inlet_salt = simulation.root.output.solution.unit_000.solution_column_inlet_comp_000
-    inlet_p1 = simulation.root.output.solution.unit_000.solution_column_inlet_comp_001
-    inlet_p2 = simulation.root.output.solution.unit_000.solution_column_inlet_comp_002
-    inlet_p3 = simulation.root.output.solution.unit_000.solution_column_inlet_comp_003
+    inlet_salt = simulation.root.output.solution.unit_000.solution_inlet_comp_000
+    inlet_p1 = simulation.root.output.solution.unit_000.solution_inlet_comp_001
+    inlet_p2 = simulation.root.output.solution.unit_000.solution_inlet_comp_002
+    inlet_p3 = simulation.root.output.solution.unit_000.solution_inlet_comp_003
 
     axis.set_title("Inlet")
     axis.plot(solution_times, inlet_salt, 'b-', label="Salt")
@@ -233,10 +234,10 @@ def plotInlet(axis, simulation):
 def plotOutlet(axis, simulation):
     solution_times = simulation.root.output.solution.solution_times
 
-    outlet_salt = simulation.root.output.solution.unit_002.solution_column_outlet_comp_000
-    outlet_p1 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_001
-    outlet_p2 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_002
-    outlet_p3 = simulation.root.output.solution.unit_002.solution_column_outlet_comp_003
+    outlet_salt = simulation.root.output.solution.unit_002.solution_outlet_comp_000
+    outlet_p1 = simulation.root.output.solution.unit_002.solution_outlet_comp_001
+    outlet_p2 = simulation.root.output.solution.unit_002.solution_outlet_comp_002
+    outlet_p3 = simulation.root.output.solution.unit_002.solution_outlet_comp_003
 
     axis.set_title("Output")
     axis.plot(solution_times, outlet_salt, 'b-', label="Salt")
