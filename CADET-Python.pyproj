@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>SMB.py</StartupFile>
+    <StartupFile>Cadet_Python.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
