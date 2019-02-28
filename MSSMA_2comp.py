@@ -22,13 +22,36 @@ from cadet import Cadet
 Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/cadet3.1-win7-x64/bin/cadet-cli.exe"
 
 import common
+import pandas
+
+def gen_fraction_times(start, stop, bins):
+    return numpy.linspace(start, stop, bins+1, endpoint=True)
+
+def gen_fractions(fraction_times, sim):
+    nComp = sim.root.input.model.unit_000.ncomp
+
+    df = pandas.DataFrame()
+
+    times = sim.root.output.solution.solution_times
+
+    for idx, (start, stop) in enumerate(zip(fraction_times[:-1], fraction_times[1:])):
+        selected = (times >= start) & (times <= stop)
+        temp = {'Start':start, 'Stop':stop}
+        for comp in range(nComp):
+            local_times = times[selected]
+            local_values = sim.root.output.solution.unit_001["solution_outlet_comp_%03d" % comp][selected]
+            
+            temp[str(comp)] = numpy.trapz(local_values, local_times) / (stop - start)
+        df = df.append(temp, ignore_index=True)
+    return df
 
 def main():
     simulation = Cadet(common.common.root)
-    simulation.filename = "MSSMA.h5"
+    simulation.filename = "MSSMA_2comp.h5"
     createSimulation(simulation)
     simulation.save()
-    simulation.run()
+    data = simulation.run()
+    print(data)
     simulation.load()
     plotSimulation(simulation)
 
@@ -43,53 +66,53 @@ def createSimulation(simulation):
                                                            1, 2, -1, -1, 1.0]
     root.input.model.unit_000.inlet_type = 'PIECEWISE_CUBIC_POLY'
     root.input.model.unit_000.unit_type = 'INLET'
-    root.input.model.unit_000.ncomp = 2
+    root.input.model.unit_000.ncomp = 3
 
-    root.input.model.unit_000.sec_000.const_coeff = [100.0, 0.15]
-    root.input.model.unit_000.sec_000.lin_coeff = [0.0, 0.0]
-    root.input.model.unit_000.sec_000.quad_coeff = [0.0, 0.0]
-    root.input.model.unit_000.sec_000.cube_coeff = [0.0, 0.0]
+    root.input.model.unit_000.sec_000.const_coeff = [100.0, 0.15, 0.01]
+    root.input.model.unit_000.sec_000.lin_coeff = [0.0, 0.0, 0.0]
+    root.input.model.unit_000.sec_000.quad_coeff = [0.0, 0.0, 0.0]
+    root.input.model.unit_000.sec_000.cube_coeff = [0.0, 0.0, 0.0]
 
-    root.input.model.unit_000.sec_001.const_coeff = [75, 0.0]
-    root.input.model.unit_000.sec_001.lin_coeff = [0.0, 0.0]
-    root.input.model.unit_000.sec_001.quad_coeff = [0.0, 0.0]
-    root.input.model.unit_000.sec_001.cube_coeff = [0.0, 0.0]
+    root.input.model.unit_000.sec_001.const_coeff = [75, 0.0, 0.0]
+    root.input.model.unit_000.sec_001.lin_coeff = [0.0, 0.0, 0.0]
+    root.input.model.unit_000.sec_001.quad_coeff = [0.0, 0.0, 0.0]
+    root.input.model.unit_000.sec_001.cube_coeff = [0.0, 0.0, 0.0]
 
-    root.input.model.unit_000.sec_002.const_coeff = [75, 0.0]
-    root.input.model.unit_000.sec_002.lin_coeff = [0.05, 0.0]
-    root.input.model.unit_000.sec_002.quad_coeff = [0.0, 0.0]
-    root.input.model.unit_000.sec_002.cube_coeff = [0.0, 0.0]
+    root.input.model.unit_000.sec_002.const_coeff = [75, 0.0, 0.0]
+    root.input.model.unit_000.sec_002.lin_coeff = [0.05, 0.0, 0.0]
+    root.input.model.unit_000.sec_002.quad_coeff = [0.0, 0.0, 0.0]
+    root.input.model.unit_000.sec_002.cube_coeff = [0.0, 0.0, 0.0]
 
     root.input.model.unit_001.adsorption_model = 'MULTISTATE_STERIC_MASS_ACTION'
     root.input.model.unit_001.col_dispersion = 1.5E-7
     root.input.model.unit_001.col_length = 0.25
     root.input.model.unit_001.col_porosity = 0.3
-    root.input.model.unit_001.film_diffusion = [2.14E-4, 2.1e-5]
-    root.input.model.unit_001.init_c = [75, 0.0]
-    root.input.model.unit_001.init_q = [225, 0.0, 0.0]
-    root.input.model.unit_001.ncomp = 2
-    root.input.model.unit_001.par_diffusion = [4.08E-10, 9.0E-12]
+    root.input.model.unit_001.film_diffusion = [2.14E-4, 2.1e-5, 2.1e-5]
+    root.input.model.unit_001.init_c = [75, 0.0, 0.0]
+    root.input.model.unit_001.init_q = [225, 0.0, 0.0, 0.0, 0.0]
+    root.input.model.unit_001.ncomp = 3
+    root.input.model.unit_001.par_diffusion = [4.08E-10, 9.0E-12, 9.0e-12]
     root.input.model.unit_001.par_porosity = 0.4
     root.input.model.unit_001.par_radius = 3.25E-5
-    root.input.model.unit_001.par_surfdiffusion = [0.0, 0.0, 0.0]
+    root.input.model.unit_001.par_surfdiffusion = [0.0, 0.0, 0.0, 0.0, 0.0]
     root.input.model.unit_001.unit_type = 'GENERAL_RATE_MODEL'
     root.input.model.unit_001.velocity = 0.001
     
     root.input.model.unit_001.adsorption.is_kinetic = 1
-    root.input.model.unit_001.adsorption.mssma_ka = [0.0, 1E11, 8E6]
-    root.input.model.unit_001.adsorption.mssma_kd = [0.0, 6E11, 2E16]
+    root.input.model.unit_001.adsorption.mssma_ka = [0.0, 1E11, 8E6, 1E11, 8E6]
+    root.input.model.unit_001.adsorption.mssma_kd = [0.0, 6E11, 2E16, 6E11, 2E16]
     root.input.model.unit_001.adsorption.mssma_lambda = 225
-    root.input.model.unit_001.adsorption.mssma_nu = [0.0, 10, 25]
-    root.input.model.unit_001.adsorption.mssma_sigma = [0.0, 48, 66]
+    root.input.model.unit_001.adsorption.mssma_nu = [0.0, 10, 25, 20, 50]
+    root.input.model.unit_001.adsorption.mssma_sigma = [0.0, 48, 66, 48*2, 66*2]
     root.input.model.unit_001.adsorption.mssma_refq = 225
     root.input.model.unit_001.adsorption.mssma_refc0 = 520.0
-    root.input.model.unit_001.adsorption.mssma_rates = [0.0, 0.0, 1e20, 10, 0.0]
+    root.input.model.unit_001.adsorption.mssma_rates = [0.0, 0.0, 1e20, 10, 0.0, 0.0, 1e20, 10, 0.0]
 
-    root.input.model.unit_001.discretization.nbound = [1, 2]
+    root.input.model.unit_001.discretization.nbound = [1, 2,2]
     root.input.model.unit_001.discretization.ncol = 50
     root.input.model.unit_001.discretization.npar = 5
 
-    root.input.model.unit_002.ncomp = 2
+    root.input.model.unit_002.ncomp = 3
     root.input.model.unit_002.unit_type = 'OUTLET'
 
     root.input.solver.user_solution_times = numpy.linspace(0, 15000, 1000)
@@ -111,6 +134,7 @@ def plotInlet(axis, simulation):
 
     inlet_salt = simulation.root.output.solution.unit_000.solution_inlet_comp_000
     inlet_p1 = simulation.root.output.solution.unit_000.solution_inlet_comp_001
+    inlet_p2 = simulation.root.output.solution.unit_000.solution_inlet_comp_002
 
     axis.set_title("Inlet")
     axis.plot(solution_times, inlet_salt, 'b-', label="Salt")
@@ -122,6 +146,7 @@ def plotInlet(axis, simulation):
 
     axis2 = axis.twinx()
     axis2.plot(solution_times, inlet_p1, 'r-', label="P1")
+    axis2.plot(solution_times, inlet_p2, 'g-', label="P2")
     axis2.set_ylabel('mMol Protein', color='r')
     axis2.tick_params('y', colors='r')
 
@@ -136,10 +161,20 @@ def plotOutlet(axis, simulation):
 
     outlet_salt = simulation.root.output.solution.unit_002.solution_outlet_comp_000
     outlet_p1 = simulation.root.output.solution.unit_002.solution_outlet_comp_001
+    outlet_p2 = simulation.root.output.solution.unit_002.solution_outlet_comp_002
 
     data = numpy.vstack([solution_times, outlet_p1]).transpose()
-    numpy.savetxt('comp_1.csv', data, delimiter=',')
+    numpy.savetxt('comp2_1.csv', data, delimiter=',')
 
+    data = numpy.vstack([solution_times, outlet_p2]).transpose()
+    numpy.savetxt('comp2_2.csv', data, delimiter=',')
+
+    data = numpy.vstack([solution_times, outlet_p1 + outlet_p2]).transpose()
+    numpy.savetxt('comp2_comb.csv', data, delimiter=',')
+
+    fraction_times = gen_fraction_times(6000, 14000, 10)
+    df = gen_fractions(fraction_times, simulation)
+    df.to_csv("comp2_fraction.csv", columns=('Start', 'Stop', '1'), index=False)
 
     axis.set_title("Output")
     axis.plot(solution_times, outlet_salt, 'b-', label="Salt")
@@ -151,6 +186,7 @@ def plotOutlet(axis, simulation):
 
     axis2 = axis.twinx()
     axis2.plot(solution_times, outlet_p1, 'r-', label="P1")
+    axis2.plot(solution_times, outlet_p2, 'g-', label="P2")
     axis2.set_ylabel('mMol Protein', color='r')
     axis2.tick_params('y', colors='r')
 

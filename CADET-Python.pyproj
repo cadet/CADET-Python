@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>Cadet_Python.py</StartupFile>
+    <StartupFile>library_test.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -23,6 +23,9 @@
     <Compile Include="cadet.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="cadet_library.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Cadet_Python.py" />
     <Compile Include="Cadet_Python_Scoop.py" />
     <Compile Include="common.py">
@@ -37,13 +40,22 @@
     <Compile Include="HICWang.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="library_test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MSSMA.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MSSMA2.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MSSMA_2comp.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Pilot_Bypass_noBT_noC.py" />
+    <Compile Include="ron.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SMB.py">
       <SubType>Code</SubType>
     </Compile>
