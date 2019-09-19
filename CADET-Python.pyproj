@@ -5,13 +5,13 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>library_test.py</StartupFile>
+    <StartupFile>examples\SMB.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda36-64</InterpreterId>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -20,55 +20,75 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="cadet.py">
+    <Compile Include="cadet\cadet.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cadet_library.py">
+    <Compile Include="cadet\LICENSE">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Cadet_Python.py" />
-    <Compile Include="Cadet_Python_Scoop.py" />
-    <Compile Include="common.py">
+    <Compile Include="cadet\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="CSTR.py">
+    <Compile Include="examples\cadet_library.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="fix_h5.py">
+    <Compile Include="examples\Cadet_Python.py" />
+    <Compile Include="examples\Cadet_Python_Scoop.py" />
+    <Compile Include="examples\common.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="HICWang.py">
+    <Compile Include="examples\CSTR.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="library_test.py">
+    <Compile Include="examples\fix_h5.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MSSMA.py">
+    <Compile Include="examples\HICWang.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MSSMA2.py">
+    <Compile Include="examples\library_test.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MSSMA_2comp.py">
+    <Compile Include="examples\MSSMA.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Pilot_Bypass_noBT_noC.py" />
-    <Compile Include="ron.py">
+    <Compile Include="examples\MSSMA2.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="SMB.py">
+    <Compile Include="examples\MSSMA_2comp.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Test.py">
+    <Compile Include="examples\Pilot_Bypass_noBT_noC.py" />
+    <Compile Include="examples\ron.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="test_lwe.py">
+    <Compile Include="examples\SMB.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="examples\Test.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="examples\test_lwe.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda36-64" />
-    <InterpreterReference Include="Global|PythonCore|3.6" />
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="cadet\" />
+    <Folder Include="examples\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="README.md">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="setup.cfg">
+      <SubType>Code</SubType>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
