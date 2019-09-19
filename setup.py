@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
     
 setuptools.setup(
     name="CADET",
-    version="0.1",
+    version="0.2",
     author="William Heymann",
     author_email="w.heymann@fz-juelich.de",
     description="CADET is a python interface to the CADET chromatography simulator",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/modsim/CADET-Match",
+    url="https://github.com/modsim/CADET-Python",
     packages=setuptools.find_packages(),
     install_requires=[
           'addict',
