@@ -91,24 +91,30 @@ class Cadet(H5):
     
     def run(self, timeout = None, check=None):
         if self.filename is not None:
-            data = subprocess.run([self.cadet_path, self.filename], timeout = timeout, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data = subprocess.run([self.cadet_path, self.filename], timeout = timeout, check=check, capture_output=True)
             self.return_information = data
             return data
         else:
             print("Filename must be set before run can be used")
 
 def recursively_load( h5file, path, func, paths): 
-
-    ans = {}
-    for key_original in h5file[path].keys():
-        key = func(key_original)
-        local_path = path + key
-        if paths is None or (paths is not None and local_path in paths):
+    ans = Dict()
+    if paths is not None:
+        for path in paths:
+            item = h5file[path]
+            if isinstance(item, h5py._hl.dataset.Dataset):
+                ans[path[1:]] = item[()]
+            elif isinstance(item, h5py._hl.group.Group):
+                ans[path[1:]] = recursively_load(h5file, path + '/', func, None)
+    else:
+        for key_original in h5file[path].keys():
+            key = func(key_original)
+            local_path = path + key
             item = h5file[path][key_original]
             if isinstance(item, h5py._hl.dataset.Dataset):
                 ans[key] = item[()]
             elif isinstance(item, h5py._hl.group.Group):
-                ans[key] = recursively_load(h5file, local_path + '/', func, paths)
+                ans[key] = recursively_load(h5file, local_path + '/', func, None)
     return ans 
 
 def recursively_save( h5file, path, dic, func):

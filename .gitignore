@@ -18,3 +18,5 @@
 /ron.py
 /CADET.egg-info
 /dist
+/build/lib/cadet
+/cadet/__pycache__

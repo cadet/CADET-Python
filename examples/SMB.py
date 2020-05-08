@@ -6,16 +6,17 @@ import numpy as np
 import math
 
 from cadet import Cadet
-Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/cadet-cli.exe"
+#Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/cadet-cli.exe"
+Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/VCPKG/bin/cadet-cli.exe"
 
 #use to render results
 import matplotlib.pyplot as plt
 
 #number of columns in a cycle
-cycle_size = 4
+cycle_size = 8
 
 #number of cycles
-cycles = 7
+cycles = 4
 
 #number of times flows have to be expanded for a 4-zone model
 repeat_size = int(cycle_size/4)
@@ -121,7 +122,7 @@ def createSimulation(simulation):
         col.ncomp = 2
         col.cross_section_area = math.pi * (0.02**2)/4.0
         col.col_dispersion = 3.8148e-20
-        col.col_length = 0.25
+        col.col_length = 0.25/repeat_size
         col.col_porosity = 0.83
         col.init_c = [0.0, 0.0]
         col.init_q = [0.0, 0.0]
