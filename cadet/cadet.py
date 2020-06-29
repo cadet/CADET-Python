@@ -8,6 +8,7 @@ import numpy
 import subprocess
 import pprint
 import copy
+import json
 
 from pathlib import Path
 
@@ -43,6 +44,20 @@ class H5():
                 recursively_save(h5file, '/', self.root, self.transform)
         else:
             print("Filename must be set before save can be used")
+
+    def save_json(self, filename):
+        with Path(filename).open("w") as fp:
+            data = convert_from_numpy(self.root, self.transform)
+            json.dump(data, fp, indent=4, sort_keys=True)
+
+    def load_json(self, filename, update=False):
+        with Path(filename).open("r") as fp:
+            data = json.load(fp)
+            data = recursively_load_dict(data, self.inverse_transform)
+            if update:
+                self.root.update(data)
+            else:
+                self.root = data
 
     def append(self):
         "This can only be used to write new keys to the system, this is faster than having to read the data before writing it"
@@ -96,6 +111,35 @@ class Cadet(H5):
             return data
         else:
             print("Filename must be set before run can be used")
+
+def convert_from_numpy(data, func):
+    ans = Dict()
+    for key_original,item in data.items():
+        key = func(key_original)
+        if isinstance(item, numpy.ndarray):
+            item = item.tolist()
+        
+        if isinstance(item, numpy.generic):
+            item = item.item()
+
+        if isinstance(item, bytes):
+            item = item.decode('ascii')
+        
+        if isinstance(item, Dict):
+            ans[key_original] = convert_from_numpy(item, func)
+        else:
+            ans[key] = item
+    return ans
+
+def recursively_load_dict( data, func): 
+    ans = Dict()
+    for key_original,item in data.items():
+        key = func(key_original)
+        if isinstance(item, dict):
+            ans[key] = recursively_load_dict(item, func)
+        else:
+            ans[key] = item
+    return ans
 
 def recursively_load( h5file, path, func, paths): 
     ans = Dict()

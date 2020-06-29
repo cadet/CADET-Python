@@ -5,13 +5,13 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>examples\SMB.py</StartupFile>
+    <StartupFile>examples\cadet_json.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda37-64</InterpreterId>
+    <InterpreterId>CondaEnv|CondaEnv|cadet_devel</InterpreterId>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -27,6 +27,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="cadet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="examples\cadet_json.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="examples\cadet_library.py">
@@ -76,6 +79,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|cadet_devel" />
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda37-64" />
   </ItemGroup>
   <ItemGroup>
