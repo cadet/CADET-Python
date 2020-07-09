@@ -145,11 +145,12 @@ def recursively_load( h5file, path, func, paths):
     ans = Dict()
     if paths is not None:
         for path in paths:
-            item = h5file[path]
-            if isinstance(item, h5py._hl.dataset.Dataset):
-                ans[path[1:]] = item[()]
-            elif isinstance(item, h5py._hl.group.Group):
-                ans[path[1:]] = recursively_load(h5file, path + '/', func, None)
+            item = h5file.get(path, None)
+            if item is not None:
+                if isinstance(item, h5py._hl.dataset.Dataset):
+                    ans[path[1:]] = item[()]
+                elif isinstance(item, h5py._hl.group.Group):
+                    ans[path[1:]] = recursively_load(h5file, path + '/', func, None)
     else:
         for key_original in h5file[path].keys():
             key = func(key_original)
