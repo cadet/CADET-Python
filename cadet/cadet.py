@@ -141,6 +141,17 @@ def recursively_load_dict( data, func):
             ans[key] = item
     return ans
 
+def set_path(obj, path, value):
+    "paths need to be broken up so that subobjects are correctly made"
+    path = path.split('/')
+    path = [i for i in path if i]
+
+    temp = obj
+    for part in path[:-1]:
+        temp = temp[part]
+
+    temp[path[-1]] = value
+
 def recursively_load( h5file, path, func, paths): 
     ans = Dict()
     if paths is not None:
@@ -148,9 +159,9 @@ def recursively_load( h5file, path, func, paths):
             item = h5file.get(path, None)
             if item is not None:
                 if isinstance(item, h5py._hl.dataset.Dataset):
-                    ans[path[1:]] = item[()]
+                    set_path(ans, path, item[()])
                 elif isinstance(item, h5py._hl.group.Group):
-                    ans[path[1:]] = recursively_load(h5file, path + '/', func, None)
+                    set_path(ans, path, recursively_load(h5file, path + '/', func, None))
     else:
         for key_original in h5file[path].keys():
             key = func(key_original)

@@ -1,9 +1,29 @@
 import cadet
 
-sim = cadet.Cadet()
-sim.filename = r"C:\Users\kosh_000\Documents\Visual Studio 2017\Projects\CADETMatch\Examples\Example1\Dextran\dextran_pulse.h5"
-sim.load()
+data = cadet.H5()
+data.filename = r"F:\MCMC\Synthetic\Bypass\Bypass_MCMC_pump_delay\mcmc_refine\mcmc\mcmc.h5"
+data.load(paths=["/bounds_change/json",])
 
-sim.save_json(r"C:\Users\kosh_000\Documents\Visual Studio 2017\Projects\CADETMatch\Examples\Example1\Dextran\dextran_pulse.json")
 
-sim.load_json(r"C:\Users\kosh_000\Documents\Visual Studio 2017\Projects\CADETMatch\Examples\Example1\Dextran\dextran_pulse.json")
+print(data)
+
+print("bounds json", data.root.bounds_change)
+
+
+print("json", data.root.bounds_change.json)
+
+
+
+data.load(paths=["/bounds_change",])
+
+
+
+print("bounds_change", data)
+
+
+
+data.load()
+
+
+
+print("all", data)

@@ -1,3 +1,0 @@
-addict
-numpy
-h5py
