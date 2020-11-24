@@ -190,56 +190,13 @@ def recursively_save( h5file, path, dic, func):
             raise ValueError("dict keys must be strings to save to hdf5")
         #handle   int, float, string and ndarray of int32, int64, float64
         if isinstance(item, str):
-            h5file[path + func(key)] = numpy.array(item, dtype='S')
-        
-        elif isinstance(item, int):
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.int32)
-        
-        elif isinstance(item, float):
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.float64)
-        
-        elif isinstance(item, numpy.ndarray) and item.dtype == numpy.float64:
-            h5file[path + func(key)] = item
-        
-        elif isinstance(item, numpy.ndarray) and item.dtype == numpy.float32:
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.float64)
-        
-        elif isinstance(item, numpy.ndarray) and item.dtype == numpy.int32:
-            h5file[path + func(key)] = item
-        
-        elif isinstance(item, numpy.ndarray) and item.dtype == numpy.int64:
-            h5file[path + func(key)] = item.astype(numpy.int32)
-
-        elif isinstance(item, numpy.ndarray) and item.dtype.kind == 'S':
-            h5file[path + func(key)] = item
-        
-        elif isinstance(item, list) and all(isinstance(i, int) for i in item):
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.int32)
-        
-        elif isinstance(item, list) and any(isinstance(i, float) for i in item):
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.float64)
-        
-        elif isinstance(item, numpy.int32):
-            h5file[path + func(key)] = item
-        
-        elif isinstance(item, numpy.float64):
-            h5file[path + func(key)] = item
-
-        elif isinstance(item, numpy.float32):
-            h5file[path + func(key)] = numpy.array(item, dtype=numpy.float64)
-        
-        elif isinstance(item, numpy.bytes_):
-            h5file[path + func(key)] = item
-        
-        elif isinstance(item, bytes):
-            h5file[path + func(key)] = item
-
+            h5file[path + func(key)] = numpy.array(item.encode('ascii'))
         elif isinstance(item, list) and all(isinstance(i, str) for i in item):
-            h5file[path + func(key)] = numpy.array(item, dtype="S")
-
-        # save dictionaries
+            h5file[path + func(key)] = numpy.array([i.encode('ascii') for i in item])
         elif isinstance(item, dict):
             recursively_save(h5file, path + key + '/', item, func)
-        # other types cannot be saved and will result in an error
         else:
-            raise ValueError('Cannot save %s/%s key with %s type.' % (path, func(key), type(item)))
+            try:
+                h5file[path + func(key)] = numpy.array(item)
+            except TypeError:
+                raise ValueError('Cannot save %s/%s key with %s type.' % (path, func(key), type(item)))
