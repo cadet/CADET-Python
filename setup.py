@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     
 setuptools.setup(
     name="CADET",
-    version="0.7",
+    version="0.8",
     author="William Heymann",
     author_email="w.heymann@fz-juelich.de",
     description="CADET is a python interface to the CADET chromatography simulator",
@@ -16,12 +16,13 @@ setuptools.setup(
     install_requires=[
           'addict',
           'numpy',
-          'h5py'
+          'h5py',
+          'filelock'
       ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 ) 

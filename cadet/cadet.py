@@ -10,6 +10,9 @@ import pprint
 import copy
 import json
 
+import filelock
+import contextlib
+
 from pathlib import Path
 
 class H5():
@@ -27,21 +30,34 @@ class H5():
         for i in data:
             self.root.update(copy.deepcopy(i))
 
-    def load(self, paths=None, update=False):
+    def load(self, paths=None, update=False, lock=False):
         if self.filename is not None:
-            with h5py.File(self.filename, 'r') as h5file:
-                data = Dict(recursively_load(h5file, '/', self.inverse_transform, paths))
-                if update:
-                    self.root.update(data)
-                else:
-                    self.root = data
+
+            if lock is True:
+                lock_file = filelock.FileLock(self.filename + '.lock')
+            else:
+                lock_file = contextlib.nullcontext()
+
+            with lock_file:
+                with h5py.File(self.filename, 'r') as h5file:
+                    data = Dict(recursively_load(h5file, '/', self.inverse_transform, paths))
+                    if update:
+                        self.root.update(data)
+                    else:
+                        self.root = data
         else:
             print('Filename must be set before load can be used')
 
-    def save(self):
+    def save(self, lock=False):
         if self.filename is not None:
-            with h5py.File(self.filename, 'w') as h5file:
-                recursively_save(h5file, '/', self.root, self.transform)
+            if lock is True:
+                lock_file = filelock.FileLock(self.filename + '.lock')
+            else:
+                lock_file = contextlib.nullcontext()
+
+            with lock_file:
+                with h5py.File(self.filename, 'w') as h5file:
+                    recursively_save(h5file, '/', self.root, self.transform)
         else:
             print("Filename must be set before save can be used")
 
@@ -59,11 +75,17 @@ class H5():
             else:
                 self.root = data
 
-    def append(self):
+    def append(self, lock=False):
         "This can only be used to write new keys to the system, this is faster than having to read the data before writing it"
         if self.filename is not None:
-            with h5py.File(self.filename, 'a') as h5file:
-                recursively_save(h5file, '/', self.root, self.transform)
+            if lock is True:
+                lock_file = filelock.FileLock(self.filename + '.lock')
+            else:
+                lock_file = contextlib.nullcontext()
+
+            with lock_file:
+                with h5py.File(self.filename, 'a') as h5file:
+                    recursively_save(h5file, '/', self.root, self.transform)
         else:
             print("Filename must be set before save can be used")
 
