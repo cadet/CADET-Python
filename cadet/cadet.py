@@ -15,6 +15,8 @@ import contextlib
 
 from pathlib import Path
 
+from cadet.cadet_dll import CadetDLL
+
 class H5():
     pp = pprint.PrettyPrinter(indent=4)
     
@@ -115,10 +117,34 @@ class H5():
                 obj = obj[i]
         obj[parts[-1]] = value
 
+def is_dll(value):
+    suffix = Path(value).suffix
+    return suffix in {'.so', '.dll'}
+
 class Cadet(H5):
     #cadet_path must be set in order for simulations to run
-    cadet_path = None
+    cadet_runner = None
     return_information = None
+
+    @property
+    def cadet_path(self):
+        if self.cadet_runner is not None:
+            return self.cadet_runner.cadet_path
+
+    @cadet_path.setter
+    def cadet_path(self, value):
+        if self.cadet_runner is not None and self.cadet_runner.cadet_path != value:
+            del self.cadet_runner
+
+        if is_dll(value):
+            self.cadet_runner  = CadetDLL(value)
+        else:
+            self.cadet_runner = CadetFile(value)
+
+    @cadet_path.deleter
+    def cadet_path(self):
+        del self.cadet_runner
+
     
     def transform(self, x):
         return str.upper(x)
@@ -127,9 +153,19 @@ class Cadet(H5):
         return str.lower(x)
     
     def run(self, timeout = None, check=None):
-        if self.filename is not None:
-            data = subprocess.run([self.cadet_path, self.filename], timeout = timeout, check=check, capture_output=True)
-            self.return_information = data
+        data = self.cadet_runner.run(simulation=self.root, filename=self.filename, timeout=timeout, check=check)
+        #self.return_information = data
+        return data
+        
+
+class CadetFile:
+
+    def __init__(self, cadet_path):
+        self.cadet_path = cadet_path
+
+    def run(self, filename = None, simulation=None, timeout = None, check=None):
+        if filename is not None:
+            data = subprocess.run([self.cadet_path, filename], timeout = timeout, check=check, capture_output=True)
             return data
         else:
             print("Filename must be set before run can be used")

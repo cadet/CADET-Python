@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{12356d41-d8b4-45c3-8413-01e847dcfac2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>examples\cadet_json.py</StartupFile>
+    <StartupFile>examples\dll_test.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -21,6 +21,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="cadet\cadet.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="cadet\cadet_dll.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="cadet\LICENSE">
@@ -41,6 +44,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="examples\CSTR.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="examples\dll_test.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="examples\fix_h5.py">
