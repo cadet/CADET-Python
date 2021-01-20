@@ -175,6 +175,14 @@ class Cadet(H5):
         data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
         #self.return_information = data
         return data
+
+    def run_load(self, timeout = None, check=None, clear=True):
+        data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
+        #self.return_information = data
+        self.load_results()
+        if clear:
+            self.clear()
+        return data
         
     def clear(self):
         if self.cadet_runner is not None:

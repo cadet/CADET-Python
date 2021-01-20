@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 #sim.load_results()
 #print(sim)
 
-cadet.cadet.Cadet.class_cadet_path(r"C:\Users\kosh_000\cadet_build\CADET\VCPKG_4\bin\cadet.dll")
+cadet.cadet.Cadet.class_cadet_path("C:/Users/kosh_000/cadet_build/CADET/VCPKG_4/bin/cadet.dll")
 
 sim = cadet.cadet.Cadet()
 
