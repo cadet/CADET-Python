@@ -2,13 +2,22 @@
 import ctypes
 import numpy
 import addict
+import time
 
 #input("Press Enter to continue...")
 
 def log_handler(file, func, line, level, level_name, message):
-	print('{} ({}:{:d}) {}'.format(level_name.decode('utf-8') , func.decode('utf-8') , line, message.decode('utf-8') ))
+	log_print('{} ({}:{:d}) {}'.format(level_name.decode('utf-8') , func.decode('utf-8') , line, message.decode('utf-8') ))
 
 c_cadet_result = ctypes.c_int
+
+def null(*args):
+	pass
+
+if 0:
+	log_print = print
+else:
+	log_print = null
 
 
 class PARAMETERPROVIDER(ctypes.Structure):
@@ -57,7 +66,7 @@ class NestedDictReader:
 
 	def push_scope(self, scope):
 		if scope in self.__cursor[-1]:
-			print('Entering scope {}'.format(scope))
+			log_print('Entering scope {}'.format(scope))
 			self.__cursor.append(self.__cursor[-1][scope])
 			return True
 
@@ -65,7 +74,7 @@ class NestedDictReader:
 
 	def pop_scope(self):
 		self.__cursor.pop()
-		print('Exiting scope')
+		log_print('Exiting scope')
 
 	def current(self):
 		return self.__cursor[-1]
@@ -84,7 +93,7 @@ def param_provider_get_double(reader, name, val):
 
 		val[0] = ctypes.c_double(float_val)
 		
-		print('GET scalar [double] {}: {}'.format(n, float(val[0])))
+		log_print('GET scalar [double] {}: {}'.format(n, float(val[0])))
 		return 0
 
 	return -1
@@ -103,7 +112,7 @@ def param_provider_get_int(reader, name, val):
 
 		val[0] = ctypes.c_int(int_val)
 
-		print('GET scalar [int] {}: {}'.format(n, int(val[0])))
+		log_print('GET scalar [int] {}: {}'.format(n, int(val[0])))
 		return 0
 
 	return -1
@@ -123,7 +132,7 @@ def param_provider_get_bool(reader, name, val):
 
 		val[0] = ctypes.c_uint8(int_val)
 
-		print('GET scalar [bool] {}: {}'.format(n, bool(val[0])))
+		log_print('GET scalar [bool] {}: {}'.format(n, bool(val[0])))
 		return 0
 
 	return -1
@@ -167,7 +176,7 @@ def param_provider_get_double_array(reader, name, n_elem, val):
 
 		n_elem[0] = ctypes.c_int(o.size)
 		val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-		print('GET array [double] {}: {}'.format(n, o))
+		log_print('GET array [double] {}: {}'.format(n, o))
 		return 0
 
 	return -1
@@ -186,7 +195,7 @@ def param_provider_get_int_array(reader, name, n_elem, val):
 
 		n_elem[0] = ctypes.c_int(o.size)
 		val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-		print('GET array [int] {}: {}'.format(n, o))
+		log_print('GET array [int] {}: {}'.format(n, o))
 		return 0
 
 	return -1
@@ -205,7 +214,7 @@ def param_provider_get_double_array_item(reader, name, index, val):
 			float_val = float(o[index])
 
 		val[0] = ctypes.c_double(float_val)
-		print('GET array [double] ({}) {}: {}'.format(index, n, val[0]))
+		log_print('GET array [double] ({}) {}: {}'.format(index, n, val[0]))
 		return 0
 
 	return -1
@@ -224,7 +233,7 @@ def param_provider_get_int_array_item(reader, name, index, val):
 			int_val = int(o[index])
 
 		val[0] = ctypes.c_int(int_val)
-		print('GET array [int] ({}) {}: {}'.format(index, n, val[0]))
+		log_print('GET array [int] ({}) {}: {}'.format(index, n, val[0]))
 		return 0
 
 	return -1
@@ -243,7 +252,7 @@ def param_provider_get_bool_array_item(reader, name, index, val):
 			int_val = int(o[index])
 
 		val[0] = ctypes.c_uint8(int_val)
-		print('GET array [bool] ({}) {}: {}'.format(index, n, bool(val[0])))
+		log_print('GET array [bool] ({}) {}: {}'.format(index, n, bool(val[0])))
 		return 0
 
 	return -1
@@ -268,7 +277,7 @@ def param_provider_get_string_array_item(reader, name, index, val):
 
 		reader.buffer = bytes_val
 		val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
-		print('GET array [string] ({}) {}: {}'.format(index, n, reader.buffer.decode('utf-8')))
+		log_print('GET array [string] ({}) {}: {}'.format(index, n, reader.buffer.decode('utf-8')))
 		return 0
 
 	return -1
@@ -278,7 +287,7 @@ def param_provider_exists(reader, name):
 	n = name.decode('utf-8')
 	c = reader.current()
 
-	print('EXISTS {}: {}'.format(n, n in c))
+	log_print('EXISTS {}: {}'.format(n, n in c))
 
 	if n in c:
 		return 1
@@ -300,7 +309,7 @@ def param_provider_is_array(reader, name, res):
 	elif isinstance(o, numpy.ndarray):
 		res[0] = ctypes.c_uint8(1)
 
-	print('ISARRAY {}: {}'.format(n, bool(res[0])))
+	log_print('ISARRAY {}: {}'.format(n, bool(res[0])))
 
 	return 0
 
@@ -314,13 +323,13 @@ def param_provider_num_elements(reader, name):
 
 	o = c[n]
 	if isinstance(o, list):
-		print('NUMELEMENTS {}: {}'.format(n, len(o)))
+		log_print('NUMELEMENTS {}: {}'.format(n, len(o)))
 		return len(o)
 	elif isinstance(o, numpy.ndarray):
-		print('NUMELEMENTS {}: {}'.format(n, o.size))
+		log_print('NUMELEMENTS {}: {}'.format(n, o.size))
 		return o.size
 
-	print('NUMELEMENTS {}: {}'.format(n, 1))
+	log_print('NUMELEMENTS {}: {}'.format(n, 1))
 	return 1
 
 
@@ -401,7 +410,7 @@ class CadetDLL:
 		self.__set_log_level = self.__lib.cdtSetLogLevel
 		self.__set_log_level.argtypes = [ctypes.c_int]
 		self.__set_log_level.restype = None
-		self.__set_log_level(7)
+		self.__set_log_level(2)
 
 		# Query API
 		cdtGetAPIv010000 = self.__lib.cdtGetAPIv010000
@@ -413,9 +422,14 @@ class CadetDLL:
 
 		self.__driver = self.__api.createDriver()
 
+	def clear(self):
+		if hasattr(self, "res"):
+			del self.res
+		self.__api.deleteDriver(self.__driver)
+		self.__driver = self.__api.createDriver()
 
 	def __del__(self):
-		print('deleteDriver()')
+		log_print('deleteDriver()')
 		self.__api.deleteDriver(self.__driver)
 
 
@@ -448,7 +462,26 @@ class CadetDLL:
 		pp.popScope = PARAMETERPROVIDER._fields_[17][1](param_provider_pop_scope)
 
 		self.__api.runSimulation(self.__driver, ctypes.byref(pp))
-		return SimulationResult(self.__api, self.__driver)
+		self.res = SimulationResult(self.__api, self.__driver)
+		return self.res
+
+
+	def load_results(self, sim):
+		output = addict.Dict()
+		if self.res is not None:
+			for key,value in sim.root.input['return'].items():
+				if key.startswith('unit'):
+					if value.write_solution_outlet:
+						unit = int(key[-3:])
+						t, out = self.res.outlet(unit)
+
+						if not len(output.solution_times):
+							output.solution_times = t
+
+						for comp in range(out.shape[2]):
+							comp_out = numpy.squeeze(out[:,:,comp])
+							output[key]['solution_outlet_comp_%03d' % comp] = comp_out
+		sim.root.output.solution = output
 
 
 def recursively_convert_dict(data): 

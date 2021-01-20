@@ -125,6 +125,7 @@ class Cadet(H5):
     #cadet_path must be set in order for simulations to run
     cadet_runner = None
     return_information = None
+    is_file = None
 
     @property
     def cadet_path(self):
@@ -138,12 +139,26 @@ class Cadet(H5):
 
         if is_dll(value):
             self.cadet_runner  = CadetDLL(value)
+            self.is_file = False
         else:
             self.cadet_runner = CadetFile(value)
+            self.is_file = True
 
     @cadet_path.deleter
     def cadet_path(self):
         del self.cadet_runner
+
+    @classmethod
+    def class_cadet_path(cls, value):
+        if cls.cadet_runner is not None and cls.cadet_runner.cadet_path != value:
+            del cls.cadet_runner
+
+        if is_dll(value):
+            cls.cadet_runner  = CadetDLL(value)
+            cls.is_file = False
+        else:
+            cls.cadet_runner = CadetFile(value)
+            cls.is_file = True
 
     
     def transform(self, x):
@@ -151,12 +166,19 @@ class Cadet(H5):
 
     def inverse_transform(self, x):
         return str.lower(x)
+
+    def load_results(self):
+        if self.cadet_runner is not None:
+            self.cadet_runner.load_results(self)
     
     def run(self, timeout = None, check=None):
-        data = self.cadet_runner.run(simulation=self.root, filename=self.filename, timeout=timeout, check=check)
+        data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
         #self.return_information = data
         return data
         
+    def clear(self):
+        if self.cadet_runner is not None:
+            self.cadet_runner.clear()
 
 class CadetFile:
 
@@ -169,6 +191,12 @@ class CadetFile:
             return data
         else:
             print("Filename must be set before run can be used")
+
+    def clear(self):
+        pass
+
+    def load_results(self, sim):
+        sim.load(paths=["/meta", "/output"], update=True)
 
 def convert_from_numpy(data, func):
     ans = Dict()
