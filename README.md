@@ -20,7 +20,7 @@ Once the simulation has been created it must be saved before it can be run.
 sim.filename = "/path/to/where/you/want/the/file.hdf5"
 sim.save()
 
-#Next the path to CADET needs to be set before a simulation can be run. If running on Microsoft Windows you need the path to cadet-cli.exe
+#next the path to CADET needs to be set before a simulation can be run. If running on Microsoft Windows you need the path to cadet-cli.exe
 
 sim.cadet_path = '/path/to/cadet-cli'
 
