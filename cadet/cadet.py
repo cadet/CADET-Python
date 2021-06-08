@@ -121,45 +121,82 @@ def is_dll(value):
     suffix = Path(value).suffix
     return suffix in {'.so', '.dll'}
 
-class Cadet(H5):
+class CadetMeta(type):
+    _cadet_runner_class = None
+    _is_file_class = None
+
+    @property
+    def is_file(cls):
+        return bool(cls._is_file_class)
+
+    @property
+    def cadet_path(cls):
+        if cls.cadet_runner is not None:
+            return cls.cadet_runner.cadet_path
+
+    @cadet_path.setter
+    def cadet_path(cls, value):
+        def __init__(cls):
+            cls._cadet_runner_class = None
+            cls._is_file_class = True
+
+        if cls._cadet_runner_class is not None and cls._cadet_runner_class.cadet_path != value:
+            del cls._cadet_runner_class
+
+        if is_dll(value):
+            cls._cadet_runner_class  = CadetDLL(value)
+            cls._is_file_class = False
+        else:
+            cls._cadet_runner_class = CadetFile(value)
+            cls._is_file_class = True
+
+    @cadet_path.deleter
+    def cadet_path(cls):
+        del cls._cadet_runner_class
+
+class Cadet(H5, metaclass=CadetMeta):
     #cadet_path must be set in order for simulations to run
-    cadet_runner = None
-    return_information = None
-    is_file = None
+    def __init__(self, *data):
+        super().__init__(*data)
+        self._cadet_runner = None
+        self.return_information = None
+        self._is_file = None
+
+    @property
+    def is_file(self):
+        if self._is_file is not None:
+            return bool(self._is_file)
+        if self._is_file_class is not None:
+            return bool(self._is_file_class)
+
+    @property
+    def cadet_runner(self):
+        if self._cadet_runner is not None:
+            return self._cadet_runner
+        if self._cadet_runner_class is not None:
+            return self._cadet_runner_class
 
     @property
     def cadet_path(self):
-        if self.cadet_runner is not None:
-            return self.cadet_runner.cadet_path
+        runner = self.cadet_runner
+        if runner is not None:
+            return runner.cadet_path
 
     @cadet_path.setter
     def cadet_path(self, value):
-        if self.cadet_runner is not None and self.cadet_runner.cadet_path != value:
-            del self.cadet_runner
+        if self._cadet_runner is not None and self._cadet_runner.cadet_path != value:
+            del self._cadet_runner
 
         if is_dll(value):
-            self.cadet_runner  = CadetDLL(value)
-            self.is_file = False
+            self._cadet_runner  = CadetDLL(value)
+            self._is_file = False
         else:
-            self.cadet_runner = CadetFile(value)
-            self.is_file = True
+            self._cadet_runner = CadetFile(value)
+            self._is_file = True
 
     @cadet_path.deleter
     def cadet_path(self):
-        del self.cadet_runner
-
-    @classmethod
-    def class_cadet_path(cls, value):
-        if cls.cadet_runner is not None and cls.cadet_runner.cadet_path != value:
-            del cls.cadet_runner
-
-        if is_dll(value):
-            cls.cadet_runner  = CadetDLL(value)
-            cls.is_file = False
-        else:
-            cls.cadet_runner = CadetFile(value)
-            cls.is_file = True
-
+        del self._cadet_runner
     
     def transform(self, x):
         return str.upper(x)
@@ -168,8 +205,9 @@ class Cadet(H5):
         return str.lower(x)
 
     def load_results(self):
-        if self.cadet_runner is not None:
-            self.cadet_runner.load_results(self)
+        runner = self.cadet_runner
+        if runner is not None:
+            runner.load_results(self)
     
     def run(self, timeout = None, check=None):
         data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
@@ -185,8 +223,9 @@ class Cadet(H5):
         return data
         
     def clear(self):
-        if self.cadet_runner is not None:
-            self.cadet_runner.clear()
+        runner = self.cadet_runner
+        if runner is not None:
+            runner.clear()
 
 class CadetFile:
 

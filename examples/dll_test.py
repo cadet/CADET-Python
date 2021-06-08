@@ -12,24 +12,25 @@ import matplotlib.pyplot as plt
 #sim.load_results()
 #print(sim)
 
-cadet.cadet.Cadet.class_cadet_path("C:/Users/kosh_000/cadet_build/CADET/VCPKG_4/bin/cadet.dll")
+cadet.cadet.Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/VCPKG_4/bin/cadet.dll"
 
 sim = cadet.cadet.Cadet()
 
 sim.filename = r"C:\Users\kosh_000\cadet_build\CADET\VCPKG_4\bin\LWE.h5"
+#sim.cadet_path = "C:/Users/kosh_000/cadet_build/CADET/VCPKG_4/bin/cadet-cli.exe"
 #sim.filename = r"F:\match_examples\transforms\auto\dextran.h5"
 sim.load()
 
 print("isFile", sim.is_file)
 
 sim.filename = "L:/temp.h5"
+#sim.save()
 
 
 #sim.cadet_path = r"C:\Users\kosh_000\cadet_build\CADET\VCPKG_4\bin\cadet-cli.exe"
 
 #sim.save()
-sim.run()
-sim.load_results()
+sim.run_load()
 
 plt.figure(figsize=[15,15])
 plt.plot(sim.root.output.solution.solution_times, sim.root.output.solution.unit_000.solution_outlet_comp_001)
