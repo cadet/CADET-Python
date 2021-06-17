@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
     
 setuptools.setup(
-    name="CADET",
+    name="CADET-Python",
     version="0.11",
     author="William Heymann",
     author_email="w.heymann@fz-juelich.de",

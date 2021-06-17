@@ -20,3 +20,4 @@
 /dist
 /build/lib/cadet
 /cadet/__pycache__
+/CADET_Python.egg-info
