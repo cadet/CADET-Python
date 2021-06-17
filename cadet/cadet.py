@@ -131,8 +131,8 @@ class CadetMeta(type):
 
     @property
     def cadet_path(cls):
-        if cls.cadet_runner is not None:
-            return cls.cadet_runner.cadet_path
+        if cls._cadet_runner_class is not None:
+            return cls._cadet_runner_class.cadet_path
 
     @cadet_path.setter
     def cadet_path(cls, value):
