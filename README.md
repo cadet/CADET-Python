@@ -4,6 +4,16 @@ https://github.com/modsim/CADET
 
 CADET-Python almost exactly maps to the documented CADET interface except that all dataset names are lowercase. This simplifies useing the interface.
 
+To install CADET-Python simply
+------------------------------
+
+pip install cadet-python
+
+or
+
+conda install -c immudzen cadet-python
+
+
 This package includes the CADET class and H5 class. H5 can be used as a simple generic HDF5 interface.
 
 As an example look at setting column porosity for column 1. From the CADET manual, the path for this is:
