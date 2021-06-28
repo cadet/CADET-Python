@@ -13,6 +13,8 @@ or
 
 conda install -c immudzen cadet-python
 
+Usage
+-----
 
 This package includes the CADET class and H5 class. H5 can be used as a simple generic HDF5 interface.
 
