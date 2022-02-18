@@ -38,5 +38,5 @@ jobs:
         pip install wheel
         python setup.py bdist_wheel
         cd dist
-        pip install CADET_python*.whl
+        pip install CADET_Python*.whl
         python -c "import cadet; print(cadet.__version__)"
