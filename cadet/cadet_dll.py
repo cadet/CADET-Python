@@ -53,6 +53,9 @@ class CADETAPIV010000(ctypes.Structure):
 				('deleteDriver', ctypes.CFUNCTYPE(None, ctypes.c_void_p)),
 				('runSimulation', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.POINTER(PARAMETERPROVIDER))),
 				('getSolutionOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
+				('getSolutionInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
+				#('getSolutionBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
+				#('getSolutionParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
 			   ]	
 
 
@@ -374,6 +377,56 @@ class SimulationResult:
 		else:
 			return (time, data)
 
+	def inlet(self, unit, own_data=True):
+		c_double_p = ctypes.POINTER(ctypes.c_double)
+		time_ptr = c_double_p()
+		data_ptr = c_double_p()
+		n_time = ctypes.c_int()
+		n_ports = ctypes.c_int()
+		n_comp = ctypes.c_int()
+	
+		result = self.__api.getSolutionInlet(self.__driver, unit, ctypes.byref(time_ptr), ctypes.byref(data_ptr), ctypes.byref(n_time), ctypes.byref(n_ports), ctypes.byref(n_comp))
+		n_time = n_time.value
+		n_ports = n_ports.value
+		n_comp = n_comp.value
+	
+		data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_ports, n_comp))
+		time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
+	
+		if own_data:
+			return (time.copy(), data.copy())
+		else:
+			return (time, data)
+
+	#def bulk(self, unit, own_data=True):
+	#	c_double_p = ctypes.POINTER(ctypes.c_double)
+	#	time_ptr = c_double_p()
+	#	data_ptr = c_double_p()
+	#	n_time = ctypes.c_int()
+	#	n_axial_cells = ctypes.c_int()
+	#	n_radial_cells = ctypes.c_int()
+	#	n_comp = ctypes.c_int()
+
+	#	result = self.__api.getSolutionBulk(self.__driver, unit, 
+	#								   ctypes.byref(time_ptr), 
+	#								   ctypes.byref(data_ptr), 
+	#								   ctypes.byref(n_time), 
+	#								   ctypes.byref(n_axial_cells), 
+	#								   ctypes.byref(n_radial_cells), 
+	#								   ctypes.byref(n_comp))
+	#	n_time = n_time.value
+	#	n_axial_cells = n_axial_cells.value
+	#	n_radial_cells = n_radial_cells.value
+	#	n_comp = n_comp.value
+
+	#	data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
+	#	time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
+
+	#	if own_data:
+	#		return (time.copy(), data.copy())
+	#	else:
+	#		return (time, data)
+
 
 class CadetDLL:
 
@@ -465,8 +518,7 @@ class CadetDLL:
 		self.res = SimulationResult(self.__api, self.__driver)
 		return self.res
 
-
-	def load_results(self, sim):
+	def load_output(self, sim):
 		output = addict.Dict()
 		if self.res is not None:
 			for key,value in sim.root.input['return'].items():
@@ -481,7 +533,47 @@ class CadetDLL:
 						for comp in range(out.shape[2]):
 							comp_out = numpy.squeeze(out[:,:,comp])
 							output[key]['solution_outlet_comp_%03d' % comp] = comp_out
-		sim.root.output.solution = output
+		return output
+
+	def load_inlet(self, sim):
+		inlet = addict.Dict()
+		if self.res is not None:
+			for key,value in sim.root.input['return'].items():
+				if key.startswith('unit'):
+					if value.write_solution_inlet:
+						unit = int(key[-3:])
+						t, out = self.res.inlet(unit)
+
+						if not len(inlet.solution_times):
+							inlet.solution_times = t
+
+						for comp in range(out.shape[2]):
+							comp_out = numpy.squeeze(out[:,:,comp])
+							inlet[key]['solution_inlet_comp_%03d' % comp] = comp_out
+		return inlet
+
+	def load_bulk(self, sim):
+		bulk = addict.Dict()
+		if self.res is not None:
+			for key,value in sim.root.input['return'].items():
+				if key.startswith('unit'):
+					if value.write_solution_bulk:
+						unit = int(key[-3:])
+						t, out = self.res.bulk(unit)
+
+						if not len(bulk.solution_times):
+							bulk.solution_times = t
+
+						bulk[key]['solution_bulk'] = out
+		return bulk
+
+
+	def load_results(self, sim):
+		sim.root.output.solution = self.load_output(sim)
+				
+		sim.root.output.solution.update(self.load_inlet(sim))
+
+		#sim.root.output.solution.update(self.load_bulk(sim))
 
 
 def recursively_convert_dict(data): 
