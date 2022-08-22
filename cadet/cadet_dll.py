@@ -382,27 +382,6 @@ class SimulationResult:
 		self.__api = api
 		self.__driver = driver
 
-	def outlet(self, unit, own_data=True):
-		c_double_p = ctypes.POINTER(ctypes.c_double)
-		time_ptr = c_double_p()
-		data_ptr = c_double_p()
-		n_time = ctypes.c_int()
-		n_ports = ctypes.c_int()
-		n_comp = ctypes.c_int()
-
-		result = self.__api.getSolutionOutlet(self.__driver, unit, ctypes.byref(time_ptr), ctypes.byref(data_ptr), ctypes.byref(n_time), ctypes.byref(n_ports), ctypes.byref(n_comp))
-		n_time = n_time.value
-		n_ports = n_ports.value
-		n_comp = n_comp.value
-
-		data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_ports, n_comp))
-		time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
-
-		if own_data:
-			return (time.copy(), data.copy())
-		else:
-			return (time, data)
-
 	def inlet(self, unit, own_data=True):
 		c_double_p = ctypes.POINTER(ctypes.c_double)
 		time_ptr = c_double_p()
@@ -424,35 +403,130 @@ class SimulationResult:
 		else:
 			return (time, data)
 
-	#def bulk(self, unit, own_data=True):
-	#	c_double_p = ctypes.POINTER(ctypes.c_double)
-	#	time_ptr = c_double_p()
-	#	data_ptr = c_double_p()
-	#	n_time = ctypes.c_int()
-	#	n_axial_cells = ctypes.c_int()
-	#	n_radial_cells = ctypes.c_int()
-	#	n_comp = ctypes.c_int()
+	def outlet(self, unit, own_data=True):
+		c_double_p = ctypes.POINTER(ctypes.c_double)
+		time_ptr = c_double_p()
+		data_ptr = c_double_p()
+		n_time = ctypes.c_int()
+		n_ports = ctypes.c_int()
+		n_comp = ctypes.c_int()
 
-	#	result = self.__api.getSolutionBulk(self.__driver, unit, 
-	#								   ctypes.byref(time_ptr), 
-	#								   ctypes.byref(data_ptr), 
-	#								   ctypes.byref(n_time), 
-	#								   ctypes.byref(n_axial_cells), 
-	#								   ctypes.byref(n_radial_cells), 
-	#								   ctypes.byref(n_comp))
-	#	n_time = n_time.value
-	#	n_axial_cells = n_axial_cells.value
-	#	n_radial_cells = n_radial_cells.value
-	#	n_comp = n_comp.value
+		result = self.__api.getSolutionOutlet(self.__driver, unit, ctypes.byref(time_ptr), ctypes.byref(data_ptr), ctypes.byref(n_time), ctypes.byref(n_ports), ctypes.byref(n_comp))
+		n_time = n_time.value
+		n_ports = n_ports.value
+		n_comp = n_comp.value
 
-	#	data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
-	#	time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
+		data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_ports, n_comp))
+		time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
 
-	#	if own_data:
-	#		return (time.copy(), data.copy())
-	#	else:
-	#		return (time, data)
+		if own_data:
+			return (time.copy(), data.copy())
+		else:
+			return (time, data)
 
+	def bulk(self, unit, own_data=True):
+		c_double_p = ctypes.POINTER(ctypes.c_double)
+		time_ptr = c_double_p()
+		data_ptr = c_double_p()
+		n_time = ctypes.c_int()
+		n_axial_cells = ctypes.c_int()
+		n_radial_cells = ctypes.c_int()
+		n_comp = ctypes.c_int()
+
+		result = self.__api.getSolutionBulk(self.__driver, unit, 
+									   ctypes.byref(time_ptr), 
+									   ctypes.byref(data_ptr), 
+									   ctypes.byref(n_time), 
+									   ctypes.byref(n_axial_cells), 
+									   ctypes.byref(n_radial_cells), 
+									   ctypes.byref(n_comp))
+		n_time = n_time.value
+		n_axial_cells = n_axial_cells.value
+		n_radial_cells = n_radial_cells.value
+		n_comp = n_comp.value
+
+		data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
+		time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
+
+		if own_data:
+			return (time.copy(), data.copy())
+		else:
+			return (time, data)
+
+	def particle(self, unit, own_data=True):
+        pass
+
+	def solid(self, unit, own_data=True):
+        pass
+
+	def flux(self, unit, own_data=True):
+        pass
+
+	def volume(self, unit, own_data=True):
+        pass
+
+	def derivativeInlet(self, unit, own_data=True):
+        pass
+
+	def derivativeOutlet(self, unit, own_data=True):
+        pass
+
+	def derivativeBulk(self, unit, own_data=True):
+        pass
+
+	def derivativeParticle(self, unit, own_data=True):
+        pass
+
+	def derivativeSolid(self, unit, own_data=True):
+        pass
+
+	def derivativeFlux(self, unit, own_data=True):
+        pass
+
+	def derivativeVolume(self, unit, own_data=True):
+        pass
+
+	def sensitivityInlet(self, unit, own_data=True):
+        pass
+
+	def sensitivityOutlet(self, unit, own_data=True):
+        pass
+
+	def sensitivityBulk(self, unit, own_data=True):
+        pass
+
+	def sensitivityParticle(self, unit, own_data=True):
+        pass
+
+	def sensitivitySolid(self, unit, own_data=True):
+        pass
+
+	def sensitivityFlux(self, unit, own_data=True):
+        pass
+
+	def sensitivityVolume(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeInlet(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeOutlet(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeBulk(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeParticle(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeSolid(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeFlux(self, unit, own_data=True):
+        pass
+
+	def sensitivityDerivativeVolume(self, unit, own_data=True):
+        pass
 
 class CadetDLL:
 
@@ -544,23 +618,6 @@ class CadetDLL:
 		self.res = SimulationResult(self.__api, self.__driver)
 		return self.res
 
-	def load_output(self, sim):
-		output = addict.Dict()
-		if self.res is not None:
-			for key,value in sim.root.input['return'].items():
-				if key.startswith('unit'):
-					if value.write_solution_outlet:
-						unit = int(key[-3:])
-						t, out = self.res.outlet(unit)
-
-						if not len(output.solution_times):
-							output.solution_times = t
-
-						for comp in range(out.shape[2]):
-							comp_out = numpy.squeeze(out[:,:,comp])
-							output[key]['solution_outlet_comp_%03d' % comp] = comp_out
-		return output
-
 	def load_inlet(self, sim):
 		inlet = addict.Dict()
 		if self.res is not None:
@@ -578,6 +635,23 @@ class CadetDLL:
 							inlet[key]['solution_inlet_comp_%03d' % comp] = comp_out
 		return inlet
 
+	def load_outlet(self, sim):
+		outlet = addict.Dict()
+		if self.res is not None:
+			for key,value in sim.root.input['return'].items():
+				if key.startswith('unit'):
+					if value.write_solution_outlet:
+						unit = int(key[-3:])
+						t, out = self.res.outlet(unit)
+
+						if not len(outlet.solution_times):
+							outlet.solution_times = t
+
+						for comp in range(out.shape[2]):
+							comp_out = numpy.squeeze(out[:,:,comp])
+							outlet[key]['solution_outlet_comp_%03d' % comp] = comp_out
+		return outlet
+
 	def load_bulk(self, sim):
 		bulk = addict.Dict()
 		if self.res is not None:
@@ -593,13 +667,110 @@ class CadetDLL:
 						bulk[key]['solution_bulk'] = out
 		return bulk
 
+    def load_particle(sim):
+        pass
 
-	def load_results(self, sim):
-		sim.root.output.solution = self.load_output(sim)
-				
+    def load_solid(sim):
+        pass
+
+    def load_flux(sim):
+        pass
+
+    def load_volume(sim):
+        pass
+
+    def load_derivative_inlet(sim):
+        pass
+
+    def load_derivative_outlet(sim):
+        pass
+
+    def load_derivative_bulk(sim):
+        pass
+
+    def load_derivative_particle(sim):
+        pass
+
+    def load_derivative_solid(sim):
+        pass
+
+    def load_derivative_flux(sim):
+        pass
+
+    def load_derivative_volume(sim):
+        pass
+
+    def load_sensitivity_inlet(sim):
+        pass
+
+    def load_sensitivity_outlet(sim):
+        pass
+
+    def load_sensitivity_bulk(sim):
+        pass
+
+    def load_sensitivity_particle(sim):
+        pass
+
+    def load_sensitivity_solid(sim):
+        pass
+
+    def load_sensitivity_flux(sim):
+        pass
+
+    def load_sensitivity_volume(sim):
+        pass
+
+    def load_sensitivity_derivative_inlet(sim):
+        pass
+
+    def load_sensitivity_derivative_outlet(sim):
+        pass
+
+    def load_sensitivity_derivative_bulk(sim):
+        pass
+
+    def load_sensitivity_derivative_particle(sim):
+        pass
+
+    def load_sensitivity_derivative_solid(sim):
+        pass
+
+    def load_sensitivity_derivative_flux(sim):
+        pass
+
+    def load_sensitivity_derivative_volume(sim):
+        pass
+
+    def load_results(self, sim):
 		sim.root.output.solution.update(self.load_inlet(sim))
-
-		#sim.root.output.solution.update(self.load_bulk(sim))
+		sim.root.output.solution.update(self.load_outlet(sim))
+		sim.root.output.solution.update(self.load_bulk(sim))
+		sim.root.output.solution.update(self.load_particle(sim))
+		sim.root.output.solution.update(self.load_solid(sim))
+		sim.root.output.solution.update(self.load_flux(sim))
+		sim.root.output.solution.update(self.load_volume(sim))
+		sim.root.output.solution.update(self.load_derivative_inlet(sim))
+		sim.root.output.solution.update(self.load_derivative_outlet(sim))
+		sim.root.output.solution.update(self.load_derivative_bulk(sim))
+		sim.root.output.solution.update(self.load_derivative_particle(sim))
+		sim.root.output.solution.update(self.load_derivative_solid(sim))
+		sim.root.output.solution.update(self.load_derivative_flux(sim))
+		sim.root.output.solution.update(self.load_derivative_volume(sim))
+		sim.root.output.solution.update(self.load_sensitivity_inlet(sim))
+		sim.root.output.solution.update(self.load_sensitivity_outlet(sim))
+		sim.root.output.solution.update(self.load_sensitivity_bulk(sim))
+		sim.root.output.solution.update(self.load_sensitivity_particle(sim))
+		sim.root.output.solution.update(self.load_sensitivity_solid(sim))
+		sim.root.output.solution.update(self.load_sensitivity_flux(sim))
+		sim.root.output.solution.update(self.load_sensitivity_volume(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_inlet(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_outlet(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_bulk(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_particle(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_solid(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_flux(sim))
+		sim.root.output.solution.update(self.load_sensitivity_derivative_volume(sim))
 
 
 def recursively_convert_dict(data): 
