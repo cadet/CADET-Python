@@ -53,6 +53,7 @@ class CADETAPIV010000(ctypes.Structure):
         ('createDriver', ctypes.CFUNCTYPE(ctypes.c_void_p)),
         ('deleteDriver', ctypes.CFUNCTYPE(None, ctypes.c_void_p)),
         ('runSimulation', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.POINTER(PARAMETERPROVIDER))),
+		('getNParTypes', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_int))),
         ('getSolutionInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
         ('getSolutionOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
         ('getSolutionBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
