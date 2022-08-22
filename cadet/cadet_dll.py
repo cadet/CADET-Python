@@ -11,6 +11,10 @@ def log_handler(file, func, line, level, level_name, message):
 
 c_cadet_result = ctypes.c_int
 
+array_double = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+
+point_int = ctypes.POINTER(ctypes.c_int)
+
 def null(*args):
     pass
 
@@ -26,17 +30,17 @@ class PARAMETERPROVIDER(ctypes.Structure):
         ('userData', ctypes.py_object),
 
         ('getDouble', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double))),
-        ('getInt', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int))),
+        ('getInt', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, point_int)),
         ('getBool', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_uint8))),
         ('getString', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p))),
 
-        ('getDoubleArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)))),
-        ('getIntArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.POINTER(ctypes.c_int)))),
-        ('getBoolArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)))),
-        ('getStringArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.POINTER(ctypes.c_char_p)))),
+        ('getDoubleArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, point_int, array_double)),
+        ('getIntArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, point_int, ctypes.POINTER(point_int))),
+        ('getBoolArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, point_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)))),
+        ('getStringArray', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, point_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_char_p)))),
 
         ('getDoubleArrayItem', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_double))),
-        ('getIntArrayItem', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_int))),
+        ('getIntArrayItem', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.c_int, point_int)),
         ('getBoolArrayItem', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8))),
         ('getStringArrayItem', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p))),
 
@@ -52,38 +56,70 @@ class CADETAPIV010000(ctypes.Structure):
 
     _fields_ = [
         ('createDriver', ctypes.CFUNCTYPE(ctypes.c_void_p)),
+
         ('deleteDriver', ctypes.CFUNCTYPE(None, ctypes.c_void_p)),
+
         ('runSimulation', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.POINTER(PARAMETERPROVIDER))),
-        ('getNParTypes', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_int))),
-        ('getSolutionInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSolutionDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivitySolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int) )),
-        ('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.POINTER(ctypes.c_double)), ctypes.POINTER(ctypes.c_int) )),
+
+        ('getNParTypes', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, point_int)),
+
+        ('getSolutionInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSolutionOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSolutionBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int )),
+        
+		('getSolutionDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSolutionDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int )),
+        
+		('getSensitivityInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSensitivityOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSensitivityBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivitySolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
+        
+		('getSensitivityDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
+        
+		('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
+        
+		('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
     ]
 
 
@@ -455,6 +491,10 @@ class SimulationResult:
         n_time = n_time.value
         n_axial_cells = n_axial_cells.value
         n_radial_cells = n_radial_cells.value
+
+        if n_radial_cells == 0:
+            n_radial_cells = 1
+
         n_comp = n_comp.value
 
         data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
@@ -687,80 +727,80 @@ class CadetDLL:
                         bulk[key]['solution_bulk'] = out
         return bulk
 
-    def load_particle(sim):
-        pass
+    def load_particle(self, sim):
+        return {}
 
-    def load_solid(sim):
-        pass
+    def load_solid(self, sim):
+        return {}
 
-    def load_flux(sim):
-        pass
+    def load_flux(self, sim):
+        return {}
 
-    def load_volume(sim):
-        pass
+    def load_volume(self, sim):
+        return {}
 
-    def load_derivative_inlet(sim):
-        pass
+    def load_derivative_inlet(self, sim):
+        return {}
 
-    def load_derivative_outlet(sim):
-        pass
+    def load_derivative_outlet(self, sim):
+        return {}
 
-    def load_derivative_bulk(sim):
-        pass
+    def load_derivative_bulk(self, sim):
+        return {}
 
-    def load_derivative_particle(sim):
-        pass
+    def load_derivative_particle(self, sim):
+        return {}
 
-    def load_derivative_solid(sim):
-        pass
+    def load_derivative_solid(self, sim):
+        return {}
 
-    def load_derivative_flux(sim):
-        pass
+    def load_derivative_flux(self, sim):
+        return {}
 
-    def load_derivative_volume(sim):
-        pass
+    def load_derivative_volume(self, sim):
+        return {}
 
-    def load_sensitivity_inlet(sim):
-        pass
+    def load_sensitivity_inlet(self, sim):
+        return {}
 
-    def load_sensitivity_outlet(sim):
-        pass
+    def load_sensitivity_outlet(self, sim):
+        return {}
 
-    def load_sensitivity_bulk(sim):
-        pass
+    def load_sensitivity_bulk(self, sim):
+        return {}
 
-    def load_sensitivity_particle(sim):
-        pass
+    def load_sensitivity_particle(self, sim):
+        return {}
 
-    def load_sensitivity_solid(sim):
-        pass
+    def load_sensitivity_solid(self, sim):
+        return {}
 
-    def load_sensitivity_flux(sim):
-        pass
+    def load_sensitivity_flux(self, sim):
+        return {}
 
-    def load_sensitivity_volume(sim):
-        pass
+    def load_sensitivity_volume(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_inlet(sim):
-        pass
+    def load_sensitivity_derivative_inlet(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_outlet(sim):
-        pass
+    def load_sensitivity_derivative_outlet(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_bulk(sim):
-        pass
+    def load_sensitivity_derivative_bulk(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_particle(sim):
-        pass
+    def load_sensitivity_derivative_particle(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_solid(sim):
-        pass
+    def load_sensitivity_derivative_solid(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_flux(sim):
-        pass
+    def load_sensitivity_derivative_flux(self, sim):
+        return {}
 
-    def load_sensitivity_derivative_volume(sim):
-        pass
+    def load_sensitivity_derivative_volume(self, sim):
+        return {}
 
     def load_results(self, sim):
         sim.root.output.solution.update(self.load_inlet(sim))
