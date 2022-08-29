@@ -61,27 +61,65 @@ class CADETAPIV010000(ctypes.Structure):
     _data_['getNParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
     _data_['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
     _data_['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nBound')
+    _data_['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    _data_['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nBound')
+    _data_['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    _data_['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'idx', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'idx', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nBound')
+    _data_['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime')
+    _data_['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    _data_['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'idx', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'idx', 'parType', 'time', 'data', 'nTime', 'nParShells', 'nAxialCells', 'nRadialCells', 'nBound')
+    _data_['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
+    _data_['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'idx', 'time', 'data', 'nTime')
 
-    lookup_prototype = {'return':c_cadet_result,
-            'drv':ctypes.c_void_p,
-            'unitOpId':ctypes.c_int,
-            'parType':ctypes.c_int,
-            'time':array_double,
-            'data':array_double,
-            'nTime':point_int,
-            'nPort':point_int,
-            'nComp':point_int,
-            'nAxialCells':point_int,
-            'nRadialCells':point_int,
-            'nParTypes':point_int,
-            None:None,
-            'parameterProvider':ctypes.POINTER(PARAMETERPROVIDER)}
+    lookup_prototype = {
+        'return': c_cadet_result,
+        'drv': ctypes.c_void_p,
+        'unitOpId': ctypes.c_int,
+        'idx': ctypes.c_int,
+        'parType': ctypes.c_int,
+        'time': array_double,
+        'data': array_double,
+        'nTime': point_int,
+        'nPort': point_int,
+        'nAxialCells': point_int,
+        'nRadialCells': point_int,
+        'nParTypes': point_int,
+        'nParShells': point_int,
+        'nComp': point_int,
+        'nBound': point_int,
+        None: None,
+        'parameterProvider': ctypes.POINTER(PARAMETERPROVIDER)
+    }
 
-    lookup_call = {'time':ctypes.POINTER(ctypes.c_double),
-            'data':ctypes.POINTER(ctypes.c_double),
-            'nTime':ctypes.c_int,
-            'nPort':ctypes.c_int,
-            'nComp':ctypes.c_int}
+    lookup_call = {
+        'time': ctypes.POINTER(ctypes.c_double),
+        'nTime': ctypes.c_int,
+        'data': ctypes.POINTER(ctypes.c_double),
+        'nPort': ctypes.c_int,
+        'nAxialCells': ctypes.c_int,
+        'nRadialCells': ctypes.c_int,
+        'nParTypes': ctypes.c_int,
+        'nParShells': ctypes.c_int,
+        'nComp': ctypes.c_int,
+        'nBound': ctypes.c_int,
+    }
 
     @classmethod
     def initialize(cls):
@@ -92,73 +130,6 @@ class CADETAPIV010000(ctypes.Structure):
 
     _fields_ = []
 
-    #_fields_ = [
-    #    ('createDriver', ctypes.CFUNCTYPE(ctypes.c_void_p)),
-
-        # ('deleteDriver', ctypes.CFUNCTYPE(None, ctypes.c_void_p)),
-
-        # ('runSimulation', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.POINTER(PARAMETERPROVIDER))),
-
-        # ('getNParTypes', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, point_int)),
-
-        # ('getSolutionInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSolutionOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSolutionBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int )),
-        
-		# ('getSolutionDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSolutionDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, array_double, array_double, point_int )),
-        
-		# ('getSensitivityInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSensitivityOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSensitivityBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivitySolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
-        
-		# ('getSensitivityDerivativeInlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeOutlet', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeBulk', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeParticle', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeSolid', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeFlux', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int, point_int, point_int, point_int )),
-        
-		# ('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
-        
-		# ('getSensitivityDerivativeVolume', ctypes.CFUNCTYPE(c_cadet_result, ctypes.c_int, ctypes.c_int, array_double, array_double, point_int )),
-    #]
 
 CADETAPIV010000.initialize()
 
@@ -459,7 +430,7 @@ class SimulationResult:
         self.__api = api
         self.__driver = driver
 
-    def load_data(self, unit, get_solution, get_solution_str, parType=None, own_data=True):
+    def load_data(self, unit, get_solution, get_solution_str, idx=None, parType=None, own_data=True):
         args = {}
         for key in self._data_[get_solution_str]:
             if key == 'return':
@@ -468,6 +439,8 @@ class SimulationResult:
                 args['drv'] = self.__driver
             elif key == 'unitOpId':
                 args['unitOpId'] = unit
+            elif key == 'idx':
+                args['idx'] = idx
             elif key == 'parType':
                 args['parType'] = parType
             else:
@@ -475,7 +448,22 @@ class SimulationResult:
 
         result = get_solution(self.__driver, unit, *tuple(args.values()))
 
-        data = numpy.ctypeslib.as_array(args['data'], shape=(args['nTime'].value, args['nPorts'].value, args['nComp'].value))
+        shape = (args['nTime'].value,)
+        for arg in args:
+            if arg == 'nPort':
+                shape += args['nPort'].value
+            elif arg == 'nParShells':
+                shape += args['nParShells'].value
+            elif 'nAxialCells' in args:
+                shape += args['nAxialCells'].value
+            elif 'nRadialCells' in args:
+                shape += args['nRadialCells'].value
+            elif 'nComp' in args:
+                shape += args['nComp'].value
+            elif 'nBound' in args:
+                shape += args['nBound'].value
+
+        data = numpy.ctypeslib.as_array(args['data'], shape=shape)
         time = numpy.ctypeslib.as_array(args['time'], shape=(args['nTime'].value, ))
 
         if own_data:
@@ -487,143 +475,89 @@ class SimulationResult:
         return self.load_data(unit, self.__api.getSolutionInlet, 'getSolutionInlet', own_data=own_data)
 
     def outlet(self, unit, own_data=True):
-        c_double_p = ctypes.POINTER(ctypes.c_double)
-        time_ptr = c_double_p()
-        data_ptr = c_double_p()
-        n_time = ctypes.c_int()
-        n_ports = ctypes.c_int()
-        n_comp = ctypes.c_int()
-
-        result = self.__api.getSolutionOutlet(
-            self.__driver,
-            unit,
-            ctypes.byref(time_ptr),
-            ctypes.byref(data_ptr),
-            ctypes.byref(n_time),
-            ctypes.byref(n_ports),
-            ctypes.byref(n_comp)
-        )
-        n_time = n_time.value
-        n_ports = n_ports.value
-        n_comp = n_comp.value
-
-        data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_ports, n_comp))
-        time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
-
-        if own_data:
-            return (time.copy(), data.copy())
-        else:
-            return (time, data)
+        return self.load_data(unit, self.__api.getSolutionOutlet, 'getSolutionOutlet', own_data=own_data)
 
     def bulk(self, unit, own_data=True):
-        c_double_p = ctypes.POINTER(ctypes.c_double)
-        time_ptr = c_double_p()
-        data_ptr = c_double_p()
-        n_time = ctypes.c_int()
-        n_axial_cells = ctypes.c_int()
-        n_radial_cells = ctypes.c_int()
-        n_comp = ctypes.c_int()
+        return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
 
-        result = self.__api.getSolutionBulk(
-            self.__driver, unit,
-            ctypes.byref(time_ptr),
-            ctypes.byref(data_ptr),
-            ctypes.byref(n_time),
-            ctypes.byref(n_axial_cells),
-            ctypes.byref(n_radial_cells),
-            ctypes.byref(n_comp)
-        )
-        n_time = n_time.value
-        n_axial_cells = n_axial_cells.value
-        n_radial_cells = n_radial_cells.value
+        # data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
+        # time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
 
-        if n_radial_cells == 0:
-            n_radial_cells = 1
+    def particle(self, unit, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
 
-        n_comp = n_comp.value
-
-        data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
-        time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
-
-        if own_data:
-            return (time.copy(), data.copy())
-        else:
-            return (time, data)
-
-    def particle(self, unit, own_data=True):
-        pass
-
-    def solid(self, unit, own_data=True):
-        pass
+    def solid(self, unit, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSolutionSolid, 'getSolutionSolid', own_data=own_data)
 
     def flux(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionFlux, 'getSolutionFlux', own_data=own_data)
 
     def volume(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionVolume, 'getSolutionVolume', own_data=own_data)
 
     def derivativeInlet(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionDerivativeInlet, 'getSolutionDerivativeInlet', own_data=own_data)
 
     def derivativeOutlet(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionDerivativeOutlet, 'getSolutionDerivativeOutlet', own_data=own_data)
 
     def derivativeBulk(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionDerivativeBulk, 'getSolutionDerivativeBulk', own_data=own_data)
 
-    def derivativeParticle(self, unit, own_data=True):
-        pass
+    def derivativeParticle(self, unit, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSolutionDerivativeParticle, 'getSolutionDerivativeParticle', own_data=own_data)
 
-    def derivativeSolid(self, unit, own_data=True):
-        pass
+    def derivativeSolid(self, unit, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSolutionDerivativeSolid, 'getSolutionDerivativeSolid', own_data=own_data)
 
     def derivativeFlux(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionDerivativeFlux, 'getSolutionDerivativeFlux', own_data=own_data)
 
     def derivativeVolume(self, unit, own_data=True):
-        pass
+        return self.load_data(unit, self.__api.getSolutionDerivativeVolume, 'getSolutionDerivativeVolume', own_data=own_data)
 
-    def sensitivityInlet(self, unit, own_data=True):
-        pass
+    def sensitivityInlet(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityInlet, 'getSensitivityInlet', idx=idx, own_data=own_data)
 
-    def sensitivityOutlet(self, unit, own_data=True):
-        pass
+    def sensitivityOutlet(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityOutlet, 'getSensitivityOutlet', idx=idx, own_data=own_data)
 
-    def sensitivityBulk(self, unit, own_data=True):
-        pass
+    def sensitivityBulk(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityBulk, 'getSensitivityBulk', idx=idx, own_data=own_data)
 
-    def sensitivityParticle(self, unit, own_data=True):
-        pass
+    def sensitivityParticle(self, unit, idx, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityParticle, 'getSensitivityParticle', idx=idx, parType=parType, own_data=own_data)
 
-    def sensitivitySolid(self, unit, own_data=True):
-        pass
+    def sensitivitySolid(self, unit, idx, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivitySolid, 'getSensitivitySolid', idx=idx, parType=parType, own_data=own_data)
 
-    def sensitivityFlux(self, unit, own_data=True):
-        pass
+    def sensitivityFlux(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityFlux, 'getSensitivityFlux', idx=idx, own_data=own_data)
 
-    def sensitivityVolume(self, unit, own_data=True):
-        pass
+    def sensitivityVolume(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityVolume, 'getSensitivityVolume', idx=idx, own_data=own_data)
 
-    def sensitivityDerivativeInlet(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeInlet(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeInlet, 'getSensitivityDerivativeInlet', idx=idx, own_data=own_data)
 
-    def sensitivityDerivativeOutlet(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeOutlet(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeOutlet, 'getSensitivityDerivativeOutlet', idx=idx, own_data=own_data)
 
-    def sensitivityDerivativeBulk(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeBulk(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeBulk, 'getSensitivityDerivativeBulk', idx=idx, own_data=own_data)
 
-    def sensitivityDerivativeParticle(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeParticle(self, unit, idx, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeParticle, 'getSensitivityDerivativeParticle', idx=idx, parType=parType, own_data=own_data)
 
-    def sensitivityDerivativeSolid(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeSolid(self, unit, idx, parType, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeSolid, 'getSensitivityDerivativeSolid', idx=idx, parType=parType, own_data=own_data)
 
-    def sensitivityDerivativeFlux(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeFlux(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeFlux, 'getSensitivityDerivativeFlux', idx=idx, own_data=own_data)
 
-    def sensitivityDerivativeVolume(self, unit, own_data=True):
-        pass
+    def sensitivityDerivativeVolume(self, unit, idx, own_data=True):
+        return self.load_data(unit, self.__api.getSensitivityDerivativeVolume, 'getSensitivityDerivativeVolume', idx=idx, own_data=own_data)
+
 
 class CadetDLL:
 
@@ -724,6 +658,13 @@ class CadetDLL:
         return self.res
 
     def load_solution(self, sim, solution, solution_str):
+        # - [ ] Split Components (Should be unified)
+        # - [ ] Split Ports (incl `SINGLE_AS_MULTI_PORT`)
+        # - [ ] Split Partype (Particle + Solid)
+        # - [ ] Coordinates?
+        # - [ ] Sensitivities / IDs
+        # - [ ] LAST_STATE_Y / LAST_STATE_YDOT
+        # - [ ] LAST_STATE_SENSY_XXX / LAST_STATE_SENSYDOT_XXX
         solution = addict.Dict()
         if self.res is not None:
             for key, value in sim.root.input['return'].items():
@@ -749,7 +690,7 @@ class CadetDLL:
 
                         if not len(solution.solution_times):
                             solution.solution_times = t
-
+                            
                         for comp in range(out.shape[2]):
                             comp_out = numpy.squeeze(out[:,:,comp])
                             solution[key][f'{solution_str}_comp_{comp:03d}'] = comp_out
