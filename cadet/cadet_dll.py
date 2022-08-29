@@ -723,129 +723,124 @@ class CadetDLL:
         self.res = SimulationResult(self.__api, self.__driver)
         return self.res
 
-    def load_inlet(self, sim):
-        inlet = addict.Dict()
+    def load_solution(self, sim, solution, solution_str):
+        solution = addict.Dict()
+        if self.res is not None:
+            for key, value in sim.root.input['return'].items():
+                if key.startswith('unit'):
+                    if value[f'write_{solution_str}']:
+                        unit = int(key[-3:])
+                        t, out = solution(unit)
+
+                        if not len(solution.solution_times):
+                            solution.solution_times = t
+
+                        solution[key][solution_str] = out
+        return solution
+
+    def load_solution_io(self, sim, solution, solution_str):
+        solution = addict.Dict()
         if self.res is not None:
             for key,value in sim.root.input['return'].items():
                 if key.startswith('unit'):
-                    if value.write_solution_inlet:
+                    if value[f'write_{solution_str}']:
                         unit = int(key[-3:])
                         t, out = self.res.inlet(unit)
 
-                        if not len(inlet.solution_times):
-                            inlet.solution_times = t
+                        if not len(solution.solution_times):
+                            solution.solution_times = t
 
                         for comp in range(out.shape[2]):
                             comp_out = numpy.squeeze(out[:,:,comp])
-                            inlet[key]['solution_inlet_comp_%03d' % comp] = comp_out
-        return inlet
+                            solution[key][f'{solution_str}_comp_{comp:03d}'] = comp_out
+        return solution
+
+    def load_inlet(self, sim):
+        return self.load_solution_io(self, sim, self.res.inlet, 'solution_inlet')
 
     def load_outlet(self, sim):
-        outlet = addict.Dict()
-        if self.res is not None:
-            for key,value in sim.root.input['return'].items():
-                if key.startswith('unit'):
-                    if value.write_solution_outlet:
-                        unit = int(key[-3:])
-                        t, out = self.res.outlet(unit)
-
-                        if not len(outlet.solution_times):
-                            outlet.solution_times = t
-
-                        for comp in range(out.shape[2]):
-                            comp_out = numpy.squeeze(out[:,:,comp])
-                            outlet[key]['solution_outlet_comp_%03d' % comp] = comp_out
-        return outlet
+        return self.load_solution_io(self, sim, self.res.outlet, 'solution_outlet')
 
     def load_bulk(self, sim):
-        bulk = addict.Dict()
-        if self.res is not None:
-            for key,value in sim.root.input['return'].items():
-                if key.startswith('unit'):
-                    if value.write_solution_bulk:
-                        unit = int(key[-3:])
-                        t, out = self.res.bulk(unit)
-
-                        if not len(bulk.solution_times):
-                            bulk.solution_times = t
-
-                        bulk[key]['solution_bulk'] = out
-        return bulk
+        return self.load_solution(self, sim, self.res.bulk, 'solution_bulk')
 
     def load_particle(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.particle, 'solution_particle')
 
     def load_solid(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.solid, 'solution_solid')
 
     def load_flux(self, sim):
-        return {}
-
+        return self.load_solution(self, sim, self.res.flux, 'solution_flux')
+    
+    def load_flux(self, sim):
+        return self.load_solution(self, sim, self.res.flux, 'solution_flux')
+    
     def load_volume(self, sim):
-        return {}
-
+        return self.load_solution(self, sim, self.res.volume, 'solution_volume')
+    
     def load_derivative_inlet(self, sim):
-        return {}
-
+        return self.load_solution_io(self, sim, self.res.soldot_inlet, 'soldot_inlet')
+    
     def load_derivative_outlet(self, sim):
-        return {}
-
+        return self.load_solution_io(self, sim, self.res.soldot_outlet, 'soldot_outlet')
+    
     def load_derivative_bulk(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.soldot_bulk, 'soldot_bulk')
 
     def load_derivative_particle(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.soldot_particle, 'soldot_particle')
 
     def load_derivative_solid(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.soldot_solid, 'soldot_solid')
 
     def load_derivative_flux(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.soldot_flux, 'soldot_flux')
 
     def load_derivative_volume(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.soldot_volume, 'soldot_volume')
 
     def load_sensitivity_inlet(self, sim):
-        return {}
+        return self.load_solution_io(self, sim, self.res.sens_inlet, 'sens_inlet')
 
     def load_sensitivity_outlet(self, sim):
-        return {}
+        return self.load_solution_io(self, sim, self.res.sens_outlet, 'sens_outlet')
 
     def load_sensitivity_bulk(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sens_bulk, 'sens_bulk')
 
     def load_sensitivity_particle(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sens_particle, 'sens_particle')
 
     def load_sensitivity_solid(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sens_solid, 'sens_solid')
 
     def load_sensitivity_flux(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sens_flux, 'sens_flux')
 
     def load_sensitivity_volume(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sens_volume, 'sens_volume')
 
     def load_sensitivity_derivative_inlet(self, sim):
-        return {}
+        return self.load_solution_io(self, sim, self.res.sensdot_inlet, 'sensdot_inlet')
 
     def load_sensitivity_derivative_outlet(self, sim):
-        return {}
+        return self.load_solution_io(self, sim, self.res.sensdot_outlet, 'sensdot_outlet')
 
     def load_sensitivity_derivative_bulk(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sensdot_bulk, 'sensdot_bulk')
 
     def load_sensitivity_derivative_particle(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sensdot_particle, 'sensdot_particle')
 
     def load_sensitivity_derivative_solid(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sensdot_solid, 'sensdot_solid')
 
     def load_sensitivity_derivative_flux(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sensdot_flux, 'sensdot_flux')
 
     def load_sensitivity_derivative_volume(self, sim):
-        return {}
+        return self.load_solution(self, sim, self.res.sensdot_volume, 'sensdot_volume')
 
     def load_results(self, sim):
         sim.root.output.solution.update(self.load_inlet(sim))
