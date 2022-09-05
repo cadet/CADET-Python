@@ -53,7 +53,7 @@ class PARAMETERPROVIDER(ctypes.Structure):
     ]
 
 
-class CADETAPIV010000(ctypes.Structure):
+class CADETAPIV010000_DATA():
     _data_ = {}
     _data_['createDriver'] = ('drv',)
     _data_['deleteDriver'] = (None, 'drv')
@@ -121,17 +121,20 @@ class CADETAPIV010000(ctypes.Structure):
         'nBound': ctypes.c_int,
     }
 
-    @classmethod
-    def initialize(cls):
-        for key, value in cls._data_.items():
-            args = tuple(cls.lookup_prototype[key] for key in value)
-            cls._fields.append( (key, ctypes.CFUNCTYPE(*args)) )
-        return None
 
+def setup_api():
     _fields_ = []
 
+    for key, value in CADETAPIV010000_DATA._data_.items():
+        args = tuple(CADETAPIV010000_DATA.lookup_prototype[key] for key in value)
+        _fields_.append( (key, ctypes.CFUNCTYPE(*args)) )
 
-CADETAPIV010000.initialize()
+    return _fields_
+
+
+class CADETAPIV010000(ctypes.Structure):
+    _fields_ = setup_api()
+
 
 class NestedDictReader:
 
@@ -479,9 +482,6 @@ class SimulationResult:
 
     def bulk(self, unit, own_data=True):
         return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
-
-        # data = numpy.ctypeslib.as_array(data_ptr, shape=(n_time, n_axial_cells, n_radial_cells, n_comp))
-        # time = numpy.ctypeslib.as_array(time_ptr, shape=(n_time, ))
 
     def particle(self, unit, parType, own_data=True):
         return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
