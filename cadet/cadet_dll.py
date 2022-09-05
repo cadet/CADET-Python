@@ -435,7 +435,7 @@ class SimulationResult:
 
     def load_data(self, unit, get_solution, get_solution_str, idx=None, parType=None, own_data=True):
         args = {}
-        for key in self._data_[get_solution_str]:
+        for key in CADETAPIV010000_DATA._data_[get_solution_str]:
             if key == 'return':
                 continue
             elif key == 'drv':
@@ -447,7 +447,7 @@ class SimulationResult:
             elif key == 'parType':
                 args['parType'] = parType
             else:
-                args[key] = ctypes.byref(self.lookup_call[key]())
+                args[key] = ctypes.byref(CADETAPIV010000_DATA.lookup_call[key]())
 
         result = get_solution(self.__driver, unit, *tuple(args.values()))
 
@@ -697,91 +697,91 @@ class CadetDLL:
         return solution
 
     def load_inlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.inlet, 'solution_inlet')
+        return self.load_solution_io(sim, self.res.inlet, 'solution_inlet')
 
     def load_outlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.outlet, 'solution_outlet')
+        return self.load_solution_io(sim, self.res.outlet, 'solution_outlet')
 
     def load_bulk(self, sim):
-        return self.load_solution(self, sim, self.res.bulk, 'solution_bulk')
+        return self.load_solution(sim, self.res.bulk, 'solution_bulk')
 
     def load_particle(self, sim):
-        return self.load_solution(self, sim, self.res.particle, 'solution_particle')
+        return self.load_solution(sim, self.res.particle, 'solution_particle')
 
     def load_solid(self, sim):
-        return self.load_solution(self, sim, self.res.solid, 'solution_solid')
+        return self.load_solution(sim, self.res.solid, 'solution_solid')
 
     def load_flux(self, sim):
-        return self.load_solution(self, sim, self.res.flux, 'solution_flux')
+        return self.load_solution(sim, self.res.flux, 'solution_flux')
     
     def load_flux(self, sim):
-        return self.load_solution(self, sim, self.res.flux, 'solution_flux')
+        return self.load_solution(sim, self.res.flux, 'solution_flux')
     
     def load_volume(self, sim):
-        return self.load_solution(self, sim, self.res.volume, 'solution_volume')
+        return self.load_solution(sim, self.res.volume, 'solution_volume')
     
     def load_derivative_inlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.soldot_inlet, 'soldot_inlet')
+        return self.load_solution_io(sim, self.res.soldot_inlet, 'soldot_inlet')
     
     def load_derivative_outlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.soldot_outlet, 'soldot_outlet')
+        return self.load_solution_io(sim, self.res.soldot_outlet, 'soldot_outlet')
     
     def load_derivative_bulk(self, sim):
-        return self.load_solution(self, sim, self.res.soldot_bulk, 'soldot_bulk')
+        return self.load_solution(sim, self.res.soldot_bulk, 'soldot_bulk')
 
     def load_derivative_particle(self, sim):
-        return self.load_solution(self, sim, self.res.soldot_particle, 'soldot_particle')
+        return self.load_solution(sim, self.res.soldot_particle, 'soldot_particle')
 
     def load_derivative_solid(self, sim):
-        return self.load_solution(self, sim, self.res.soldot_solid, 'soldot_solid')
+        return self.load_solution(sim, self.res.soldot_solid, 'soldot_solid')
 
     def load_derivative_flux(self, sim):
-        return self.load_solution(self, sim, self.res.soldot_flux, 'soldot_flux')
+        return self.load_solution(sim, self.res.soldot_flux, 'soldot_flux')
 
     def load_derivative_volume(self, sim):
-        return self.load_solution(self, sim, self.res.soldot_volume, 'soldot_volume')
+        return self.load_solution(sim, self.res.soldot_volume, 'soldot_volume')
 
     def load_sensitivity_inlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.sens_inlet, 'sens_inlet')
+        return self.load_solution_io(sim, self.res.sens_inlet, 'sens_inlet')
 
     def load_sensitivity_outlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.sens_outlet, 'sens_outlet')
+        return self.load_solution_io(sim, self.res.sens_outlet, 'sens_outlet')
 
     def load_sensitivity_bulk(self, sim):
-        return self.load_solution(self, sim, self.res.sens_bulk, 'sens_bulk')
+        return self.load_solution(sim, self.res.sens_bulk, 'sens_bulk')
 
     def load_sensitivity_particle(self, sim):
-        return self.load_solution(self, sim, self.res.sens_particle, 'sens_particle')
+        return self.load_solution(sim, self.res.sens_particle, 'sens_particle')
 
     def load_sensitivity_solid(self, sim):
-        return self.load_solution(self, sim, self.res.sens_solid, 'sens_solid')
+        return self.load_solution(sim, self.res.sens_solid, 'sens_solid')
 
     def load_sensitivity_flux(self, sim):
-        return self.load_solution(self, sim, self.res.sens_flux, 'sens_flux')
+        return self.load_solution(sim, self.res.sens_flux, 'sens_flux')
 
     def load_sensitivity_volume(self, sim):
-        return self.load_solution(self, sim, self.res.sens_volume, 'sens_volume')
+        return self.load_solution(sim, self.res.sens_volume, 'sens_volume')
 
     def load_sensitivity_derivative_inlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.sensdot_inlet, 'sensdot_inlet')
+        return self.load_solution_io(sim, self.res.sensdot_inlet, 'sensdot_inlet')
 
     def load_sensitivity_derivative_outlet(self, sim):
-        return self.load_solution_io(self, sim, self.res.sensdot_outlet, 'sensdot_outlet')
+        return self.load_solution_io(sim, self.res.sensdot_outlet, 'sensdot_outlet')
 
     def load_sensitivity_derivative_bulk(self, sim):
-        return self.load_solution(self, sim, self.res.sensdot_bulk, 'sensdot_bulk')
+        return self.load_solution(sim, self.res.sensdot_bulk, 'sensdot_bulk')
 
     def load_sensitivity_derivative_particle(self, sim):
-        return self.load_solution(self, sim, self.res.sensdot_particle, 'sensdot_particle')
+        return self.load_solution(sim, self.res.sensdot_particle, 'sensdot_particle')
 
     def load_sensitivity_derivative_solid(self, sim):
-        return self.load_solution(self, sim, self.res.sensdot_solid, 'sensdot_solid')
+        return self.load_solution(sim, self.res.sensdot_solid, 'sensdot_solid')
 
     def load_sensitivity_derivative_flux(self, sim):
-        return self.load_solution(self, sim, self.res.sensdot_flux, 'sensdot_flux')
+        return self.load_solution(sim, self.res.sensdot_flux, 'sensdot_flux')
 
     def load_sensitivity_derivative_volume(self, sim):
-        return self.load_solution(self, sim, self.res.sensdot_volume, 'sensdot_volume')
+        return self.load_solution(sim, self.res.sensdot_volume, 'sensdot_volume')
 
     def load_results(self, sim):
         sim.root.output.solution.update(self.load_inlet(sim))
