@@ -139,25 +139,25 @@ class CADETAPIV010000(ctypes.Structure):
 class NestedDictReader:
 
     def __init__(self, data):
-        self.__root = data
-        self.__cursor = []
-        self.__cursor.append(data)
+        self._root = data
+        self._cursor = []
+        self._cursor.append(data)
         self.buffer = None
 
     def push_scope(self, scope):
-        if scope in self.__cursor[-1]:
+        if scope in self._cursor[-1]:
             log_print('Entering scope {}'.format(scope))
-            self.__cursor.append(self.__cursor[-1][scope])
+            self._cursor.append(self._cursor[-1][scope])
             return True
 
         return False
 
     def pop_scope(self):
-        self.__cursor.pop()
+        self._cursor.pop()
         log_print('Exiting scope')
 
     def current(self):
-        return self.__cursor[-1]
+        return self._cursor[-1]
 
 
 def param_provider_get_double(reader, name, val):
@@ -426,48 +426,47 @@ def param_provider_pop_scope(reader):
     reader.pop_scope()
     return 0
 
-
+def null(obj):
+    "do nothing"
+    return obj
 class SimulationResult:
 
     def __init__(self, api, driver):
-        self.__api = api
-        self.__driver = driver
+        self._api = api
+        self._driver = driver
 
     def load_data(self, unit, get_solution, get_solution_str, idx=None, parType=None, own_data=True):
-        args = {}
+        vars = {}
+        wrappers = {}
         for key in CADETAPIV010000_DATA._data_[get_solution_str]:
             if key == 'return':
                 continue
             elif key == 'drv':
-                args['drv'] = self.__driver
+                vars['drv'] = self._driver
+                wrappers[key] = null
             elif key == 'unitOpId':
-                args['unitOpId'] = unit
+                vars['unitOpId'] = unit
+                wrappers[key] = null
             elif key == 'idx':
-                args['idx'] = idx
+                vars['idx'] = idx
+                wrappers[key] = null
             elif key == 'parType':
-                args['parType'] = parType
+                vars['parType'] = parType
+                wrappers[key] = null
             else:
-                args[key] = ctypes.byref(CADETAPIV010000_DATA.lookup_call[key]())
+                vars[key] = CADETAPIV010000_DATA.lookup_call[key]()
+                wrappers[key] = ctypes.byref
 
-        result = get_solution(self.__driver, unit, *tuple(args.values()))
+        result = get_solution(*tuple(wrappers[var_key](var_value) for var_key, var_value in vars.items()))
 
-        shape = (args['nTime'].value,)
-        for arg in args:
-            if arg == 'nPort':
-                shape += args['nPort'].value
-            elif arg == 'nParShells':
-                shape += args['nParShells'].value
-            elif 'nAxialCells' in args:
-                shape += args['nAxialCells'].value
-            elif 'nRadialCells' in args:
-                shape += args['nRadialCells'].value
-            elif 'nComp' in args:
-                shape += args['nComp'].value
-            elif 'nBound' in args:
-                shape += args['nBound'].value
+        shape = []
+        dimensions = ['nTime', 'nPort', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp', 'nBound']
+        for dim in dimensions:
+            if dim in vars and vars[dim].value:
+                shape.append(vars[dim].value)
 
-        data = numpy.ctypeslib.as_array(args['data'], shape=shape)
-        time = numpy.ctypeslib.as_array(args['time'], shape=(args['nTime'].value, ))
+        data = numpy.ctypeslib.as_array(vars['data'], shape=shape)
+        time = numpy.ctypeslib.as_array(vars['time'], shape=(vars['nTime'].value, ))
 
         if own_data:
             return (time.copy(), data.copy())
@@ -475,110 +474,110 @@ class SimulationResult:
             return (time, data)
 
     def inlet(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionInlet, 'getSolutionInlet', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionInlet, 'getSolutionInlet', own_data=own_data)
 
     def outlet(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionOutlet, 'getSolutionOutlet', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionOutlet, 'getSolutionOutlet', own_data=own_data)
 
     def bulk(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
 
     def particle(self, unit, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionBulk, 'getSolutionBulk', own_data=own_data)
 
     def solid(self, unit, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionSolid, 'getSolutionSolid', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionSolid, 'getSolutionSolid', own_data=own_data)
 
     def flux(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionFlux, 'getSolutionFlux', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionFlux, 'getSolutionFlux', own_data=own_data)
 
     def volume(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionVolume, 'getSolutionVolume', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionVolume, 'getSolutionVolume', own_data=own_data)
 
     def derivativeInlet(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeInlet, 'getSolutionDerivativeInlet', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeInlet, 'getSolutionDerivativeInlet', own_data=own_data)
 
     def derivativeOutlet(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeOutlet, 'getSolutionDerivativeOutlet', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeOutlet, 'getSolutionDerivativeOutlet', own_data=own_data)
 
     def derivativeBulk(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeBulk, 'getSolutionDerivativeBulk', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeBulk, 'getSolutionDerivativeBulk', own_data=own_data)
 
     def derivativeParticle(self, unit, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeParticle, 'getSolutionDerivativeParticle', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeParticle, 'getSolutionDerivativeParticle', own_data=own_data)
 
     def derivativeSolid(self, unit, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeSolid, 'getSolutionDerivativeSolid', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeSolid, 'getSolutionDerivativeSolid', own_data=own_data)
 
     def derivativeFlux(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeFlux, 'getSolutionDerivativeFlux', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeFlux, 'getSolutionDerivativeFlux', own_data=own_data)
 
     def derivativeVolume(self, unit, own_data=True):
-        return self.load_data(unit, self.__api.getSolutionDerivativeVolume, 'getSolutionDerivativeVolume', own_data=own_data)
+        return self.load_data(unit, self._api.getSolutionDerivativeVolume, 'getSolutionDerivativeVolume', own_data=own_data)
 
     def sensitivityInlet(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityInlet, 'getSensitivityInlet', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityInlet, 'getSensitivityInlet', idx=idx, own_data=own_data)
 
     def sensitivityOutlet(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityOutlet, 'getSensitivityOutlet', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityOutlet, 'getSensitivityOutlet', idx=idx, own_data=own_data)
 
     def sensitivityBulk(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityBulk, 'getSensitivityBulk', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityBulk, 'getSensitivityBulk', idx=idx, own_data=own_data)
 
     def sensitivityParticle(self, unit, idx, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityParticle, 'getSensitivityParticle', idx=idx, parType=parType, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityParticle, 'getSensitivityParticle', idx=idx, parType=parType, own_data=own_data)
 
     def sensitivitySolid(self, unit, idx, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivitySolid, 'getSensitivitySolid', idx=idx, parType=parType, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivitySolid, 'getSensitivitySolid', idx=idx, parType=parType, own_data=own_data)
 
     def sensitivityFlux(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityFlux, 'getSensitivityFlux', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityFlux, 'getSensitivityFlux', idx=idx, own_data=own_data)
 
     def sensitivityVolume(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityVolume, 'getSensitivityVolume', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityVolume, 'getSensitivityVolume', idx=idx, own_data=own_data)
 
     def sensitivityDerivativeInlet(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeInlet, 'getSensitivityDerivativeInlet', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeInlet, 'getSensitivityDerivativeInlet', idx=idx, own_data=own_data)
 
     def sensitivityDerivativeOutlet(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeOutlet, 'getSensitivityDerivativeOutlet', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeOutlet, 'getSensitivityDerivativeOutlet', idx=idx, own_data=own_data)
 
     def sensitivityDerivativeBulk(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeBulk, 'getSensitivityDerivativeBulk', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeBulk, 'getSensitivityDerivativeBulk', idx=idx, own_data=own_data)
 
     def sensitivityDerivativeParticle(self, unit, idx, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeParticle, 'getSensitivityDerivativeParticle', idx=idx, parType=parType, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeParticle, 'getSensitivityDerivativeParticle', idx=idx, parType=parType, own_data=own_data)
 
     def sensitivityDerivativeSolid(self, unit, idx, parType, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeSolid, 'getSensitivityDerivativeSolid', idx=idx, parType=parType, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeSolid, 'getSensitivityDerivativeSolid', idx=idx, parType=parType, own_data=own_data)
 
     def sensitivityDerivativeFlux(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeFlux, 'getSensitivityDerivativeFlux', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeFlux, 'getSensitivityDerivativeFlux', idx=idx, own_data=own_data)
 
     def sensitivityDerivativeVolume(self, unit, idx, own_data=True):
-        return self.load_data(unit, self.__api.getSensitivityDerivativeVolume, 'getSensitivityDerivativeVolume', idx=idx, own_data=own_data)
+        return self.load_data(unit, self._api.getSensitivityDerivativeVolume, 'getSensitivityDerivativeVolume', idx=idx, own_data=own_data)
 
 
 class CadetDLL:
 
     def __init__(self, dll_path):
         self.cadet_path = dll_path
-        self.__lib = ctypes.cdll.LoadLibrary(dll_path)
+        self._lib = ctypes.cdll.LoadLibrary(dll_path)
 
         # Query meta information
-        cdtGetLibraryVersion = self.__lib.cdtGetLibraryVersion
+        cdtGetLibraryVersion = self._lib.cdtGetLibraryVersion
         cdtGetLibraryVersion.restype = ctypes.c_char_p
         self.cadet_version = cdtGetLibraryVersion().decode('utf-8')
 
-        cdtGetLibraryCommitHash = self.__lib.cdtGetLibraryCommitHash
+        cdtGetLibraryCommitHash = self._lib.cdtGetLibraryCommitHash
         cdtGetLibraryCommitHash.restype = ctypes.c_char_p
         self.cadet_commit_hash = cdtGetLibraryCommitHash().decode('utf-8')
 
-        cdtGetLibraryBranchRefspec = self.__lib.cdtGetLibraryBranchRefspec
+        cdtGetLibraryBranchRefspec = self._lib.cdtGetLibraryBranchRefspec
         cdtGetLibraryBranchRefspec.restype = ctypes.c_char_p
         self.cadet_branch = cdtGetLibraryBranchRefspec().decode('utf-8')
 
-        cdtGetLibraryBuildType = self.__lib.cdtGetLibraryBuildType
+        cdtGetLibraryBuildType = self._lib.cdtGetLibraryBuildType
         cdtGetLibraryBuildType.restype = ctypes.c_char_p
         self.cadet_build_type = cdtGetLibraryBuildType().decode('utf-8')
 
@@ -592,37 +591,37 @@ class CadetDLL:
             ctypes.c_char_p,
             ctypes.c_char_p
         )
-        set_log_handler = self.__lib.cdtSetLogReceiver
+        set_log_handler = self._lib.cdtSetLogReceiver
         set_log_handler.argtypes = [LOG_HANDLER_CLBK]
         set_log_handler.restype = None
         # Keep reference alive by assigning it to this Python object
-        self.__log_handler = LOG_HANDLER_CLBK(log_handler)
-        set_log_handler(self.__log_handler)
+        self._log_handler = LOG_HANDLER_CLBK(log_handler)
+        set_log_handler(self._log_handler)
 
-        self.__set_log_level = self.__lib.cdtSetLogLevel
-        self.__set_log_level.argtypes = [ctypes.c_int]
-        self.__set_log_level.restype = None
-        self.__set_log_level(2)
+        self._set_log_level = self._lib.cdtSetLogLevel
+        self._set_log_level.argtypes = [ctypes.c_int]
+        self._set_log_level.restype = None
+        self._set_log_level(2)
 
         # Query API
-        cdtGetAPIv010000 = self.__lib.cdtGetAPIv010000
+        cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
         cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
         cdtGetAPIv010000.restype = c_cadet_result
 
-        self.__api = CADETAPIV010000()
-        cdtGetAPIv010000(ctypes.byref(self.__api))
+        self._api = CADETAPIV010000()
+        cdtGetAPIv010000(ctypes.byref(self._api))
 
-        self.__driver = self.__api.createDriver()
+        self._driver = self._api.createDriver()
 
     def clear(self):
         if hasattr(self, "res"):
             del self.res
-        self.__api.deleteDriver(self.__driver)
-        self.__driver = self.__api.createDriver()
+        self._api.deleteDriver(self._driver)
+        self._driver = self._api.createDriver()
 
     def __del__(self):
         log_print('deleteDriver()')
-        self.__api.deleteDriver(self.__driver)
+        self._api.deleteDriver(self._driver)
 
 
     def run(self, filename = None, simulation=None, timeout = None, check=None):
@@ -653,11 +652,11 @@ class CadetDLL:
         pp.pushScope = PARAMETERPROVIDER._fields_[16][1](param_provider_push_scope)
         pp.popScope = PARAMETERPROVIDER._fields_[17][1](param_provider_pop_scope)
 
-        self.__api.runSimulation(self.__driver, ctypes.byref(pp))
-        self.res = SimulationResult(self.__api, self.__driver)
+        self._api.runSimulation(self._driver, ctypes.byref(pp))
+        self.res = SimulationResult(self._api, self._driver)
         return self.res
 
-    def load_solution(self, sim, solution, solution_str):
+    def load_solution(self, sim, solution_fun, solution_str):
         # - [ ] Split Components (Should be unified)
         # - [ ] Split Ports (incl `SINGLE_AS_MULTI_PORT`)
         # - [ ] Split Partype (Particle + Solid)
@@ -671,7 +670,7 @@ class CadetDLL:
                 if key.startswith('unit'):
                     if value[f'write_{solution_str}']:
                         unit = int(key[-3:])
-                        t, out = solution(unit)
+                        t, out = solution_fun(unit)
 
                         if not len(solution.solution_times):
                             solution.solution_times = t
