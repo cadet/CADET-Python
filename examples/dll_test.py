@@ -34,4 +34,6 @@ plt.plot(sim.root.output.solution.solution_times, sim.root.output.solution.unit_
 plt.plot(sim.root.output.solution.solution_times, sim.root.output.solution.unit_000.solution_inlet_comp_003)
 plt.show()
 
-#print(sim.root.output.solution.unit_000.solution_bulk.shape)
+print(sim.root.output.solution.unit_000.solution_bulk.shape)
+
+a = None
