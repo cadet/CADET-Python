@@ -13,6 +13,7 @@ sim.load()
 
 sim.root.input['return'].unit_000.write_solution_inlet = 1
 sim.root.input['return'].unit_000.write_solution_bulk = 1
+sim.root.input['return'].unit_000.single_as_multi_port = 0
 sim.root.input['return'].unit_001.write_solution_bulk = 0
 
 print('before run')
