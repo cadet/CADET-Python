@@ -1,4 +1,5 @@
 
+from cmath import sin
 import ctypes
 import numpy
 import addict
@@ -140,18 +141,20 @@ class SimulationResult:
         result = get_solution(*tuple(wrappers[var_key](var_value) for var_key, var_value in vars.items()))
 
         shape = []
+        dims = []
         dimensions = ['nTime', 'nPort', 'nParShells', 'nAxialCells', 'nRadialCells', 'nComp', 'nBound']
         for dim in dimensions:
             if dim in vars and vars[dim].value:
                 shape.append(vars[dim].value)
+                dims.append(dim)
 
         data = numpy.ctypeslib.as_array(vars['data'], shape=shape)
         time = numpy.ctypeslib.as_array(vars['time'], shape=(vars['nTime'].value, ))
 
         if own_data:
-            return (time.copy(), data.copy())
+            return time.copy(), data.copy(), dims
         else:
-            return (time, data)
+            return time, data, dims
 
     def inlet(self, unit, own_data=True):
         return self.load_data(unit, self._api.getSolutionInlet, 'getSolutionInlet', own_data=own_data)
@@ -312,7 +315,6 @@ class CadetDLL:
         return self.res
 
     def load_solution(self, sim, solution_fun, solution_str):
-        # - [ ] Split Components (Should be unified)
         # - [ ] Split Ports (incl `SINGLE_AS_MULTI_PORT`)
         # - [ ] Split Partype (Particle + Solid)
         # - [ ] Coordinates?
@@ -325,7 +327,7 @@ class CadetDLL:
                 if key.startswith('unit'):
                     if value[f'write_{solution_str}']:
                         unit = int(key[-3:])
-                        t, out = solution_fun(unit)
+                        t, out, dims = solution_fun(unit)
 
                         if not len(solution.solution_times):
                             solution.solution_times = t
@@ -340,14 +342,54 @@ class CadetDLL:
                 if key.startswith('unit'):
                     if value[f'write_{solution_str}']:
                         unit = int(key[-3:])
-                        t, out = solution_fun(unit)
+                        t, out, dims = solution_fun(unit)
 
                         if not len(solution.solution_times):
                             solution.solution_times = t
-                            
-                        for comp in range(out.shape[2]):
-                            comp_out = numpy.squeeze(out[:,:,comp])
-                            solution[key][f'{solution_str}_comp_{comp:03d}'] = comp_out
+
+                        split_components_data = value.get('split_components_data', 1)
+                        split_ports_data = value.get('split_ports_data', 1)
+                        single_as_multi_port = value.get('single_as_multi_port', 0)
+
+                        nComp = dims.index('nComp')
+                        try:
+                            nPorts = dims.index('nPorts')
+                        except ValueError:
+                            nPorts = None
+
+                        if split_components_data:
+                            if split_ports_data:
+                                if nPorts is None:
+                                    if single_as_multi_port:
+                                        for comp in range(out.shape[nComp]):
+                                            comp_out = numpy.squeeze(out[..., comp])
+                                            solution[key][f'{solution_str}_port_000_comp_{comp:03d}'] = comp_out
+                                    else:
+                                        for comp in range(out.shape[nComp]):
+                                            comp_out = numpy.squeeze(out[..., comp])
+                                            solution[key][f'{solution_str}_comp_{comp:03d}'] = comp_out
+                                else:
+                                    for port in range(out.shape[nPorts]):
+                                        for comp in range(out.shape[nComp]):
+                                            comp_out = numpy.squeeze(out[..., port, comp])
+                                            solution[key][f'{solution_str}_port_{port:03d}_comp_{comp:03d}'] = comp_out
+                            else:
+                                for comp in range(out.shape[nComp]):
+                                    comp_out = numpy.squeeze(out[...,comp])
+                                    solution[key][f'{solution_str}_comp_{comp:03d}'] = comp_out
+                        else:
+                            if split_ports_data:
+                                if nPorts is None:
+                                    if single_as_multi_port:
+                                        solution[key][f'{solution_str}_port_000'] = out
+                                    else:
+                                        solution[key][solution_str] = out
+                                else:
+                                    for port in range(out.shape[nPorts]):
+                                        port_out = numpy.squeeze(out[..., port, :])
+                                        solution[key][f'{solution_str}_port_{port:03d}'] = port_out
+                            else:
+                                solution[key][solution_str] = out
         return solution
 
     def load_inlet(self, sim):
