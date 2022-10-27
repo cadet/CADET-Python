@@ -16,7 +16,7 @@ setuptools.setup(
     install_requires=[
           'addict',
           'numpy',
-          'h5py',
+          'h5py <= 3.6.0',
           'filelock'
       ],
     classifiers=[
