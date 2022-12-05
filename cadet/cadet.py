@@ -306,30 +306,44 @@ def recursively_load( h5file, path, func, paths):
                 ans[key] = recursively_load(h5file, local_path + '/', func, None)
     return ans 
 
-def recursively_save( h5file, path, dic, func):
-
-    # argument type checking
-    if not isinstance(dic, dict):
-        raise ValueError("must provide a dictionary")        
+def recursively_save(h5file, path, dic, func):
 
     if not isinstance(path, str):
         raise ValueError("path must be a string")
     if not isinstance(h5file, h5py._hl.files.File):
         raise ValueError("must be an open h5py file")
+
+    # argument type checking
+    if not isinstance(dic, dict):
+        raise ValueError("must provide a dictionary")   
+
     # save items to the hdf5 file
     for key, item in dic.items():
         key = str(key)
+        value = None
+    
         if not isinstance(key, str):
             raise ValueError("dict keys must be strings to save to hdf5")
-        #handle   int, float, string and ndarray of int32, int64, float64
-        if isinstance(item, str):
-            h5file[path + func(key)] = numpy.array(item.encode('ascii'))
-        elif isinstance(item, list) and all(isinstance(i, str) for i in item):
-            h5file[path + func(key)] = numpy.array([i.encode('ascii') for i in item])
-        elif isinstance(item, dict):
+    
+        if isinstance(item, dict):
             recursively_save(h5file, path + key + '/', item, func)
+    
+        # handle int, float, string and ndarray of int32, int64, float64
+        elif isinstance(item, str):
+            value = numpy.array(item.encode('ascii'))
+        elif isinstance(item, list) and all(isinstance(i, str) for i in item):
+            value = numpy.array([i.encode('ascii') for i in item])
         else:
             try:
-                h5file[path + func(key)] = numpy.array(item)
+                value = numpy.array(item)
             except TypeError:
                 raise ValueError('Cannot save %s/%s key with %s type.' % (path, func(key), type(item)))
+    
+        if value is not None:    
+            try:
+                h5file[path + func(key)] = value
+            except OSError as e:
+                if str(e) == 'Unable to create link (name already exists)':
+                    raise KeyError(f'Name conflict with upper and lower case entries for key "{path}{key}".')
+                else:
+                    raise
