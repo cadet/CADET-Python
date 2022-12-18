@@ -19,7 +19,7 @@ from cadet.cadet_dll import CadetDLL
 
 class H5():
     pp = pprint.PrettyPrinter(indent=4)
-    
+
     def transform(self, x):
         return x
 
@@ -197,7 +197,7 @@ class Cadet(H5, metaclass=CadetMeta):
     @cadet_path.deleter
     def cadet_path(self):
         del self._cadet_runner
-    
+
     def transform(self, x):
         return str.upper(x)
 
@@ -208,7 +208,7 @@ class Cadet(H5, metaclass=CadetMeta):
         runner = self.cadet_runner
         if runner is not None:
             runner.load_results(self)
-    
+
     def run(self, timeout = None, check=None):
         data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
         #self.return_information = data
@@ -221,7 +221,7 @@ class Cadet(H5, metaclass=CadetMeta):
         if clear:
             self.clear()
         return data
-        
+
     def clear(self):
         runner = self.cadet_runner
         if runner is not None:
@@ -251,20 +251,20 @@ def convert_from_numpy(data, func):
         key = func(key_original)
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
-        
+
         if isinstance(item, numpy.generic):
             item = item.item()
 
         if isinstance(item, bytes):
             item = item.decode('ascii')
-        
+
         if isinstance(item, Dict):
             ans[key_original] = convert_from_numpy(item, func)
         else:
             ans[key] = item
     return ans
 
-def recursively_load_dict( data, func): 
+def recursively_load_dict( data, func):
     ans = Dict()
     for key_original,item in data.items():
         key = func(key_original)
@@ -285,7 +285,7 @@ def set_path(obj, path, value):
 
     temp[path[-1]] = value
 
-def recursively_load( h5file, path, func, paths): 
+def recursively_load( h5file, path, func, paths):
     ans = Dict()
     if paths is not None:
         for path in paths:
@@ -304,7 +304,7 @@ def recursively_load( h5file, path, func, paths):
                 ans[key] = item[()]
             elif isinstance(item, h5py._hl.group.Group):
                 ans[key] = recursively_load(h5file, local_path + '/', func, None)
-    return ans 
+    return ans
 
 def recursively_save(h5file, path, dic, func):
 
@@ -315,19 +315,19 @@ def recursively_save(h5file, path, dic, func):
 
     # argument type checking
     if not isinstance(dic, dict):
-        raise ValueError("must provide a dictionary")   
+        raise ValueError("must provide a dictionary")
 
     # save items to the hdf5 file
     for key, item in dic.items():
         key = str(key)
         value = None
-    
+
         if not isinstance(key, str):
             raise ValueError("dict keys must be strings to save to hdf5")
-    
+
         if isinstance(item, dict):
             recursively_save(h5file, path + key + '/', item, func)
-    
+
         # handle int, float, string and ndarray of int32, int64, float64
         elif isinstance(item, str):
             value = numpy.array(item.encode('ascii'))
@@ -338,8 +338,8 @@ def recursively_save(h5file, path, dic, func):
                 value = numpy.array(item)
             except TypeError:
                 raise ValueError('Cannot save %s/%s key with %s type.' % (path, func(key), type(item)))
-    
-        if value is not None:    
+
+        if value is not None:
             try:
                 h5file[path + func(key)] = value
             except OSError as e:
