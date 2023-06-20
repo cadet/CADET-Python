@@ -363,7 +363,12 @@ class Cadet(H5, metaclass=CadetMeta):
         return data
 
     def run_load(self, timeout=None, check=None, clear=True):
-        data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
+        data = self.cadet_runner.run(
+            simulation=self.root.input,
+            filename=self.filename,
+            timeout=timeout,
+            check=check
+        )
         # self.return_information = data
         self.load_results()
         if clear:
