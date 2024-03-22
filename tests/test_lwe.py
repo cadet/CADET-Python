@@ -1,27 +1,13 @@
-#!/usr/bin/env python3.6
-
-# Everything in here is based on CADET3.pdf in the same directory
-# 
-
-# Basic Python CADET file based interface compatible with CADET 3.0 and 3.1
-# Some additional fields have been added so that the generated simulations will also
-# work in 3.1 and where those differences are I have noted them.
-# This whole file follows the CADET pdf documentation. I have broken the system up into many
-# functions in order to make it simpler and to make code reuse easier.
-
-# Normally the main function is placed at the bottom of the file but I have placed it at the top so that
+# Normally the main function is placed at the bottom of the file, but I have placed it at the top so that
 # This interface is more like a tutorial and can be read from the top down and any given function
 # can be drilled into to learn more about it.
+import os
 
-#use to render results
 import matplotlib.pyplot as plt
-
 import numpy
 
 from cadet import Cadet
-import common
-
-Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/cadet-cli.exe"
+from tests import common
 
 
 # Helper functions that make it easier to set the values in the HDF5 file
@@ -29,14 +15,18 @@ Cadet.cadet_path = "C:/Users/kosh_000/cadet_build/CADET-dev/MS_SMKL_RELEASE/bin/
 # below match those types.
 
 def main():
+    if not os.path.exists("tmp"):
+        os.makedirs("tmp")
     simulation = Cadet(common.common.root)
-    simulation.filename = "f:/temp/LWE.h5"
+    simulation.filename = "tmp/LWE.h5"
     createSimulation(simulation)
     simulation.save()
     simulation.run()
     simulation.load()
 
     plotSimulation(simulation)
+    return simulation
+
 
 def createSimulation(simulation):
     root = simulation.root
@@ -81,10 +71,9 @@ def createSimulation(simulation):
     root.input.model.unit_001.par_surfdiffusion = [0.0, 0.0]
     root.input.model.unit_001.unit_type = 'GENERAL_RATE_MODEL'
 
-    #root.input.model.unit_001.velocity = 1
-    #root.input.model.unit_001.cross_section_area = 4700.352526439483
+    # root.input.model.unit_001.velocity = 1
+    # root.input.model.unit_001.cross_section_area = 4700.352526439483
     root.input.model.unit_001.velocity = 5.75e-4
-
 
     root.input.model.unit_001.adsorption.is_kinetic = 0
     root.input.model.unit_001.adsorption.sma_ka = [0.0, 35.5]
@@ -104,37 +93,38 @@ def createSimulation(simulation):
     root.input.solver.sections.nsec = 3
     root.input.solver.sections.section_continuity = [0, 0]
     root.input.solver.sections.section_times = [0.0, 10.0, 90.0, 1500.0]
-    
+
+
 def plotSimulation(simulation):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=[16, 8])
     plotInlet(ax1, simulation)
     plotOutlet(ax2, simulation)
     f.tight_layout()
-    plt.show()
+    plt.savefig("tmp/lwe.png")
+
 
 def plotInlet(axis, simulation):
     solution_times = simulation.root.output.solution.solution_times
 
     inlet_salt = simulation.root.output.solution.unit_000.solution_inlet_comp_000
     inlet_p1 = simulation.root.output.solution.unit_000.solution_inlet_comp_001
-    #inlet_p2 = simulation.root.output.solution.unit_000.solution_inlet_comp_002
-    #inlet_p3 = simulation.root.output.solution.unit_000.solution_inlet_comp_003
+    # inlet_p2 = simulation.root.output.solution.unit_000.solution_inlet_comp_002
+    # inlet_p3 = simulation.root.output.solution.unit_000.solution_inlet_comp_003
 
     axis.set_title("Inlet")
     axis.plot(solution_times, inlet_salt, 'b-', label="Salt")
     axis.set_xlabel('time (s)')
-        
+
     # Make the y-axis label, ticks and tick labels match the line color.
     axis.set_ylabel('mMol Salt', color='b')
     axis.tick_params('y', colors='b')
 
     axis2 = axis.twinx()
     axis2.plot(solution_times, inlet_p1, 'r-', label="P1")
-    #axis2.plot(solution_times, inlet_p2, 'g-', label="P2")
-    #axis2.plot(solution_times, inlet_p3, 'k-', label="P3")
+    # axis2.plot(solution_times, inlet_p2, 'g-', label="P2")
+    # axis2.plot(solution_times, inlet_p3, 'k-', label="P3")
     axis2.set_ylabel('mMol Protein', color='r')
     axis2.tick_params('y', colors='r')
-
 
     lines, labels = axis.get_legend_handles_labels()
     lines2, labels2 = axis2.get_legend_handles_labels()
@@ -146,32 +136,30 @@ def plotOutlet(axis, simulation):
 
     outlet_salt = simulation.root.output.solution.unit_002.solution_outlet_comp_000
     outlet_p1 = simulation.root.output.solution.unit_002.solution_outlet_comp_001
-    #outlet_p2 = simulation.root.output.solution.unit_002.solution_outlet_comp_002
-    #outlet_p3 = simulation.root.output.solution.unit_002.solution_outlet_comp_003
+    # outlet_p2 = simulation.root.output.solution.unit_002.solution_outlet_comp_002
+    # outlet_p3 = simulation.root.output.solution.unit_002.solution_outlet_comp_003
 
     axis.set_title("Output")
     axis.plot(solution_times, outlet_salt, 'b-', label="Salt")
     axis.set_xlabel('time (s)')
-        
+
     # Make the y-axis label, ticks and tick labels match the line color.
     axis.set_ylabel('mMol Salt', color='b')
     axis.tick_params('y', colors='b')
 
     axis2 = axis.twinx()
     axis2.plot(solution_times, outlet_p1, 'r-', label="P1")
-    #axis2.plot(solution_times, outlet_p2, 'g-', label="P2")
-    #axis2.plot(solution_times, outlet_p3, 'k-', label="P3")
+    # axis2.plot(solution_times, outlet_p2, 'g-', label="P2")
+    # axis2.plot(solution_times, outlet_p3, 'k-', label="P3")
     axis2.set_ylabel('mMol Protein', color='r')
     axis2.tick_params('y', colors='r')
-
 
     lines, labels = axis.get_legend_handles_labels()
     lines2, labels2 = axis2.get_legend_handles_labels()
     axis2.legend(lines + lines2, labels + labels2, loc=0)
 
 
-if __name__ == "__main__":
-    import sys
-    print(sys.version)
-    main()
-
+def test_lwe():
+    sim = main()
+    assert isinstance(sim.root.output.solution.unit_002.solution_outlet_comp_001, numpy.ndarray)
+    assert isinstance(sim.root.output.solution.unit_002.solution_outlet_comp_000, numpy.ndarray)
