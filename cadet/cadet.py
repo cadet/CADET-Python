@@ -359,6 +359,7 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def run(self, timeout=None, check=None):
         data = self.cadet_runner.run(simulation=self.root.input, filename=self.filename, timeout=timeout, check=check)
+        # TODO: Why is this commented out?
         # self.return_information = data
         return data
 
@@ -369,6 +370,7 @@ class Cadet(H5, metaclass=CadetMeta):
             timeout=timeout,
             check=check
         )
+        # TODO: Why is this commented out?
         # self.return_information = data
         self.load_results()
         if clear:
