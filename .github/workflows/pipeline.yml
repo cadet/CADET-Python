@@ -43,9 +43,10 @@ jobs:
         path: ${{ env.CONDA }}/envs
         key: python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
 
-    - name: Set up mamba
+    - name: Set up python env
       run: |
         mamba install python==${{ matrix.python-version }}
+        pip install .
     - name: Install pypa/build
       run: |
         python -m pip install build --user
