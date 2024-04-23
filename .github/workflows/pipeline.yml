@@ -57,6 +57,7 @@ jobs:
     - name: Test Wheel install and import
       run: |
         python -c "import cadet; print(cadet.__version__)"
+        cd ..
     - name: Test with pytest
       run: |
         pip install .[testing]
