@@ -127,6 +127,10 @@ def is_dll(value):
 
 
 class CadetMeta(type):
+    """
+    A meta class for the CADET interface. This allows calls to Cadet.cadet_path = "..." to set
+    the cadet_path for all subsequent Cadet() instances.
+    """
     _cadet_runner_class = None
     _is_file_class = None
 
@@ -141,10 +145,6 @@ class CadetMeta(type):
 
     @cadet_path.setter
     def cadet_path(cls, value):
-        def __init__(cls):
-            cls._cadet_runner_class = None
-            cls._is_file_class = True
-
         if cls._cadet_runner_class is not None and cls._cadet_runner_class.cadet_path != value:
             del cls._cadet_runner_class
 
@@ -165,12 +165,17 @@ class Cadet(H5, metaclass=CadetMeta):
     def __init__(self, *data):
         super().__init__(*data)
         self._cadet_runner = None
-        self.return_information = None
-        self._is_file = None
+
+        self._is_file = None  # Is CLI or DLL
+        # self.cadet_path  # from Bill, declared in meta class -> path to CLI-file or DLL-file
+
+        self.install_path = None  # from Jo -> root of the CADET installation.
+
+        self.cadet_cli_path = None
         self.cadet_dll_path = None
         self.cadet_create_lwe_path = None
-        self.cadet_cli_path = None
-        self._install_path = None
+
+        self.return_information = None
 
     @property
     def is_file(self):
