@@ -17,9 +17,9 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Get Date
       id: get-date
@@ -43,13 +43,20 @@ jobs:
         path: ${{ env.CONDA }}/envs
         key: python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
 
-    - name: Test Wheel install and import
+    - name: Set up python env
       run: |
         mamba install python==${{ matrix.python-version }}
-        pip install wheel
-        python setup.py bdist_wheel
-        cd dist
-        pip install CADET_Python*.whl
+        pip install .
+    - name: Install pypa/build
+      run: |
+        python -m pip install build --user
+
+    - name: Build binary wheel and source tarball
+      run: |
+        python -m build --sdist --wheel --outdir dist/ .
+
+    - name: Test Wheel install and import
+      run: |
         python -c "import cadet; print(cadet.__version__)"
         cd ..
     - name: Test with pytest
