@@ -1,27 +1,61 @@
 import ctypes
-import numpy
+import os
+from pathlib import Path
+from typing import Any, Optional
+
 import addict
+import numpy
+
+from cadet.runner import CadetRunnerBase
 import cadet.cadet_dll_parameterprovider as cadet_dll_parameterprovider
 
 
-def log_handler(file, func, line, level, level_name, message):
-    log_print('{} ({}:{:d}) {}'.format(level_name.decode('utf-8') , func.decode('utf-8') , line, message.decode('utf-8') ))
+def log_handler(
+        file: bytes,
+        func: bytes,
+        line: int,
+        level: int,
+        level_name: bytes,
+        message: bytes
+        ) -> None:
+    """
+    Log handler for the CADET DLL.
 
-def _no_log_output(*args):
+    Parameters
+    ----------
+    file : bytes
+        The file name where the log originates.
+    func : bytes
+        The function name where the log originates.
+    line : int
+        The line number of the log.
+    level : int
+        The log level.
+    level_name : bytes
+        The name of the log level.
+    message : bytes
+        The log message.
+    """
+    log_print(
+        f"{level_name.decode('utf-8')} "
+        f"({func.decode('utf-8')}:{line}) {message.decode('utf-8')}"
+    )
+
+
+def _no_log_output(*args: Any) -> None:
+    """Disable log output by doing nothing."""
     pass
 
-if 0:
-    log_print = print
-else:
-    log_print = _no_log_output
 
-# Some common types
+enable_logging = False
+log_print = print if enable_logging else _no_log_output
+
+# Common types for ctypes function signatures
 CadetDriver = ctypes.c_void_p
 array_double = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
 point_int = ctypes.POINTER(ctypes.c_int)
 
 # Values of cdtResult
-# TODO: Convert to lookup table to improve error messages below.
 c_cadet_result = ctypes.c_int
 _CDT_OK = 0
 _CDT_ERROR = -1
@@ -29,17 +63,22 @@ _CDT_ERROR_INVALID_INPUTS = -2
 _CDT_DATA_NOT_STORED = -3
 
 
-class CADETAPIV010000_DATA():
+class CADETAPIV010000_DATA:
     """
-    Definition of CADET-C-API v1.0
+    Definition of CADET-C-API v1.0 function signatures and type mappings.
 
-    signatures : dict with signatures of exported API functions. (See CADET/include/cadet/cadet.h)
-    lookup_prototype : ctypes for common parameters
-    lookup_output_argument_type : ctypes for API output parameters (e.g., double* time or double** data)
-
+    Attributes
+    ----------
+    signatures : dict
+        Signatures of exported API functions.
+    lookup_prototype : dict
+        Mapping of common ctypes parameters.
+    lookup_output_argument_type : dict
+        Mapping of ctypes output parameters for the API.
     """
 
-    # Order is important, has to match the cdtAPIv010000 struct of the C-API
+    # API function signatures
+    # Note, order is important, it has to match the cdtAPIv010000 struct of the C-API
     signatures = {}
     signatures['createDriver'] = ('drv',)
     signatures['deleteDriver'] = (None, 'drv')
@@ -95,6 +134,7 @@ class CADETAPIV010000_DATA():
 
     signatures['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
 
+    # Mappings for common ctypes parameters
     lookup_prototype = {
         'return': c_cadet_result,
         'drv': CadetDriver,
@@ -139,35 +179,71 @@ class CADETAPIV010000_DATA():
     }
 
 
-def _setup_api():
-    """list: Tuples with function names and ctype functions"""
-    _fields_ = []
+def _setup_api() -> list[tuple[str, ctypes.CFUNCTYPE]]:
+    """
+    Set up the API function prototypes for CADETAPIV010000.
 
+    Returns
+    -------
+    list of tuple
+        List of function names and corresponding ctypes function prototypes.
+    """
+    _fields_ = []
     for key, value in CADETAPIV010000_DATA.signatures.items():
         args = tuple(CADETAPIV010000_DATA.lookup_prototype[key] for key in value)
-        _fields_.append( (key, ctypes.CFUNCTYPE(*args)) )
+        _fields_.append((key, ctypes.CFUNCTYPE(*args)))
 
     return _fields_
 
 
 class CADETAPIV010000(ctypes.Structure):
-    """Mimic cdtAPIv010000 struct of CADET C-API in ctypes"""
+    """Mimic cdtAPIv010000 struct of CADET C-API in ctypes."""
     _fields_ = _setup_api()
 
 
 class SimulationResult:
+    """
+    Handles reading results from a CADET simulation.
 
-    def __init__(self, api: CADETAPIV010000, driver: CadetDriver):
+    Parameters
+    ----------
+    api : CADETAPIV010000
+        The CADET API instance.
+    driver : CadetDriver
+        The driver handle used for the simulation.
+
+    """
+
+    def __init__(self, api: CADETAPIV010000, driver: CadetDriver) -> None:
         self._api = api
         self._driver = driver
 
     def _load_data(
             self,
             get_solution_str: str,
-            unitOpId: int | None = None,
-            sensIdx: int = None,
-            parType: int = None):
+            unitOpId: Optional[int] = None,
+            sensIdx: Optional[int] = None,
+            parType: Optional[int] = None
+            ) -> Optional[dict[str, Any]]:
+        """
+        Load data from the CADET API.
 
+        Parameters
+        ----------
+        get_solution_str : str
+            The name of the API function to call.
+        unitOpId : Optional[int], default=None
+            The unit operation ID.
+        sensIdx : Optional[int], default=None
+            The sensitivity index.
+        parType : Optional[int], default=None
+            The particle type index.
+
+        Returns
+        -------
+        Optional[dict[str, Any]]
+            The output arguments mapped to their values, or None if data is not available.
+        """
         get_solution = getattr(self._api, get_solution_str)
 
         # Collect actual values
@@ -207,11 +283,30 @@ class SimulationResult:
 
     def _process_array(
             self,
-            call_outputs,
+            call_outputs: dict[str, Any],
             data_key: str,
             len_key: str,
-            own_data: bool = True):
+            own_data: bool = True,
+            ) -> Optional[numpy.ndarray]:
+        """
+        Process array data from the API.
 
+        Parameters
+        ----------
+        call_outputs : dict
+            The output arguments returned from the API call.
+        data_key : str
+            The key for the data array in the output arguments.
+        len_key : str
+            The key for the length of the data array.
+        own_data : bool, default=True
+            Whether to create a copy of the data.
+
+        Returns
+        -------
+        Optional[numpy.ndarray]
+            The processed data array or None if the length is zero.
+        """
         array_length = call_outputs[len_key].value
         if array_length == 0:
             return
@@ -223,9 +318,24 @@ class SimulationResult:
 
     def _process_data(
             self,
-            call_outputs,
-            own_data: bool = True):
+            call_outputs: dict[str, Any],
+            own_data: bool = True,
+            ) -> Optional[tuple[numpy.ndarray, numpy.ndarray, list[str]]]:
+        """
+        Process multi-dimensional data from the API.
 
+        Parameters
+        ----------
+        call_outputs : dict
+            The output arguments returned from the API call.
+        own_data : bool, default=True
+            Whether to create a copy of the data.
+
+        Returns
+        -------
+        Optional[tuple[numpy.ndarray, numpy.ndarray, list[str]]]
+            A tuple of time, data, and dimensions, or None if no data is available.
+        """
         shape = []
         dims = []
 
@@ -270,7 +380,25 @@ class SimulationResult:
 
         return time, data, dims
 
-    def _load_and_process(self, *args, own_data=True, **kwargs):
+    def _load_and_process(
+            self,
+            *args: Any,
+            own_data: bool = True,
+            **kwargs: Any
+            ) -> Optional[tuple[numpy.ndarray, numpy.ndarray, list[str]]]:
+        """
+        Load and process data from the API in a single step.
+
+        Parameters
+        ----------
+        own_data : bool, default=True
+            Whether to create a copy of the data.
+
+        Returns
+        -------
+        Optional[tuple[numpy.ndarray, numpy.ndarray, list[str]]]
+            A tuple of time, data, and dimensions, or None if no data is available.
+        """
         call_outputs = self._load_data(*args, **kwargs)
 
         if call_outputs is None:
@@ -279,7 +407,31 @@ class SimulationResult:
         processed_results = self._process_data(call_outputs, own_data)
         return processed_results
 
-    def _load_and_process_array(self, data_key: str, len_key: str, *args, own_data=True, **kwargs):
+    def _load_and_process_array(
+            self,
+            data_key: str,
+            len_key: str,
+            *args: Any,
+            own_data: bool = True,
+            **kwargs: Any
+            ) -> Optional[numpy.ndarray]:
+        """
+        Load and process a 1D array from the API.
+
+        Parameters
+        ----------
+        data_key : str
+            The key for the data array in the output arguments.
+        len_key : str
+            The key for the length of the data array.
+        own_data : bool, default=True
+            Whether to create a copy of the data.
+
+        Returns
+        -------
+        Optional[numpy.ndarray]
+            The processed data array or None if no data is available.
+        """
         call_outputs = self._load_data(*args, **kwargs)
 
         if call_outputs is None:
@@ -287,348 +439,1153 @@ class SimulationResult:
 
         return self._process_array(call_outputs, data_key, len_key, own_data)
 
-    def npartypes(self, unitOpId: int):
-        call_outputs = self._load_data(
-            'getNumParTypes',
-            unitOpId=unitOpId,
-        )
+    def npartypes(self, unitOpId: int) -> int:
+        """
+        Get the number of particle types for a given unit operation.
 
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+
+        Returns
+        -------
+        int
+            The number of particle types.
+        """
+        call_outputs = self._load_data('getNumParTypes', unitOpId=unitOpId)
         return int(call_outputs['nParTypes'].value)
 
-    def nsensitivities(self):
-        call_outputs = self._load_data(
-            'getNumSensitivities',
-        )
+    def nsensitivities(self) -> int:
+        """
+        Get the number of sensitivities defined for the simulation.
 
+        Returns
+        -------
+        int
+            The number of sensitivities.
+        """
+        call_outputs = self._load_data('getNumSensitivities')
         return int(call_outputs['nSens'].value)
 
-    def solution_inlet(self, unitOpId: int, own_data=True):
+    def solution_inlet(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the inlet solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionInlet',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionInlet', unitOpId=unitOpId, own_data=own_data
         )
 
-    def solution_outlet(self, unitOpId: int, own_data=True):
+    def solution_outlet(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the outlet solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionOutlet',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionOutlet', unitOpId=unitOpId, own_data=own_data
         )
 
-    def solution_bulk(self, unitOpId: int, own_data=True):
+    def solution_bulk(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the bulk solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionBulk',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionBulk', unitOpId=unitOpId, own_data=own_data
         )
 
-    def solution_particle(self, unitOpId: int, parType: int, own_data=True):
+    def solution_particle(
+            self,
+            unitOpId: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the particle-phase solution for a given unit operation and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionParticle',
-            unitOpId=unitOpId,
-            parType=parType,
-            own_data=own_data,
+            'getSolutionParticle', unitOpId=unitOpId, parType=parType, own_data=own_data
         )
 
-    def solution_solid(self, unitOpId: int, parType: int, own_data=True):
+    def solution_solid(
+            self,
+            unitOpId: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the solid-phase solution for a given unit operation and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionSolid',
-            unitOpId=unitOpId,
-            parType=parType,
-            own_data=own_data,
+            'getSolutionSolid', unitOpId=unitOpId, parType=parType, own_data=own_data
         )
 
-    def solution_flux(self, unitOpId: int, own_data=True):
+    def solution_flux(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the flux solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionFlux',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionFlux', unitOpId=unitOpId, own_data=own_data
         )
 
-    def solution_volume(self, unitOpId: int, own_data=True):
+    def solution_volume(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the volume solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution.
+        """
         return self._load_and_process(
-            'getSolutionVolume',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionVolume', unitOpId=unitOpId, own_data=own_data
         )
 
-    def soldot_inlet(self, unitOpId: int, own_data=True):
+    def soldot_inlet(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the inlet solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
-            'getSolutionDerivativeInlet',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionDerivativeInlet', unitOpId=unitOpId, own_data=own_data
         )
 
-    def soldot_outlet(self, unitOpId: int, own_data=True):
+    def soldot_outlet(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the outlet solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
-            'getSolutionDerivativeOutlet',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionDerivativeOutlet', unitOpId=unitOpId, own_data=own_data
         )
 
-    def soldot_bulk(self, unitOpId: int, own_data=True):
+    def soldot_bulk(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the bulk solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
-            'getSolutionDerivativeBulk',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionDerivativeBulk', unitOpId=unitOpId, own_data=own_data
         )
 
-    def soldot_particle(self, unitOpId: int, parType: int, own_data=True):
+    def soldot_particle(
+            self,
+            unitOpId: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the particle-phase solution for a given unit operation and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
             'getSolutionDerivativeParticle',
             unitOpId=unitOpId,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def soldot_solid(self, unitOpId: int, parType: int, own_data=True):
+    def soldot_solid(
+            self,
+            unitOpId: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the solid-phase solution for a given unit operation and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
             'getSolutionDerivativeSolid',
             unitOpId=unitOpId,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def soldot_flux(self, unitOpId: int, own_data=True):
+    def soldot_flux(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the flux solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
-            'getSolutionDerivativeFlux',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionDerivativeFlux', unitOpId=unitOpId, own_data=own_data
         )
 
-    def soldot_volume(self, unitOpId: int, own_data=True):
+    def soldot_volume(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the volume solution for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the solution derivative.
+        """
         return self._load_and_process(
-            'getSolutionDerivativeVolume',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'getSolutionDerivativeVolume', unitOpId=unitOpId, own_data=own_data
         )
 
-    def sens_inlet(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sens_inlet(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the sensitivity data for the inlet of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
-            'getSensitivityInlet',
-            unitOpId=unitOpId,
-            sensIdx=sensIdx,
-            own_data=own_data,
+            'getSensitivityInlet', unitOpId=unitOpId, sensIdx=sensIdx, own_data=own_data
         )
 
-    def sens_outlet(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sens_outlet(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the outlet of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
             'getSensitivityOutlet',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sens_bulk(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sens_bulk(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the bulk of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
-            'getSensitivityBulk',
-            unitOpId=unitOpId,
-            sensIdx=sensIdx,
-            own_data=own_data,
+            'getSensitivityBulk', unitOpId=unitOpId, sensIdx=sensIdx, own_data=own_data
         )
 
-    def sens_particle(self, unitOpId: int, sensIdx: int, parType: int, own_data=True):
+    def sens_particle(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the particle phase of a given unit operation, sensitivity index, and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
             'getSensitivityParticle',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sens_solid(self, unitOpId: int, sensIdx: int, parType: int, own_data=True):
+    def sens_solid(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the solid phase of a given unit operation, sensitivity index, and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
             'getSensitivitySolid',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sens_flux(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sens_flux(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the flux of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
-            'getSensitivityFlux',
-            unitOpId=unitOpId,
-            sensIdx=sensIdx,
-            own_data=own_data,
+            'getSensitivityFlux', unitOpId=unitOpId, sensIdx=sensIdx, own_data=own_data
         )
 
-    def sens_volume(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sens_volume(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity data for the volume of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity data.
+        """
         return self._load_and_process(
             'getSensitivityVolume',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_inlet(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sensdot_inlet(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the inlet of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeInlet',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_outlet(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sensdot_outlet(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the outlet of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeOutlet',
             unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_bulk(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sensdot_bulk(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the bulk of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeBulk',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_particle(self, unitOpId: int, sensIdx: int, parType: int, own_data=True):
+    def sensdot_particle(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the particle phase of a given unit operation, sensitivity index, and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeParticle',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_solid(self, unitOpId: int, sensIdx: int, parType: int, own_data=True):
+    def sensdot_solid(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the solid phase of a given unit operation, sensitivity index, and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeSolid',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
             parType=parType,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_flux(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sensdot_flux(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the flux of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeFlux',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def sensdot_volume(self, unitOpId: int, sensIdx: int, own_data=True):
+    def sensdot_volume(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load sensitivity derivative data for the volume of a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity derivative data.
+        """
         return self._load_and_process(
             'getSensitivityDerivativeVolume',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def last_state_y(self, own_data=True):
+    def last_state_y(
+            self,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the last state of the system.
+
+        Parameters
+        ----------
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The state data.
+        """
         return self._load_and_process_array(
-            'state',
-            'nStates',
-            'getLastState',
-            own_data=own_data,
+            'state', 'nStates', 'getLastState', own_data=own_data
         )
 
-    def last_state_ydot(self, own_data=True):
+    def last_state_ydot(
+            self,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the last state of the system.
+
+        Parameters
+        ----------
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The time derivative data.
+        """
         return self._load_and_process_array(
-            'state',
-            'nStates',
-            'getLastStateTimeDerivative',
-            own_data=own_data,
+            'state', 'nStates', 'getLastStateTimeDerivative', own_data=own_data
         )
 
-    def last_state_y_unit(self, unitOpId: int, own_data=True):
+    def last_state_y_unit(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the last state of a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The state data.
+        """
         return self._load_and_process_array(
-            'state',
-            'nStates',
-            'getLastUnitState',
-            unitOpId=unitOpId,
-            own_data=own_data,
+            'state', 'nStates', 'getLastUnitState', unitOpId=unitOpId, own_data=own_data
         )
 
-    def last_state_ydot_unit(self, unitOpId: int, own_data=True):
+    def last_state_ydot_unit(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the last state of a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The time derivative data.
+        """
         return self._load_and_process_array(
             'state',
             'nStates',
             'getLastUnitStateTimeDerivative',
             unitOpId=unitOpId,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def last_state_sens(self, sensIdx: int, own_data=True):
+    def last_state_sens(
+            self,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the last sensitivity state for a given sensitivity index.
+
+        Parameters
+        ----------
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The sensitivity state data.
+        """
         return self._load_and_process_array(
             'state',
             'nStates',
             'getLastSensitivityState',
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def last_state_sensdot(self, sensIdx: int, own_data=True):
+    def last_state_sensdot(
+            self,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the last sensitivity state for a given sensitivity index.
+
+        Parameters
+        ----------
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The sensitivity state time derivative data.
+        """
         return self._load_and_process_array(
             'state',
             'nStates',
             'getLastSensitivityStateTimeDerivative',
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def last_state_sens_unit(self, unitOpId: int, sensIdx: int, own_data=True):
+    def last_state_sens_unit(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the last sensitivity state for a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity state.
+        """
         return self._load_and_process(
             'getLastSensitivityUnitState',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def last_state_sensdot_unit(self, unitOpId: int, sensIdx: int, own_data=True):
+    def last_state_sensdot_unit(
+            self,
+            unitOpId: int,
+            sensIdx: int,
+            own_data: bool = True,
+            ) -> tuple[numpy.ndarray, numpy.ndarray, list[str]]:
+        """
+        Load the time derivative of the last sensitivity state for a given unit operation and sensitivity index.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        sensIdx : int
+            The sensitivity index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        tuple[numpy.ndarray, numpy.ndarray, list[str]]
+            The time, data, and dimensions of the sensitivity state time derivative.
+        """
         return self._load_and_process(
             'getLastSensitivityUnitStateTimeDerivative',
             unitOpId=unitOpId,
             sensIdx=sensIdx,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def primary_coordinates(self, unitOpId: int, own_data=True):
+    def primary_coordinates(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> numpy.ndarray:
+        """
+        Load the primary coordinates for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The primary coordinates.
+        """
         return self._load_and_process_array(
             'coords',
             'nCoords',
             'getPrimaryCoordinates',
             unitOpId=unitOpId,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def secondary_coordinates(self, unitOpId: int, own_data=True):
+    def secondary_coordinates(
+            self,
+            unitOpId: int,
+            own_data: bool = True,
+            ) -> numpy.ndarray:
+        """
+        Load the secondary coordinates for a given unit operation.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The secondary coordinates.
+        """
         return self._load_and_process_array(
             'coords',
             'nCoords',
             'getSecondaryCoordinates',
             unitOpId=unitOpId,
-            own_data=own_data,
+            own_data=own_data
         )
 
-    def particle_coordinates(self, unitOpId: int, parType: int, own_data=True):
+    def particle_coordinates(
+            self,
+            unitOpId: int,
+            parType: int,
+            own_data: bool = True,
+            ) -> numpy.ndarray:
+        """
+        Load the particle coordinates for a given unit operation and particle type.
+
+        Parameters
+        ----------
+        unitOpId : int
+            The unit operation ID.
+        parType : int
+            The particle type index.
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The particle coordinates.
+        """
         return self._load_and_process_array(
             'coords',
             'nCoords',
             'getParticleCoordinates',
             unitOpId=unitOpId,
-            parType=parType,
-            own_data=own_data,
+            parType=parType, own_data=own_data
         )
 
-    def solution_times(self, own_data=True):
+    def solution_times(
+            self,
+            own_data: bool = True,
+            ) -> numpy.ndarray:
+        """
+        Load the solution times from the simulation.
+
+        Parameters
+        ----------
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        numpy.ndarray
+            The solution times.
+        """
         return self._load_and_process_array(
-            'time',
-            'nTime',
-            'getSolutionTimes',
-            own_data=own_data
+            'time', 'nTime', 'getSolutionTimes', own_data=own_data
         )
 
 
-class CadetDLL:
+class CadetDLLRunner(CadetRunnerBase):
+    """
+    Runner for CADET simulations using a DLL-based interface.
 
-    def __init__(self, dll_path):
-        self.cadet_path = dll_path
+    This class loads and interacts with the CADET DLL, providing methods for running
+    simulations and loading results.
+    """
+
+    def __init__(self, dll_path: os.PathLike) -> None:
+        """
+        Initialize the CadetDLLRunner.
+
+        Parameters
+        ----------
+        dll_path : os.PathLike or str
+            Path to the CADET DLL.
+        """
+        self.cadet_path = Path(dll_path)
         self._lib = ctypes.cdll.LoadLibrary(dll_path)
 
         # Query meta information
@@ -679,28 +1636,63 @@ class CadetDLL:
         cdtGetAPIv010000(ctypes.byref(self._api))
 
         self._driver = self._api.createDriver()
-        self.res = None
+        self.res: Optional[SimulationResult] = None
 
-    def clear(self):
+    def clear(self) -> None:
+        """
+        Clear the current simulation state.
+
+        This method deletes the current simulation results and resets the driver.
+        """
         if hasattr(self, "res"):
             del self.res
+
         self._api.deleteDriver(self._driver)
         self._driver = self._api.createDriver()
 
-    def __del__(self):
+    def __del__(self) -> None:
+        """
+        Clean up the CADET driver on object deletion.
+        """
         log_print('deleteDriver()')
         self._api.deleteDriver(self._driver)
 
-    def run(self, filename=None, simulation=None, timeout=None, check=None):
+    def run(
+            self,
+            simulation: Optional["Cadet"] = None,
+            timeout: Optional[int] = None,
+            ) -> SimulationResult:
+        """
+        Run a CADET simulation using the DLL interface.
+
+        Parameters
+        ----------
+        simulation : Optional[Cadet]
+            Simulation object containing input data.
+        timeout : Optional[int]
+            Maximum time allowed for the simulation to run, in seconds.
+
+        Returns
+        -------
+        SimulationResult
+            The simulation result object.
+        """
         pp = cadet_dll_parameterprovider.PARAMETERPROVIDER(simulation)
 
         self._api.runSimulation(self._driver, ctypes.byref(pp))
         self.res = SimulationResult(self._api, self._driver)
 
-        # TODO: Return if simulation was successful or crashed
         return self.res
 
-    def load_results(self, sim):
+    def load_results(self, sim: "Cadet") -> None:
+        """
+        Load the simulation results into the provided simulation object.
+
+        Parameters
+        ----------
+        sim : Cadet
+            The simulation object where results will be loaded.
+        """
         if self.res is None:
             return
 
@@ -718,10 +1710,9 @@ class CadetDLL:
         if write_solution_times:
             sim.root.output.solution.solution_times = self.res.solution_times()
 
-    def load_coordinates(self, sim):
+    def load_coordinates(self, sim: "Cadet") -> None:
         """Load coordinates data from simulation results."""
         coordinates = addict.Dict()
-        # TODO: Use n_units from API?
         for unit in range(sim.root.input.model.nunits):
             unit_index = self._get_index_string('unit', unit)
             write_coordinates = sim.root.input['return'][unit_index].get('write_coordinates', 0)
@@ -744,10 +1735,9 @@ class CadetDLL:
         if len(coordinates) > 0:
             sim.root.output.coordinates = coordinates
 
-    def load_solution(self, sim):
+    def load_solution(self, sim: "Cadet") -> addict.Dict:
         """Load solution data from simulation results."""
         solution = addict.Dict()
-        # TODO: Use n_units from API?
         for unit in range(sim.root.input.model.nunits):
             unit_index = self._get_index_string('unit', unit)
             unit_solution = addict.Dict()
@@ -771,12 +1761,12 @@ class CadetDLL:
             if len(unit_solution) > 1:
                 solution[unit_index].update(unit_solution)
 
-        if len(unit_solution) > 1:
+        if len(solution) > 1:
             sim.root.output.solution.update(solution)
 
         return solution
 
-    def load_sensitivity(self, sim):
+    def load_sensitivity(self, sim: "Cadet") -> None:
         """Load sensitivity data from simulation results."""
         sensitivity = addict.Dict()
         nsens = sim.root.input.sensitivity.get('nsens', 0)
@@ -838,15 +1828,13 @@ class CadetDLL:
         if len(sensitivity) > 0:
             sim.root.output.sensitivity = sensitivity
 
-    def load_state(self, sim):
+    def load_state(self, sim: "Cadet") -> None:
         """Load last state from simulation results."""
-        # System state
         write_solution_last = sim.root.input['return'].get('write_solution_last', 0)
         if write_solution_last:
             sim.root.output['last_state_y'] = self.res.last_state_y()
             sim.root.output['last_state_ydot'] = self.res.last_state_ydot()
 
-        # System sensitivities
         write_sens_last = sim.root.input['return'].get('write_sens_last', 0)
         if write_sens_last:
             for idx in range(self.res.nsensitivities()):
@@ -855,8 +1843,6 @@ class CadetDLL:
                 idx_str_ydot = self._get_index_string('last_state_sensydot', idx)
                 sim.root.output[idx_str_ydot] = self.res.last_state_sensdot(idx)
 
-
-        # TODO: Use n_units from API?
         solution = sim.root.output.solution
         for unit in range(sim.root.input.model.nunits):
             unit_index = self._get_index_string('unit', unit)
@@ -867,23 +1853,22 @@ class CadetDLL:
                 soldot_last_unit = self.res.last_state_ydot_unit(unit)
                 solution[unit_index]['last_state_ydot'] = soldot_last_unit
 
+    @staticmethod
+    def _get_index_string(prefix: str, index: int) -> str:
+        """Get a formatted string index (e.g., ('unit', 0) -> 'unit_000')."""
+        return f'{prefix}_{index:03d}'
+
     def _checks_if_write_is_true(func):
         """Decorator to check if unit operation solution should be written out."""
         def wrapper(self, sim, unitOpId, solution_str, *args, **kwargs):
             unit_index = self._get_index_string('unit', unitOpId)
-
             write = sim.root.input['return'][unit_index].get(f'write_{solution_str}', 0)
-
             if not write:
                 return {}
-
             solution = func(self, sim, unitOpId, solution_str, *args, **kwargs)
-
             if solution is None:
                 return {}
-
             return solution
-
         return wrapper
 
     def _loads_data(func):
@@ -894,28 +1879,39 @@ class CadetDLL:
                 data = solution_fun(unitOpId)
             else:
                 data = solution_fun(unitOpId, sensIdx)
-
             if data is None:
                 return
-
             solution = func(self, sim, data, unitOpId, solution_str, *args, **kwargs)
-
             return solution
-
         return wrapper
 
     @_checks_if_write_is_true
     @_loads_data
-    def _load_solution_trivial(self, sim, data, unitOpId, solution_str, sensIdx=None):
+    def _load_solution_trivial(
+            self,
+            sim: "Cadet",
+            data: tuple[numpy.ndarray, numpy.ndarray, list[int]],
+            unitOpId: int,
+            solution_str: str,
+            sensIdx: Optional[int] = None
+            ) -> addict.Dict:
+        """Load trivial solution data from simulation results."""
         solution = addict.Dict()
         _, out, _ = data
         solution[solution_str] = out
-
         return solution
 
     @_checks_if_write_is_true
     @_loads_data
-    def _load_solution_io(self, sim, data, unitOpId, solution_str, sensIdx=None):
+    def _load_solution_io(
+            self,
+            sim: "Cadet",
+            data: tuple[numpy.ndarray, numpy.ndarray, list[int]],
+            unitOpId: int,
+            solution_str: str,
+            sensIdx: Optional[int] = None
+            ) -> addict.Dict:
+        """Load IO-related solution data from simulation results."""
         solution = addict.Dict()
         _, out, dims = data
 
@@ -972,7 +1968,14 @@ class CadetDLL:
         return solution
 
     @_checks_if_write_is_true
-    def _load_solution_particle(self, sim, unitOpId, solution_str, sensIdx=None):
+    def _load_solution_particle(
+            self,
+            sim: "Cadet",
+            unitOpId: int,
+            solution_str: str,
+            sensIdx: Optional[int] = None
+            ) -> addict.Dict:
+        """Load particle-related solution data from simulation results."""
         solution = addict.Dict()
         solution_fun = getattr(self.res, solution_str)
 
@@ -996,7 +1999,7 @@ class CadetDLL:
                 solution[f'{solution_str}_{par_index}'] = out
 
         if len(solution) == 0:
-            return
+            return addict.Dict()
 
         return solution
 
