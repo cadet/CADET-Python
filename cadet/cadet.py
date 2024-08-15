@@ -4,8 +4,9 @@ import subprocess
 import warnings
 from pathlib import Path
 
-from cadet.cadet_dll import CadetDLL
 from cadet.h5 import H5
+from cadet.runner import CadetRunnerBase, CadetFileRunner
+from cadet.cadet_dll import CadetDLLRunner
 
 
 def is_dll(value):
@@ -36,10 +37,10 @@ class CadetMeta(type):
             del cls._cadet_runner_class
 
         if is_dll(value):
-            cls._cadet_runner_class = CadetDLL(value)
+            cls._cadet_runner_class = CadetDLLRunner(value)
             cls._is_file_class = False
         else:
-            cls._cadet_runner_class = CadetFile(value)
+            cls._cadet_runner_class = CadetFileRunner(value)
             cls._is_file_class = True
 
     @cadet_path.deleter
@@ -92,10 +93,10 @@ class Cadet(H5, metaclass=CadetMeta):
             del self._cadet_runner
 
         if is_dll(value):
-            self._cadet_runner = CadetDLL(value)
+            self._cadet_runner = CadetDLLRunner(value)
             self._is_file = False
         else:
-            self._cadet_runner = CadetFile(value)
+            self._cadet_runner = CadetFileRunner(value)
             self._is_file = True
 
     @cadet_path.deleter
@@ -259,22 +260,3 @@ class Cadet(H5, metaclass=CadetMeta):
         runner = self.cadet_runner
         if runner is not None:
             runner.clear()
-
-
-class CadetFile:
-
-    def __init__(self, cadet_path):
-        self.cadet_path = cadet_path
-
-    def run(self, filename=None, simulation=None, timeout=None, check=None):
-        if filename is not None:
-            data = subprocess.run([self.cadet_path, filename], timeout=timeout, check=check, capture_output=True)
-            return data
-        else:
-            print("Filename must be set before run can be used")
-
-    def clear(self):
-        pass
-
-    def load_results(self, sim):
-        sim.load(paths=["/meta", "/output"], update=True)
