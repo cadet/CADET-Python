@@ -1,16 +1,36 @@
 import ctypes
-import numpy
+import numpy as np
+from typing import Any, Optional
 
-def null(*args):
+
+def null(*args: Any) -> None:
+    """Do nothing (used as a placeholder function)."""
     pass
 
-if 0:
-    log_print = print
-else:
-    log_print = null
+log_print = print if 0 else null
 
+def param_provider_get_double(
+        reader: Any,
+        name: ctypes.c_char_p,
+        val: ctypes.POINTER(ctypes.c_double)
+        ) -> int:
+    """
+    Retrieve a double value from the reader based on the provided name.
 
-def param_provider_get_double(reader, name, val):
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    val : ctypes.POINTER(ctypes.c_double)
+        A pointer to store the retrieved double value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -22,14 +42,34 @@ def param_provider_get_double(reader, name, val):
             float_val = float(o[0])
 
         val[0] = ctypes.c_double(float_val)
-
-        log_print('GET scalar [double] {}: {}'.format(n, float(val[0])))
+        log_print(f"GET scalar [double] {n}: {float(val[0])}")
         return 0
 
     return -1
 
 
-def param_provider_get_int(reader, name, val):
+def param_provider_get_int(
+        reader: Any,
+        name: ctypes.c_char_p,
+        val: ctypes.POINTER(ctypes.c_int)
+        ) -> int:
+    """
+    Retrieve an integer value from the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    val : ctypes.POINTER(ctypes.c_int)
+        A pointer to store the retrieved integer value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -41,41 +81,79 @@ def param_provider_get_int(reader, name, val):
             int_val = int(o[0])
 
         val[0] = ctypes.c_int(int_val)
-
-        log_print('GET scalar [int] {}: {}'.format(n, int(val[0])))
+        log_print(f"GET scalar [int] {n}: {int(val[0])}")
         return 0
 
     return -1
 
 
-def param_provider_get_bool(reader, name, val):
+def param_provider_get_bool(
+        reader: Any,
+        name: ctypes.c_char_p,
+        val: ctypes.POINTER(ctypes.c_uint8)
+        ) -> int:
+    """
+    Retrieve a boolean value from the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    val : ctypes.POINTER(ctypes.c_uint8)
+        A pointer to store the retrieved boolean value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
     if n in c:
         o = c[n]
-
         try:
             int_val = int(o)
         except TypeError:
             int_val = int(o[0])
 
         val[0] = ctypes.c_uint8(int_val)
-
-        log_print('GET scalar [bool] {}: {}'.format(n, bool(val[0])))
+        log_print(f"GET scalar [bool] {n}: {bool(val[0])}")
         return 0
 
     return -1
 
 
-def param_provider_get_string(reader, name, val):
+def param_provider_get_string(
+        reader: Any,
+        name: ctypes.c_char_p,
+        val: ctypes.POINTER(ctypes.c_char_p)
+        ) -> int:
+    """
+    Retrieve a string value from the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    val : ctypes.POINTER(ctypes.c_char_p)
+        A pointer to store the retrieved string value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
     if n in c:
         o = c[n]
 
-        #we have one of array of strings, array of bytestrings, bytestring or string or something convertable to one of these
         if hasattr(o, 'encode'):
             bytes_val = o.encode('utf-8')
         elif hasattr(o, 'decode'):
@@ -87,51 +165,121 @@ def param_provider_get_string(reader, name, val):
 
         reader.buffer = bytes_val
         val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
-
         return 0
 
     return -1
 
 
-def param_provider_get_double_array(reader, name, n_elem, val):
+def param_provider_get_double_array(
+        reader: Any,
+        name: ctypes.c_char_p,
+        n_elem: ctypes.POINTER(ctypes.c_int),
+        val: ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+        ) -> int:
+    """
+    Retrieve a double array from the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    n_elem : ctypes.POINTER(ctypes.c_int)
+        A pointer to store the number of elements in the array.
+    val : ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+        A pointer to store the retrieved array.
+
+    Returns
+    -------
+    int
+        0 if the array was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
-    if (n in c):
+    if n in c:
         o = c[n]
         if isinstance(o, list):
-            o = numpy.ascontiguousarray(o)
-        if (not isinstance(o, numpy.ndarray)) or (o.dtype != numpy.double) or (not o.flags.c_contiguous):
+            o = np.ascontiguousarray(o)
+        if not isinstance(o, np.ndarray) or o.dtype != np.double or not o.flags.c_contiguous:
             return -1
 
         n_elem[0] = ctypes.c_int(o.size)
         val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-        log_print('GET array [double] {}: {}'.format(n, o))
+        log_print(f"GET array [double] {n}: {o}")
         return 0
 
     return -1
 
 
-def param_provider_get_int_array(reader, name, n_elem, val):
+def param_provider_get_int_array(
+        reader: Any,
+        name: ctypes.c_char_p,
+        n_elem: ctypes.POINTER(ctypes.c_int),
+        val: ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
+        ) -> int:
+    """
+    Retrieve an integer array from the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    n_elem : ctypes.POINTER(ctypes.c_int)
+        A pointer to store the number of elements in the array.
+    val : ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
+        A pointer to store the retrieved array.
+
+    Returns
+    -------
+    int
+        0 if the array was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
-    if (n in c):
+    if n in c:
         o = c[n]
         if isinstance(o, list):
-            o = numpy.ascontiguousarray(o)
-        if (not isinstance(o, numpy.ndarray)) or (o.dtype != int) or (not o.flags.c_contiguous):
+            o = np.ascontiguousarray(o)
+        if not isinstance(o, np.ndarray) or o.dtype != int or not o.flags.c_contiguous:
             return -1
 
         n_elem[0] = ctypes.c_int(o.size)
         val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-        log_print('GET array [int] {}: {}'.format(n, o))
+        log_print(f"GET array [int] {n}: {o}")
         return 0
 
     return -1
 
 
-def param_provider_get_double_array_item(reader, name, index, val):
+def param_provider_get_double_array_item(
+        reader: Any,
+        name: ctypes.c_char_p,
+        index: int, val: ctypes.POINTER(ctypes.c_double)
+        ) -> int:
+    """
+    Retrieve an item from a double array in the reader based on the provided name and index.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    index : int
+        The index of the array item to retrieve.
+    val : ctypes.POINTER(ctypes.c_double)
+        A pointer to store the retrieved double value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -144,13 +292,36 @@ def param_provider_get_double_array_item(reader, name, index, val):
             float_val = float(o[index])
 
         val[0] = ctypes.c_double(float_val)
-        log_print('GET array [double] ({}) {}: {}'.format(index, n, val[0]))
+        log_print(f"GET array [double] ({index}) {n}: {val[0]}")
         return 0
 
     return -1
 
 
-def param_provider_get_int_array_item(reader, name, index, val):
+def param_provider_get_int_array_item(
+        reader: Any,
+        name: ctypes.c_char_p,
+        index: int, val: ctypes.POINTER(ctypes.c_int)
+        ) -> int:
+    """
+    Retrieve an item from an integer array in the reader based on the provided name and index.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    index : int
+        The index of the array item to retrieve.
+    val : ctypes.POINTER(ctypes.c_int)
+        A pointer to store the retrieved integer value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -163,13 +334,36 @@ def param_provider_get_int_array_item(reader, name, index, val):
             int_val = int(o[index])
 
         val[0] = ctypes.c_int(int_val)
-        log_print('GET array [int] ({}) {}: {}'.format(index, n, val[0]))
+        log_print(f"GET array [int] ({index}) {n}: {val[0]}")
         return 0
 
     return -1
 
 
-def param_provider_get_bool_array_item(reader, name, index, val):
+def param_provider_get_bool_array_item(
+        reader: Any,
+        name: ctypes.c_char_p,
+        index: int, val: ctypes.POINTER(ctypes.c_uint8)
+        ) -> int:
+    """
+    Retrieve an item from a boolean array in the reader based on the provided name and index.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    index : int
+        The index of the array item to retrieve.
+    val : ctypes.POINTER(ctypes.c_uint8)
+        A pointer to store the retrieved boolean value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -182,18 +376,41 @@ def param_provider_get_bool_array_item(reader, name, index, val):
             int_val = int(o[index])
 
         val[0] = ctypes.c_uint8(int_val)
-        log_print('GET array [bool] ({}) {}: {}'.format(index, n, bool(val[0])))
+        log_print(f"GET array [bool] ({index}) {n}: {bool(val[0])}")
         return 0
 
     return -1
 
 
-def param_provider_get_string_array_item(reader, name, index, val):
-    name = name.decode('utf-8')
+def param_provider_get_string_array_item(
+        reader: Any,
+        name: ctypes.c_char_p,
+        index: int, val: ctypes.POINTER(ctypes.c_char_p)
+        ) -> int:
+    """
+    Retrieve an item from a string array in the reader based on the provided name and index.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to retrieve.
+    index : int
+        The index of the array item to retrieve.
+    val : ctypes.POINTER(ctypes.c_char_p)
+        A pointer to store the retrieved string value.
+
+    Returns
+    -------
+    int
+        0 if the value was found and retrieved successfully, -1 otherwise.
+    """
+    name_str = name.decode('utf-8')
     current_reader = reader.current()
 
-    if name in current_reader:
-        str_value = current_reader[name]
+    if name_str in current_reader:
+        str_value = current_reader[name_str]
         if isinstance(str_value, bytes):
             bytes_val = str_value
         else:
@@ -201,26 +418,61 @@ def param_provider_get_string_array_item(reader, name, index, val):
 
         reader.buffer = bytes_val
         val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
-        log_print(f"GET array [string] ({index}) {name}: {reader.buffer.decode('utf-8')}")
-
+        log_print(f"GET array [string] ({index}) {name_str}: {reader.buffer.decode('utf-8')}")
         return 0
 
     return -1
 
 
-def param_provider_exists(reader, name):
+def param_provider_exists(
+        reader: Any,
+        name: ctypes.c_char_p
+        ) -> int:
+    """
+    Check if a given parameter name exists in the reader.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to check.
+
+    Returns
+    -------
+    int
+        1 if the name exists, 0 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
-    log_print('EXISTS {}: {}'.format(n, n in c))
+    log_print(f"EXISTS {n}: {n in c}")
 
-    if n in c:
-        return 1
-
-    return 0
+    return 1 if n in c else 0
 
 
-def param_provider_is_array(reader, name, res):
+def param_provider_is_array(
+        reader: Any,
+        name: ctypes.c_char_p,
+        res: ctypes.POINTER(ctypes.c_uint8)
+        ) -> int:
+    """
+    Check if a given parameter is an array.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to check.
+    res : ctypes.POINTER(ctypes.c_uint8)
+        A pointer to store the result (1 if the parameter is an array, 0 otherwise).
+
+    Returns
+    -------
+    int
+        0 if the check was successful, -1 if the parameter does not exist.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -228,18 +480,31 @@ def param_provider_is_array(reader, name, res):
         return -1
 
     o = c[n]
-    res[0] = ctypes.c_uint8(0)
-    if isinstance(o, list):
-        res[0] = ctypes.c_uint8(1)
-    elif isinstance(o, numpy.ndarray):
-        res[0] = ctypes.c_uint8(1)
-
-    log_print('ISARRAY {}: {}'.format(n, bool(res[0])))
+    res[0] = ctypes.c_uint8(1 if isinstance(o, (list, np.ndarray)) else 0)
+    log_print(f"ISARRAY {n}: {bool(res[0])}")
 
     return 0
 
 
-def param_provider_num_elements(reader, name):
+def param_provider_num_elements(
+        reader: Any,
+        name: ctypes.c_char_p
+        ) -> int:
+    """
+    Get the number of elements in a given parameter if it is an array.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the parameter to check.
+
+    Returns
+    -------
+    int
+        The number of elements if the parameter is an array, 1 otherwise.
+    """
     n = name.decode('utf-8')
     c = reader.current()
 
@@ -248,24 +513,56 @@ def param_provider_num_elements(reader, name):
 
     o = c[n]
     if isinstance(o, list):
-        log_print('NUMELEMENTS {}: {}'.format(n, len(o)))
+        log_print(f"NUMELEMENTS {n}: {len(o)}")
         return len(o)
-    elif isinstance(o, numpy.ndarray):
-        log_print('NUMELEMENTS {}: {}'.format(n, o.size))
+    elif isinstance(o, np.ndarray):
+        log_print(f"NUMELEMENTS {n}: {o.size}")
         return o.size
 
-    log_print('NUMELEMENTS {}: {}'.format(n, 1))
+    log_print(f"NUMELEMENTS {n}: 1")
     return 1
 
-def param_provider_push_scope(reader, name):
-	n = name.decode('utf-8')
 
-	if reader.push_scope(n):
-		return 0
-	else:
-		return -1
+def param_provider_push_scope(
+        reader: Any,
+        name: ctypes.c_char_p
+        ) -> int:
+    """
+    Push a new scope in the reader based on the provided name.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+    name : ctypes.c_char_p
+        The name of the scope to push.
+
+    Returns
+    -------
+    int
+        0 if the scope was successfully pushed, -1 otherwise.
+    """
+    n = name.decode('utf-8')
+
+    if reader.push_scope(n):
+        return 0
+    else:
+        return -1
 
 
-def param_provider_pop_scope(reader):
-	reader.pop_scope()
-	return 0
+def param_provider_pop_scope(reader: Any) -> int:
+    """
+    Pop the current scope from the reader.
+
+    Parameters
+    ----------
+    reader : Any
+        The reader object containing the current data scope.
+
+    Returns
+    -------
+    int
+        0 if the scope was successfully popped.
+    """
+    reader.pop_scope()
+    return 0
