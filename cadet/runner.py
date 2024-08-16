@@ -80,7 +80,7 @@ class CadetFileRunner(CadetRunnerBase):
             self,
             simulation: "Cadet",
             timeout: Optional[int] = None,
-            ) -> bool:
+            ) -> None:
         """
         Run a CADET simulation using the CLI executable.
 
@@ -90,11 +90,6 @@ class CadetFileRunner(CadetRunnerBase):
             Not used in this runner.
         timeout : Optional[int]
             Maximum time allowed for the simulation to run, in seconds.
-
-        Returns
-        -------
-        bool
-            True if the simulation ran successfully, False otherwise.
 
         Raises
         ------
@@ -115,7 +110,7 @@ class CadetFileRunner(CadetRunnerBase):
                 f"Simulation failed with error: {data.stderr.decode('utf-8')}"
             )
 
-        return True
+        return
 
     def clear(self) -> None:
         """

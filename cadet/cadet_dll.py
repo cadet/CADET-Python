@@ -1,4 +1,5 @@
 import ctypes
+import io
 import os
 from pathlib import Path
 from typing import Any, Optional
@@ -9,46 +10,6 @@ import numpy
 from cadet.runner import CadetRunnerBase
 import cadet.cadet_dll_parameterprovider as cadet_dll_parameterprovider
 
-
-def log_handler(
-        file: bytes,
-        func: bytes,
-        line: int,
-        level: int,
-        level_name: bytes,
-        message: bytes
-        ) -> None:
-    """
-    Log handler for the CADET DLL.
-
-    Parameters
-    ----------
-    file : bytes
-        The file name where the log originates.
-    func : bytes
-        The function name where the log originates.
-    line : int
-        The line number of the log.
-    level : int
-        The log level.
-    level_name : bytes
-        The name of the log level.
-    message : bytes
-        The log message.
-    """
-    log_print(
-        f"{level_name.decode('utf-8')} "
-        f"({func.decode('utf-8')}:{line}) {message.decode('utf-8')}"
-    )
-
-
-def _no_log_output(*args: Any) -> None:
-    """Disable log output by doing nothing."""
-    pass
-
-
-enable_logging = False
-log_print = print if enable_logging else _no_log_output
 
 # Common types for ctypes function signatures
 CadetDriver = ctypes.c_void_p
@@ -1605,27 +1566,27 @@ class CadetDLLRunner(CadetRunnerBase):
         cdtGetLibraryBuildType.restype = ctypes.c_char_p
         self.cadet_build_type = cdtGetLibraryBuildType().decode('utf-8')
 
-        # Enable logging
-        LOG_HANDLER_CLBK = ctypes.CFUNCTYPE(
+        # Define the log handler callback type
+        self.LOG_HANDLER_CLBK = ctypes.CFUNCTYPE(
             None,
-            ctypes.c_char_p,
-            ctypes.c_char_p,
-            ctypes.c_uint,
-            ctypes.c_int,
-            ctypes.c_char_p,
-            ctypes.c_char_p
+            ctypes.c_char_p,  # file
+            ctypes.c_char_p,  # func
+            ctypes.c_uint,    # line
+            ctypes.c_int,     # level
+            ctypes.c_char_p,  # level_name
+            ctypes.c_char_p   # message
         )
-        set_log_handler = self._lib.cdtSetLogReceiver
-        set_log_handler.argtypes = [LOG_HANDLER_CLBK]
-        set_log_handler.restype = None
-        # Keep reference alive by assigning it to this Python object
-        self._log_handler = LOG_HANDLER_CLBK(log_handler)
-        set_log_handler(self._log_handler)
+
+        # Set up the C functions for setting the log handler and log level
+        self._set_log_handler = self._lib.cdtSetLogReceiver
+        self._set_log_handler.argtypes = [self.LOG_HANDLER_CLBK]
+        self._set_log_handler.restype = None
 
         self._set_log_level = self._lib.cdtSetLogLevel
         self._set_log_level.argtypes = [ctypes.c_int]
         self._set_log_level.restype = None
-        self._set_log_level(2)
+
+        self._default_log_level = 2
 
         # Query API
         cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
@@ -1654,14 +1615,48 @@ class CadetDLLRunner(CadetRunnerBase):
         """
         Clean up the CADET driver on object deletion.
         """
-        log_print('deleteDriver()')
         self._api.deleteDriver(self._driver)
+
+    def setup_log_buffer(self, log_level: int = None) -> io.StringIO:
+        """
+        Set up a new log buffer for capturing log output with the specified log level.
+
+        Parameters
+        ----------
+        log_level : int, optional
+            The desired log level. Defaults to the instance's default log level.
+
+        Returns
+        -------
+        log_buffer : io.StringIO
+            A new log buffer for capturing log output.
+        """
+        if log_level is None:
+            log_level = self._default_log_level
+
+        # Create a new log buffer
+        log_buffer = io.StringIO()
+
+        def log_handler(file, func, line, level, level_name, message):
+            """Logging callback function."""
+            msg = f"{level_name.decode('utf-8')} ({func.decode('utf-8')}:{line}) {message.decode('utf-8')}"
+            log_buffer.write(msg + "\n")  # Write to the instance's buffer
+
+        # Set up the logging callback
+        self._log_handler = self.LOG_HANDLER_CLBK(log_handler)
+        self._set_log_handler(self._log_handler)
+
+        # Set the log level
+        self._set_log_level(log_level)
+
+        # Return the log buffer so it can be accessed after the run
+        return log_buffer
 
     def run(
             self,
             simulation: Optional["Cadet"] = None,
             timeout: Optional[int] = None,
-            ) -> SimulationResult:
+            ) -> None:
         """
         Run a CADET simulation using the DLL interface.
 
@@ -1672,17 +1667,24 @@ class CadetDLLRunner(CadetRunnerBase):
         timeout : Optional[int]
             Maximum time allowed for the simulation to run, in seconds.
 
-        Returns
-        -------
-        SimulationResult
-            The simulation result object.
+        Raises
+        ------
+        RuntimeError
+            If the simulation process returns a non-zero exit code.
         """
         pp = cadet_dll_parameterprovider.PARAMETERPROVIDER(simulation)
 
-        self._api.runSimulation(self._driver, ctypes.byref(pp))
+        log_buffer = self.setup_log_buffer()
+
+        returncode = self._api.runSimulation(self._driver, ctypes.byref(pp))
+
+        if returncode != 0:
+            error_message = log_buffer.getvalue()
+            raise RuntimeError(f"Simulation failed with error: {error_message}")
+
         self.res = SimulationResult(self._api, self._driver)
 
-        return self.res
+        return
 
     def load_results(self, sim: "Cadet") -> None:
         """
