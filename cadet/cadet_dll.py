@@ -1616,7 +1616,7 @@ class CadetDLLRunner(CadetRunnerBase):
     simulations and loading results.
     """
 
-    def __init__(self, dll_path: os.PathLike) -> None:
+    def __init__(self, dll_path: os.PathLike | str) -> None:
         """
         Initialize the CadetDLLRunner.
 
@@ -1626,7 +1626,7 @@ class CadetDLLRunner(CadetRunnerBase):
             Path to the CADET DLL.
         """
         self.cadet_path = Path(dll_path)
-        self._lib = ctypes.cdll.LoadLibrary(dll_path)
+        self._lib = ctypes.cdll.LoadLibrary(self.cadet_path.as_posix())
 
         # Query meta information
         cdtGetLibraryVersion = self._lib.cdtGetLibraryVersion
