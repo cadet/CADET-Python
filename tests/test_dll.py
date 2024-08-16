@@ -88,14 +88,11 @@ def setup_model(
     sensitivity analysis, and writes the model to 'my_model.h5', using the command-line
     interface.
     """
-    executable = 'createLWE'
-    if platform.system() == 'Windows':
-        executable += '.exe'
 
-    create_lwe_path = Path(cadet_root) / 'bin' / executable
+    cadet_model = Cadet(install_path=cadet_root, use_dll=True)
 
     args = [
-        create_lwe_path.as_posix(),
+        cadet_model.cadet_create_lwe_path,
         f'--out {file_name}',
         f'--unit {model}',
         f'--parTypes {n_partypes}',
@@ -120,23 +117,10 @@ def setup_model(
             "Failure: Creation of test simulation ran into problems"
         )
 
-    model = Cadet()
-    # TODO: This should be simplified once #14 is merged.
-    if use_dll:
-        cadet_path = cadet_root / 'lib' / 'libcadet.so'
-        if not cadet_path.exists():
-            cadet_path = cadet_root / 'lib' / 'libcadet_d.so'
-    else:
-        cadet_path = cadet_root / 'bin' / 'cadet-cli'
+    cadet_model.filename = file_name
+    cadet_model.load()
 
-    if not cadet_path.exists():
-        raise FileNotFoundError("Could not find CADET at: {cadet_root}")
-
-    model.cadet_path = cadet_path
-    model.filename = file_name
-    model.load()
-
-    return model
+    return cadet_model
 
 
 def setup_solution_recorder(
