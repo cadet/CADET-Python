@@ -1,9 +1,29 @@
-from abc import ABC, abstractmethod
-import ctypes
 import os
-from pathlib import Path
+import pathlib
 import subprocess
-from typing import Optional, Any
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+
+@dataclass
+class ReturnInformation:
+    """
+    Class to store information about a CADET run return status.
+
+    Parameters
+    ----------
+    return_code : int
+        An integer representing the return code. 0 indicates success, non-zero values indicate errors.
+    error_message : str
+        A string containing the error message if an error occurred. Empty if no error.
+    log : str
+        A string containing log information.
+    """
+    return_code: int
+    error_message: str
+    log: str
 
 
 class CadetRunnerBase(ABC):
@@ -12,13 +32,14 @@ class CadetRunnerBase(ABC):
 
     Subclasses must implement the `run`, `clear`, and `load_results` methods.
     """
+    cadet_path: Optional[pathlib.Path] = None
 
     @abstractmethod
     def run(
             self,
             simulation: "Cadet",
             timeout: Optional[int] = None,
-            ) -> bool:
+    ) -> ReturnInformation:
         """
         Run a CADET simulation.
 
@@ -31,8 +52,8 @@ class CadetRunnerBase(ABC):
 
         Returns
         -------
-        bool
-            True, if simulation ran successfully, False otherwise.
+        ReturnInformation
+            Information about the simulation run.
         """
         pass
 
@@ -56,14 +77,14 @@ class CadetRunnerBase(ABC):
         pass
 
 
-class CadetFileRunner(CadetRunnerBase):
+class CadetCLIRunner(CadetRunnerBase):
     """
     File-based CADET runner.
 
     This class runs CADET simulations using a command-line interface (CLI) executable.
     """
 
-    def __init__(self, cadet_path: str) -> None:
+    def __init__(self, cadet_path: str | os.PathLike) -> None:
         """
         Initialize the CadetFileRunner.
 
@@ -80,7 +101,7 @@ class CadetFileRunner(CadetRunnerBase):
             self,
             simulation: "Cadet",
             timeout: Optional[int] = None,
-            ) -> None:
+    ) -> ReturnInformation:
         """
         Run a CADET simulation using the CLI executable.
 
@@ -95,6 +116,11 @@ class CadetFileRunner(CadetRunnerBase):
         ------
         RuntimeError
             If the simulation process returns a non-zero exit code.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
         """
         if simulation.filename is None:
             raise ValueError("Filename must be set before run can be used")
@@ -105,12 +131,13 @@ class CadetFileRunner(CadetRunnerBase):
             capture_output=True
         )
 
-        if data.returncode != 0:
-            raise RuntimeError(
-                f"Simulation failed with error: {data.stderr.decode('utf-8')}"
-            )
+        return_info = ReturnInformation(
+            return_code=data.returncode,
+            error_message=data.stderr.decode('utf-8'),
+            log=data.stdout.decode('utf-8')
+        )
 
-        return
+        return return_info
 
     def clear(self) -> None:
         """
