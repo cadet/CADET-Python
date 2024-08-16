@@ -7,7 +7,7 @@ from typing import Optional
 import warnings
 
 from cadet.h5 import H5
-from cadet.runner import CadetRunnerBase, CadetFileRunner
+from cadet.runner import CadetRunnerBase, CadetCLIRunner, ReturnInformation
 from cadet.cadet_dll import CadetDLLRunner
 
 
@@ -29,26 +29,87 @@ def is_dll(path: os.PathLike) -> bool:
     return suffix in {'.so', '.dll'}
 
 
+def install_path_to_cadet_paths(
+        install_path: Optional[os.PathLike],
+        ) -> tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]:
+    """
+    Get the correct paths (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
+     from the installation path of CADET. This is extracted into a function to be used
+     in both the meta class and the cadet class itself.
+
+    Parameters
+    ----------
+    install_path : Optional[os.PathLike]
+        Path to the root of the CADET installation or the executable file 'cadet-cli'.
+        If a file path is provided, the root directory will be inferred.
+
+    Returns
+    -------
+    tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]
+        Tuple with CADET installation paths
+        (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
+    """
+    if install_path is None:
+        return None, None, None, None
+
+    install_path = Path(install_path)
+
+    if install_path.is_file():
+        cadet_root = install_path.parent.parent
+        warnings.warn(
+            "The specified install_path is not the root of the CADET installation. "
+            "It has been inferred from the file path."
+        )
+    else:
+        cadet_root = install_path
+
+    root_path = cadet_root
+
+    cli_executable = 'cadet-cli'
+    lwe_executable = 'createLWE'
+
+    if platform.system() == 'Windows':
+        cli_executable += '.exe'
+        lwe_executable += '.exe'
+
+    cadet_cli_path = cadet_root / 'bin' / cli_executable
+    if cadet_cli_path.is_file():
+        cadet_cli_path = cadet_cli_path
+    else:
+        raise FileNotFoundError(
+            "CADET could not be found. Please check the path."
+        )
+
+    cadet_create_lwe_path = cadet_root / 'bin' / lwe_executable
+    if cadet_create_lwe_path.is_file():
+        cadet_create_lwe_path = cadet_create_lwe_path.as_posix()
+
+    if platform.system() == 'Windows':
+        dll_path = cadet_root / 'bin' / 'cadet.dll'
+        dll_debug_path = cadet_root / 'bin' / 'cadet_d.dll'
+    else:
+        dll_path = cadet_root / 'lib' / 'libcadet.so'
+        dll_debug_path = cadet_root / 'lib' / 'libcadet_d.so'
+
+    # Look for debug dll if dll is not found.
+    if not dll_path.is_file() and dll_debug_path.is_file():
+        dll_path = dll_debug_path
+
+    if dll_path.is_file():
+        cadet_dll_path = dll_path
+    else:
+        cadet_dll_path = None
+
+    return root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path
+
+
 class CadetMeta(type):
     """
     Meta class for the CADET interface.
 
     This meta class allows setting the `cadet_path` attribute for all instances of the
-    `Cadet` class. The `cadet_path` determines whether to use a DLL or file-based CADET
-    runner.
+    `Cadet` class.
     """
-
-    @property
-    def is_file(cls) -> bool:
-        """
-        Check if the current runner is file-based.
-
-        Returns
-        -------
-        bool
-            True if the current runner is file-based, False otherwise.
-        """
-        return bool(cls._is_file_class)
 
     @property
     def cadet_path(cls) -> Optional[Path]:
@@ -80,26 +141,21 @@ class CadetMeta(type):
         Otherwise, a `CadetFileRunner` runner is used.
         """
         cadet_path = Path(cadet_path)
-        if (
-                cls._cadet_runner_class is not None
-                and
-                cls._cadet_runner_class.cadet_path != cadet_path
-                ):
-            del cls._cadet_runner_class
 
-        if is_dll(cadet_path):
-            cls._cadet_runner_class = CadetDLLRunner(cadet_path)
-            cls._is_file_class = False
-        else:
-            cls._cadet_runner_class = CadetFileRunner(cadet_path)
-            cls._is_file_class = True
+        warnings.warn(
+            "Support for setting cadet.cadet_path will be removed in a future version. "
+            "TODO: What alternative should be used?",
+            DeprecationWarning
+        )
 
-    @cadet_path.deleter
-    def cadet_path(cls) -> None:
-        """
-        Delete the current CADET runner instance.
-        """
-        del cls._cadet_runner_class
+        cls.use_dll = cadet_path.suffix in [".dll", ".so"]
+
+        _install_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path = install_path_to_cadet_paths(cadet_path)
+
+        cls._install_path = _install_path
+        cls.cadet_create_lwe_path = cadet_create_lwe_path
+        cls.cadet_cli_path = cadet_cli_path
+        cls.cadet_dll_path = cadet_dll_path
 
 
 class Cadet(H5, metaclass=CadetMeta):
@@ -123,61 +179,92 @@ class Cadet(H5, metaclass=CadetMeta):
         Stores the information returned after a simulation run.
     """
 
-    def __init__(self, *data):
+    def __init__(self, install_path: Optional[Path] = None, use_dll: bool = False, *data):
         """
         Initialize a new instance of the Cadet class.
 
         Parameters
         ----------
         *data : tuple
-            Additional data to be passed to the base class.
+            Additional data to be passed to the H5 base class initialization.
         """
         super().__init__(*data)
-        self._cadet_runner: Optional[CadetRunnerBase] = None
-        self._is_file: Optional[bool] = None
-        self.install_path: Optional[Path] = None
-        self.cadet_cli_path: Optional[Path] = None
-        self.cadet_dll_path: Optional[Path] = None
+
+        # If _cadet_cli_runner_class has been set in the Meta Class, use them, else instantiate Nones
+        if hasattr(self, "cadet_cli_path") and self.cadet_cli_path is not None:
+            self._cadet_cli_runner: Optional[CadetCLIRunner] = CadetCLIRunner(
+                self.cadet_cli_path
+            )
+        else:
+            self.use_dll = use_dll
+
+        if hasattr(self, "cadet_dll_path") and self.cadet_dll_path is not None:
+            self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
+                self.cadet_dll_path
+            )
+        else:
+            self.use_dll = use_dll
+
         self.cadet_create_lwe_path: Optional[Path] = None
         self.return_information: Optional[dict] = None
 
+        # Regardless of settings in the Meta Class, if we get an install_path, we respect the install_path
+        if install_path is not None:
+            self.install_path = install_path  # This will overwrite _cadet_dll_runner and _cadet_cli_runner
+            return
+
+        # If _cadet_cli_runner_class has been set in the Meta Class, don't autodetect Cadet, just return
+        if self._cadet_cli_runner is not None:
+            return
+
+        # If neither Meta Class nor install_path are given: autodetect Cadet
+        self.install_path = self.autodetect_cadet()
+
     @property
-    def is_file(self) -> Optional[bool]:
+    def install_path(self) -> Optional[Path]:
         """
-        Check if the current runner is file-based.
+        Path to the installation of CADET.
 
         Returns
         -------
-        Optional[bool]
-            True if the runner is file-based, False otherwise. None if undetermined.
+        Optional[Path]
+            The root directory of the CADET installation or the path to 'cadet-cli'.
         """
-        if self._is_file is not None:
-            return bool(self._is_file)
-        if self._is_file_class is not None:
-            return bool(self._is_file_class)
-        return None
+        return self._install_path
+
+    @install_path.setter
+    def install_path(self, install_path: Optional[os.PathLike]) -> None:
+        """
+        Set the installation path of CADET.
+
+        Parameters
+        ----------
+        install_path : Optional[os.PathLike]
+            Path to the root of the CADET installation or the executable file 'cadet-cli'.
+            If a file path is provided, the root directory will be inferred.
+        """
+        if install_path is None:
+            self._install_path = None
+            self.cadet_cli_path = None
+            self.cadet_dll_path = None
+            self.cadet_create_lwe_path = None
+            return
+
+        root_path, cadet_cli_path, cadet_dll_path, create_lwe_path = install_path_to_cadet_paths(install_path)
+
+        self._install_path = root_path
+        self.cadet_cli_path = cadet_cli_path
+        self.cadet_dll_path = cadet_dll_path
+        self.cadet_create_lwe_path = create_lwe_path
+
+        if self.cadet_cli_path is not None:
+            self._cadet_cli_runner = CadetCLIRunner(self.cadet_cli_path)
+        if self.cadet_dll_path is not None:
+            self._cadet_dll_runner = CadetDLLRunner(self.cadet_dll_path)
+
 
     @property
-    def cadet_runner(self) -> CadetRunnerBase:
-        """
-        Get the current CADET runner instance.
-
-        Returns
-        -------
-        CadetRunnerBase
-            The current runner instance, either a DLL or file-based runner.
-        """
-        if self._cadet_runner is not None:
-            return self._cadet_runner
-        if hasattr(self, "_cadet_runner_class") and self._cadet_runner_class is not None:
-            return self._cadet_runner_class
-
-        self.autodetect_cadet()
-
-        return self._cadet_runner
-
-    @property
-    def cadet_path(self) -> Path:
+    def cadet_path(self) -> Optional[Path]:
         """
         Get the path to the current CADET executable or library.
 
@@ -208,24 +295,14 @@ class Cadet(H5, metaclass=CadetMeta):
         """
         cadet_path = Path(cadet_path)
 
-        if self._cadet_runner is not None and self._cadet_runner.cadet_path != cadet_path:
-            del self._cadet_runner
+        warnings.warn(
+            "Deprecation warning: Support for setting cadet.cadet_path will be removed in a future version.",
+            FutureWarning
+        )
+        self.install_path = cadet_path
 
-        if is_dll(cadet_path):
-            self._cadet_runner = CadetDLLRunner(cadet_path)
-            self._is_file = False
-        else:
-            self._cadet_runner = CadetFileRunner(cadet_path)
-            self._is_file = True
-
-    @cadet_path.deleter
-    def cadet_path(self) -> None:
-        """
-        Delete the current CADET runner instance.
-        """
-        del self._cadet_runner
-
-    def autodetect_cadet(self) -> Optional[Path]:
+    @staticmethod
+    def autodetect_cadet() -> Optional[Path]:
         """
         Autodetect the CADET installation path.
 
@@ -252,86 +329,84 @@ class Cadet(H5, metaclass=CadetMeta):
 
         cli_path = Path(path)
         cadet_root = cli_path.parent.parent if cli_path else None
-        if cadet_root:
-            self.install_path = cadet_root
 
         return cadet_root
 
     @property
-    def install_path(self) -> Optional[Path]:
+    def cadet_runner(self) -> CadetRunnerBase:
         """
-        Path to the installation of CADET.
+        Get the current CADET runner instance.
 
         Returns
         -------
-        Optional[Path]
-            The root directory of the CADET installation or the path to 'cadet-cli'.
+        Optional[CadetRunnerBase]
+            The current runner instance, either a DLL or file-based runner.
         """
-        return self._install_path
 
-    @install_path.setter
-    def install_path(self, install_path: Optional[os.PathLike]) -> None:
-        """
-        Set the installation path of CADET.
+        if self.use_dll and self.found_dll:
+            return self._cadet_dll_runner
+
+        if self.use_dll and not self.found_dll:
+            raise ValueError("Set Cadet to use_dll but no dll interface found.")
+
+        return self._cadet_cli_runner
+
+    def create_lwe(self, file_path=None):
+        """Create basic LWE example and loads the configuration into self.
 
         Parameters
         ----------
-        install_path : Path | os.PathLike | None
-            Path to the root of the CADET installation or the executable file 'cadet-cli'.
-            If a file path is provided, the root directory will be inferred.
+        file_path : Path, optional
+            Path to store HDF5 file. If None, temporary file will be created and
+            deleted after simulation.
+
         """
-        if install_path is None:
-            self._install_path = None
-            self.cadet_cli_path = None
-            self.cadet_dll_path = None
-            self.cadet_create_lwe_path = None
-            return
-
-        install_path = Path(install_path)
-
-        if install_path.is_file():
-            cadet_root = install_path.parent.parent
-            warnings.warn(
-                "The specified install_path is not the root of the CADET installation. "
-                "It has been inferred from the file path."
-            )
+        file_path_input = file_path
+        if file_path is None:
+            file_name = "LWE.h5"
+            cwd = os.getcwd()
+            file_path = Path(cwd) / file_name
         else:
-            cadet_root = install_path
+            file_path = Path(file_path).absolute()
+            file_name = file_path.name
+            cwd = file_path.parent.as_posix()
 
-        self._install_path = cadet_root
-
-        cli_executable = 'cadet-cli'
-        lwe_executable = 'createLWE'
-
-        if platform.system() == 'Windows':
-            cli_executable += '.exe'
-            lwe_executable += '.exe'
-
-        cadet_cli_path = cadet_root / 'bin' / cli_executable
-        if cadet_cli_path.is_file():
-            self.cadet_cli_path = cadet_cli_path
-            self.cadet_path = cadet_cli_path
-        else:
-            raise FileNotFoundError(
-                "CADET could not be found. Please check the path."
+        ret = subprocess.run(
+            [self.cadet_create_lwe_path, '-o', file_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd
+        )
+        if ret.returncode != 0:
+            if ret.stdout:
+                print('Output', ret.stdout.decode('utf-8'))
+            if ret.stderr:
+                print('Errors', ret.stderr.decode('utf-8'))
+            raise RuntimeError(
+                "Failure: Creation of test simulation ran into problems"
             )
 
-        cadet_create_lwe_path = cadet_root / 'bin' / lwe_executable
-        if cadet_create_lwe_path.is_file():
-            self.cadet_create_lwe_path = cadet_create_lwe_path.as_posix()
+        self.filename = file_path
 
-        if platform.system() == 'Windows':
-            dll_path = cadet_root / 'bin' / 'cadet.dll'
-            dll_debug_path = cadet_root / 'bin' / 'cadet_d.dll'
-        else:
-            dll_path = cadet_root / 'lib' / 'lib_cadet.so'
-            dll_debug_path = cadet_root / 'lib' / 'lib_cadet_d.so'
+        self.load()
 
-        if not dll_path.is_file() and dll_debug_path.is_file():
-            dll_path = dll_debug_path
+        if file_path_input is None:
+            os.remove(file_path)
 
-        if dll_path.is_file():
-            self.cadet_dll_path = dll_path.as_posix()
+        return self
+
+    @property
+    def found_dll(self):
+        """
+        Check if a DLL interface was found.
+
+        Returns
+        -------
+        bool
+            True if a cadet DLL interface was found.
+            False otherwise.
+        """
+        return self.cadet_dll_path is not None
 
     def transform(self, x: str) -> str:
         """
@@ -368,7 +443,7 @@ class Cadet(H5, metaclass=CadetMeta):
     def run(
             self,
             timeout: Optional[int] = None,
-            ) -> None:
+    ) -> ReturnInformation:
         """
         Run the CADET simulation.
 
@@ -376,17 +451,24 @@ class Cadet(H5, metaclass=CadetMeta):
         ----------
         timeout : Optional[int]
             Maximum time allowed for the simulation to run, in seconds.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
         """
-        self.cadet_runner.run(
+        return_information = self.cadet_runner.run(
             self,
             timeout=timeout,
         )
+
+        return return_information
 
     def run_load(
             self,
             timeout: Optional[int] = None,
             clear: bool = True
-            ) -> None:
+    ) -> ReturnInformation:
         """
         Run the CADET simulation and load the results.
 
@@ -396,12 +478,18 @@ class Cadet(H5, metaclass=CadetMeta):
             Maximum time allowed for the simulation to run, in seconds.
         clear : bool
             If True, clear previous results after loading new ones.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
         """
-        self.run(timeout)
+        return_information = self.run(timeout)
         self.load_results()
 
         if clear:
             self.clear()
+        return return_information
 
     def load_results(self) -> None:
         """Load the results of the last simulation run into the current instance."""
@@ -414,3 +502,9 @@ class Cadet(H5, metaclass=CadetMeta):
         runner = self.cadet_runner
         if runner is not None:
             runner.clear()
+
+    def __del__(self):
+        self.clear()
+        del self.cadet_runner
+
+        super().__del__()
