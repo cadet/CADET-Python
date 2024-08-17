@@ -29,7 +29,9 @@ def is_dll(path: os.PathLike) -> bool:
     return suffix in {'.so', '.dll'}
 
 
-def install_path_to_cadet_paths(install_path: Optional[os.PathLike]) -> (None, None, None, None):
+def install_path_to_cadet_paths(
+        install_path: Optional[os.PathLike],
+        ) -> tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]:
     """
     Get the correct paths (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
      from the installation path of CADET. This is extracted into a function to be used
@@ -37,24 +39,15 @@ def install_path_to_cadet_paths(install_path: Optional[os.PathLike]) -> (None, N
 
     Parameters
     ----------
-    install_path : Path | os.PathLike | None
+    install_path : Optional[os.PathLike]
         Path to the root of the CADET installation or the executable file 'cadet-cli'.
         If a file path is provided, the root directory will be inferred.
 
     Returns
     -------
-
-     root_path : Path | os.PathLike | None
-        Path to the root of the CADET installation.
-
-     cadet_cli_path : Path | os.PathLike | None
-        Path to the executable file `cadet-cli`
-
-     cadet_dll_path : Path | os.PathLike | None
-        Path to the library file `cadet.dll` or `cadet.so`
-
-     cadet_create_lwe_path : Path | os.PathLike | None
-        Path to the executable file `createLWE`
+    tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]
+        Tuple with CADET installation paths
+        (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
     """
     if install_path is None:
         return None, None, None, None
@@ -95,8 +88,8 @@ def install_path_to_cadet_paths(install_path: Optional[os.PathLike]) -> (None, N
         dll_path = cadet_root / 'bin' / 'cadet.dll'
         dll_debug_path = cadet_root / 'bin' / 'cadet_d.dll'
     else:
-        dll_path = cadet_root / 'lib' / 'lib_cadet.so'
-        dll_debug_path = cadet_root / 'lib' / 'lib_cadet_d.so'
+        dll_path = cadet_root / 'lib' / 'libcadet.so'
+        dll_debug_path = cadet_root / 'lib' / 'libcadet_d.so'
 
     # Look for debug dll if dll is not found.
     if not dll_path.is_file() and dll_debug_path.is_file():
@@ -192,7 +185,11 @@ class CadetMeta(type):
         """
         cadet_path = Path(cadet_path)
 
-        warnings.warn("Deprecation warning: Support for setting cadet.cadet_path will be removed in a future version.")
+        warnings.warn(
+            "Support for setting cadet.cadet_path will be removed in a future version. "
+            "TODO: What alternative should be used?",
+            DeprecationWarning
+        )
 
         cls.use_dll = cadet_path.suffix in [".dll", ".so"]
 
@@ -306,7 +303,7 @@ class Cadet(H5, metaclass=CadetMeta):
 
         Parameters
         ----------
-        install_path : Path | os.PathLike | None
+        install_path : Optional[os.PathLike]
             Path to the root of the CADET installation or the executable file 'cadet-cli'.
             If a file path is provided, the root directory will be inferred.
         """
@@ -324,8 +321,10 @@ class Cadet(H5, metaclass=CadetMeta):
         self.cadet_dll_path = cadet_dll_path
         self.cadet_create_lwe_path = create_lwe_path
 
-        self._cadet_dll_runner = CadetDLLRunner(self.cadet_dll_path)
-        self._cadet_cli_runner = CadetCLIRunner(self.cadet_cli_path)
+        if self.cadet_cli_path is not None:
+            self._cadet_cli_runner = CadetCLIRunner(self.cadet_cli_path)
+        if self.cadet_dll_path is not None:
+            self._cadet_dll_runner = CadetDLLRunner(self.cadet_dll_path)
 
 
     @property
