@@ -1794,7 +1794,7 @@ class CadetDLLRunner(CadetRunnerBase):
     def load_coordinates(self, sim: "Cadet") -> None:
         """Load coordinates data from simulation results."""
         coordinates = addict.Dict()
-        for unit in range(sim.root.input.model.nunits):
+        for unit in range(self.res.nunits()):
             unit_index = self._get_index_string('unit', unit)
             write_coordinates = sim.root.input['return'][unit_index].get('write_coordinates', 0)
             if write_coordinates:
@@ -1819,7 +1819,7 @@ class CadetDLLRunner(CadetRunnerBase):
     def load_solution(self, sim: "Cadet") -> addict.Dict:
         """Load solution data from simulation results."""
         solution = addict.Dict()
-        for unit in range(sim.root.input.model.nunits):
+        for unit in range(self.res.nunits()):
             unit_index = self._get_index_string('unit', unit)
             unit_solution = addict.Dict()
 
@@ -1855,7 +1855,7 @@ class CadetDLLRunner(CadetRunnerBase):
         for sens in range(nsens):
             sens_index = self._get_index_string('param', sens)
 
-            for unit in range(sim.root.input.model.nunits):
+            for unit in range(self.res.nunits()):
                 unit_sensitivity = addict.Dict()
                 unit_index = self._get_index_string('unit', unit)
 
@@ -1925,7 +1925,7 @@ class CadetDLLRunner(CadetRunnerBase):
                 sim.root.output[idx_str_ydot] = self.res.last_state_sensdot(idx)
 
         solution = sim.root.output.solution
-        for unit in range(sim.root.input.model.nunits):
+        for unit in range(self.res.nunits()):
             unit_index = self._get_index_string('unit', unit)
             write_solution_last = sim.root.input['return'][unit_index].get('write_solution_last_unit', 0)
             if write_solution_last:
