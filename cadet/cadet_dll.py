@@ -14,7 +14,9 @@ import cadet.cadet_dll_parameterprovider as cadet_dll_parameterprovider
 # Common types for ctypes function signatures
 CadetDriver = ctypes.c_void_p
 array_double = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+point_bool = ctypes.POINTER(ctypes.c_bool)
 point_int = ctypes.POINTER(ctypes.c_int)
+point_double = ctypes.POINTER(ctypes.c_double)
 
 # Values of cdtResult
 c_cadet_result = ctypes.c_int
@@ -41,43 +43,47 @@ class CADETAPIV010000_DATA:
     # API function signatures
     # Note, order is important, it has to match the cdtAPIv010000 struct of the C-API
     signatures = {}
+
+    signatures['getFileFormat'] = ('return', 'fileFormat')
+
     signatures['createDriver'] = ('drv',)
     signatures['deleteDriver'] = (None, 'drv')
     signatures['runSimulation'] = ('return', 'drv', 'parameterProvider')
 
+    signatures['getNumUnitOp'] = ('return', 'drv', 'nUnits')
     signatures['getNumParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
     signatures['getNumSensitivities'] = ('return', 'drv', 'nSens')
 
     signatures['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
     signatures['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
-    signatures['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp')
-    signatures['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound')
-    signatures['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp')
+    signatures['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
     signatures['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
     signatures['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
     signatures['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
-    signatures['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp')
-    signatures['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound')
-    signatures['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp')
+    signatures['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
     signatures['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
     signatures['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
     signatures['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
-    signatures['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp')
-    signatures['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound')
-    signatures['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp')
+    signatures['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
     signatures['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
     signatures['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
     signatures['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp')
-    signatures['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp')
-    signatures['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound')
-    signatures['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp')
+    signatures['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
     signatures['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
     signatures['getLastState'] = ('return', 'drv', 'state', 'nStates')
@@ -92,19 +98,18 @@ class CADETAPIV010000_DATA:
     signatures['getPrimaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
     signatures['getSecondaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
     signatures['getParticleCoordinates'] = ('return', 'drv', 'unitOpId', 'parType', 'coords', 'nCoords')
-
     signatures['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
+
+    signatures['getTimeSim'] = ('return', 'drv', 'timeSim')
 
     # Mappings for common ctypes parameters
     lookup_prototype = {
+        None: None,
         'return': c_cadet_result,
+        'fileFormat': point_int,
         'drv': CadetDriver,
-        'unitOpId': ctypes.c_int,
-        'sensIdx': ctypes.c_int,
-        'parType': ctypes.c_int,
-        'time': array_double,
-        'data': array_double,
-        'coords': array_double,
+        'parameterProvider': ctypes.POINTER(cadet_dll_parameterprovider.PARAMETERPROVIDER),
+        'nUnits': point_int,
         'nTime': point_int,
         'nCoords': point_int,
         'nPort': point_int,
@@ -115,16 +120,24 @@ class CADETAPIV010000_DATA:
         'nParShells': point_int,
         'nComp': point_int,
         'nBound': point_int,
-        'state': array_double,
         'nStates': point_int,
-        None: None,
-        'parameterProvider': ctypes.POINTER(cadet_dll_parameterprovider.PARAMETERPROVIDER),
+        'unitOpId': ctypes.c_int,
+        'sensIdx': ctypes.c_int,
+        'parType': ctypes.c_int,
+        'time': array_double,
+        'data': array_double,
+        'state': array_double,
+        'coords': array_double,
+        'keepAxialSingletonDimension': point_bool,
+        'keepParticleSingletonDimension': point_bool,
+        'timeSim': point_double,
     }
 
     lookup_output_argument_type = {
-        'time': ctypes.POINTER(ctypes.c_double),
+        'fileFormat': ctypes.c_int,
+        'nUnits': ctypes.c_int,
         'nTime': ctypes.c_int,
-        'data': ctypes.POINTER(ctypes.c_double),
+        'nCoords': ctypes.c_int,
         'nPort': ctypes.c_int,
         'nAxialCells': ctypes.c_int,
         'nRadialCells': ctypes.c_int,
@@ -133,10 +146,14 @@ class CADETAPIV010000_DATA:
         'nParShells': ctypes.c_int,
         'nComp': ctypes.c_int,
         'nBound': ctypes.c_int,
-        'state': ctypes.POINTER(ctypes.c_double),
         'nStates': ctypes.c_int,
+        'time': ctypes.POINTER(ctypes.c_double),
+        'data': ctypes.POINTER(ctypes.c_double),
+        'state': ctypes.POINTER(ctypes.c_double),
         'coords': ctypes.POINTER(ctypes.c_double),
-        'nCoords': ctypes.c_int,
+        'keepAxialSingletonDimension': ctypes.c_bool,
+        'keepParticleSingletonDimension': ctypes.c_bool,
+        'timeSim': ctypes.c_double,
     }
 
 
@@ -299,6 +316,7 @@ class SimulationResult:
         """
         shape = []
         dims = []
+        drop_indices = []
 
         # Ordering of multi-dimensional arrays, all possible dimensions:
         # bulk: 'nTime', ('nAxialCells',) ('nRadialCells' / 'nPorts',) 'nComp'
@@ -324,10 +342,19 @@ class SimulationResult:
             return
 
         if 'data' in call_outputs:
+            if 'nAxialCells' in dims:
+                nAxialCells = call_outputs['nAxialCells'].value
+                keep_axial_singleton_dim = call_outputs['keepAxialSingletonDimension'].value
+                if nAxialCells == 1 and not keep_axial_singleton_dim:
+                    drop_indices.append(dims.index('nAxialCells'))
+
             if 'nParShells' in dims:
                 nParShells = call_outputs['nParShells'].value
-                if nParShells == 1:
-                    shape.pop(dims.index('nParShells'))
+                keep_particle_singleton_dim = call_outputs['keepParticleSingletonDimension'].value
+                if nParShells == 1 and not keep_particle_singleton_dim:
+                    drop_indices.append(dims.index('nParShells'))
+
+            shape = numpy.delete(shape, drop_indices)
 
             data = numpy.ctypeslib.as_array(call_outputs['data'], shape=shape)
             if own_data:
@@ -399,6 +426,38 @@ class SimulationResult:
             return None
 
         return self._process_array(call_outputs, data_key, len_key, own_data)
+
+    def file_format(
+            self,
+            own_data: bool = True,
+            ) -> float:
+        """
+        Load the file format used for the simulation config.
+
+        Parameters
+        ----------
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        int
+            The file format.
+        """
+        call_outputs = self._load_data('getFileFormat')
+        return int(call_outputs['fileFormat'].value)
+
+    def nunits(self) -> int:
+        """
+        Get the number of unit operations in the system.
+
+        Returns
+        -------
+        int
+            The number of unit operations in the system.
+        """
+        call_outputs = self._load_data('getNumUnitOp')
+        return int(call_outputs['nUnits'].value)
 
     def npartypes(self, unitOpId: int) -> int:
         """
@@ -1528,6 +1587,26 @@ class SimulationResult:
             'time', 'nTime', 'getSolutionTimes', own_data=own_data
         )
 
+    def time_sim(
+            self,
+            own_data: bool = True,
+            ) -> float:
+        """
+        Load the simulation run time.
+
+        Parameters
+        ----------
+        own_data : bool, optional
+            Whether to copy the data (default is True).
+
+        Returns
+        -------
+        float
+            The simulation run time.
+        """
+        call_outputs = self._load_data('getTimeSim')
+        return float(call_outputs['timeSim'].value)
+
 
 class CadetDLLRunner(CadetRunnerBase):
     """
@@ -2016,5 +2095,5 @@ class CadetDLLRunner(CadetRunnerBase):
         sim.root.meta.cadet_branch = self.cadet_branch
         sim.root.meta.cadet_commit = self.cadet_commit_hash
         sim.root.meta.cadet_version = self.cadet_version
-        sim.root.meta.file_format = None
-        sim.root.meta.time_sim = None
+        sim.root.meta.file_format = self.res.file_format()
+        sim.root.meta.time_sim = self.res.time_sim()
