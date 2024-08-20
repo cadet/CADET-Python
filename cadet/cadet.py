@@ -219,6 +219,7 @@ class Cadet(H5, metaclass=CadetMeta):
             self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
                 self.cadet_dll_path
             )
+            self._ensure_compatible_dll_version()
         else:
             self._cadet_dll_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
@@ -271,7 +272,26 @@ class Cadet(H5, metaclass=CadetMeta):
             self._cadet_cli_runner = CadetCLIRunner(self.cadet_cli_path)
         if self.cadet_dll_path is not None:
             self._cadet_dll_runner = CadetDLLRunner(self.cadet_dll_path)
+            self._ensure_compatible_dll_version()
 
+    def _ensure_compatible_dll_version(self):
+        """
+        Ensure that the CADET DLL version is compatible with the required interface.
+
+        Raises
+        ------
+        RuntimeError
+            If `use_dll` is `True` and the CADET version is outdated (less than 5), indicating that
+            the DLL interface is not supported.
+        """
+        if int(self._cadet_dll_runner.cadet_version[0]) < 5:
+            if self.use_dll:
+                raise RuntimeError(
+                    f"CADET was set to `use_dll` but found outdated CADET "
+                    f"version {self._cadet_dll_runner.cadet_version} "
+                    f"which does not support the DLL interface."
+                )
+            self._cadet_dll_runner = None
 
     @property
     def cadet_path(self) -> Optional[Path]:

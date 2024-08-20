@@ -1,6 +1,7 @@
 import ctypes
 import io
 import os
+import warnings
 from pathlib import Path
 from typing import Any, Optional
 
@@ -1645,6 +1646,13 @@ class CadetDLLRunner(CadetRunnerBase):
         cdtGetLibraryBuildType.restype = ctypes.c_char_p
         self._cadet_build_type = cdtGetLibraryBuildType().decode('utf-8')
 
+        if int(self._cadet_version[0]) < 5:
+            warnings.warn(
+                f"The detected CADET installation with version {self._cadet_version}"
+                " is below version 5.0 and does not support the DLL interface."
+            )
+            return
+
         # Define the log handler callback type
         self.LOG_HANDLER_CLBK = ctypes.CFUNCTYPE(
             None,
@@ -1684,6 +1692,9 @@ class CadetDLLRunner(CadetRunnerBase):
 
         This method deletes the current simulation results and resets the driver.
         """
+        if int(self._cadet_version[0]) < 5:
+            return
+
         if hasattr(self, "res"):
             del self.res
 
@@ -1694,6 +1705,8 @@ class CadetDLLRunner(CadetRunnerBase):
         """
         Clean up the CADET driver on object deletion.
         """
+        if int(self._cadet_version[0]) < 5:
+            return
         self._api.deleteDriver(self._driver)
 
     def setup_log_buffer(self, log_level: int = None) -> io.StringIO:
