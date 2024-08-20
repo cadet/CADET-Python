@@ -121,9 +121,12 @@ class CadetMeta(type):
         Optional[Path]
             The current CADET path if set, otherwise None.
         """
-        if cls._cadet_runner_class is not None:
-            return cls._cadet_runner_class.cadet_path
-        return None
+        if cls.use_dll and cls.cadet_dll_path is not None:
+            return cls.cadet_dll_path
+        elif cls.cadet_cli_path is not None:
+            return cls.cadet_cli_path
+        else:
+            return None
 
     @cadet_path.setter
     def cadet_path(cls, cadet_path: os.PathLike) -> None:
@@ -182,6 +185,10 @@ class Cadet(H5, metaclass=CadetMeta):
     def __init__(self, install_path: Optional[Path] = None, use_dll: bool = False, *data):
         """
         Initialize a new instance of the Cadet class.
+        Priority order of install_paths is:
+        1. install_path set in __init__ args
+        2. install_path set in CadetMeta
+        3. auto-detected install_path
 
         Parameters
         ----------
@@ -190,12 +197,22 @@ class Cadet(H5, metaclass=CadetMeta):
         """
         super().__init__(*data)
 
+        self.cadet_create_lwe_path: Optional[Path] = None
+        self.return_information: Optional[dict] = None
+
+        # Regardless of settings in the Meta Class, if we get an install_path, we respect the install_path
+        if install_path is not None:
+            self.use_dll = use_dll
+            self.install_path = install_path  # This will set _cadet_dll_runner and _cadet_cli_runner
+            return
+
         # If _cadet_cli_runner_class has been set in the Meta Class, use them, else instantiate Nones
         if hasattr(self, "cadet_cli_path") and self.cadet_cli_path is not None:
             self._cadet_cli_runner: Optional[CadetCLIRunner] = CadetCLIRunner(
                 self.cadet_cli_path
             )
         else:
+            self._cadet_cli_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
 
         if hasattr(self, "cadet_dll_path") and self.cadet_dll_path is not None:
@@ -203,21 +220,14 @@ class Cadet(H5, metaclass=CadetMeta):
                 self.cadet_dll_path
             )
         else:
+            self._cadet_dll_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
 
-        self.cadet_create_lwe_path: Optional[Path] = None
-        self.return_information: Optional[dict] = None
-
-        # Regardless of settings in the Meta Class, if we get an install_path, we respect the install_path
-        if install_path is not None:
-            self.install_path = install_path  # This will overwrite _cadet_dll_runner and _cadet_cli_runner
+        # If any runner has been set in the Meta Class, don't auto-detect Cadet, just return
+        if self._cadet_cli_runner is not None or self._cadet_dll_runner is not None:
             return
 
-        # If _cadet_cli_runner_class has been set in the Meta Class, don't autodetect Cadet, just return
-        if self._cadet_cli_runner is not None:
-            return
-
-        # If neither Meta Class nor install_path are given: autodetect Cadet
+        # If neither Meta Class nor install_path are given: auto-detect Cadet
         self.install_path = self.autodetect_cadet()
 
     @property
@@ -505,6 +515,5 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def __del__(self):
         self.clear()
-        del self.cadet_runner
-
-        super().__del__()
+        del self._cadet_dll_runner
+        del self._cadet_cli_runner
