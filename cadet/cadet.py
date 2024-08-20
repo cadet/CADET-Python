@@ -125,49 +125,6 @@ class CadetMeta(type):
             return cls._cadet_runner_class.cadet_path
         return None
 
-    @property
-    def _cadet_runner_class(cls) -> Optional[CadetRunnerBase]:
-        """
-        Determine the appropriate CADET runner class based on installation path and usage preferences.
-
-        Returns
-        -------
-        Optional[CadetRunnerBase]
-            Returns the CADET runner class based on the class attributes.
-            If `_install_path` is None, returns None.
-            If `use_dll` is True and `_cadet_dll_runner_class` is defined, returns `_cadet_dll_runner_class`.
-            Otherwise, returns `_cadet_cli_runner_class`.
-        """
-        if cls._install_path is None:
-            return None
-
-        if cls.use_dll and hasattr(cls, "_cadet_dll_runner_class"):
-            return cls._cadet_dll_runner_class
-
-        return cls._cadet_cli_runner_class
-
-    def remove_outdated_interface(cls, interface_name, new_interface_path):
-        """
-        Remove an outdated interface attribute from the class.
-
-        If the specified interface exists and its `cadet_path` does not match
-        the `new_interface_path`, the attribute is deleted from the class.
-
-        Parameters
-        ----------
-        interface_name : str
-            The name of the interface attribute to check and possibly remove.
-        new_interface_path : str
-            The path to the new interface. If the existing interface's path does not match
-            this path, the old interface attribute is removed.
-        """
-        if (
-                hasattr(cls, interface_name)
-                and getattr(cls, interface_name) is not None
-                and getattr(cls, interface_name).cadet_path != new_interface_path
-        ):
-            delattr(cls, interface_name)
-
     @cadet_path.setter
     def cadet_path(cls, cadet_path: os.PathLike) -> None:
         """
@@ -197,25 +154,8 @@ class CadetMeta(type):
 
         cls._install_path = _install_path
         cls.cadet_create_lwe_path = cadet_create_lwe_path
-
-        cls.remove_outdated_interface("_cadet_dll_runner_class", cadet_dll_path)
-        cls.remove_outdated_interface("_cadet_cli_runner_class", cadet_cli_path)
-
-        if cadet_dll_path is not None:
-            cls._cadet_dll_runner_class = CadetDLLRunner(cadet_dll_path)
-
-        cls._cadet_cli_runner_class = CadetCLIRunner(cadet_cli_path)
-
-    @cadet_path.deleter
-    def cadet_path(cls) -> None:
-        """
-        Delete the current CADET runner instance.
-        """
-        del cls._cadet_dll_runner_class
-        del cls._cadet_cli_runner_class
-        del cls._install_path
-        del cls.cadet_create_lwe_path
-        del cls.use_dll
+        cls.cadet_cli_path = cadet_cli_path
+        cls.cadet_dll_path = cadet_dll_path
 
 
 class Cadet(H5, metaclass=CadetMeta):
@@ -251,22 +191,18 @@ class Cadet(H5, metaclass=CadetMeta):
         super().__init__(*data)
 
         # If _cadet_cli_runner_class has been set in the Meta Class, use them, else instantiate Nones
-        if hasattr(self, "_cadet_cli_runner_class") and self._cadet_cli_runner_class:
-            self._cadet_cli_runner = self._cadet_cli_runner_class
-            self.cadet_cli_path = self._cadet_cli_runner_class.cadet_path
-            self.use_dll = self.use_dll
+        if hasattr(self, "cadet_cli_path") and self.cadet_cli_path is not None:
+            self._cadet_cli_runner: Optional[CadetCLIRunner] = CadetCLIRunner(
+                self.cadet_cli_path
+            )
         else:
-            self._cadet_cli_runner: Optional[CadetCLIRunner] = None
-            self.cadet_cli_path: Optional[Path] = None
             self.use_dll = use_dll
 
-        if hasattr(self, "_cadet_dll_runner_class") and self._cadet_dll_runner_class:
-            self._cadet_dll_runner = self._cadet_dll_runner_class
-            self.cadet_dll_path = self._cadet_dll_runner_class.cadet_path
-            self.use_dll = self.use_dll
+        if hasattr(self, "cadet_dll_path") and self.cadet_dll_path is not None:
+            self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
+                self.cadet_dll_path
+            )
         else:
-            self._cadet_dll_runner: Optional[CadetDLLRunner] = None
-            self.cadet_dll_path: Optional[Path] = None
             self.use_dll = use_dll
 
         self.cadet_create_lwe_path: Optional[Path] = None
@@ -278,7 +214,7 @@ class Cadet(H5, metaclass=CadetMeta):
             return
 
         # If _cadet_cli_runner_class has been set in the Meta Class, don't autodetect Cadet, just return
-        if hasattr(self, "_cadet_cli_runner_class") and self._cadet_cli_runner_class:
+        if self._cadet_cli_runner is not None:
             return
 
         # If neither Meta Class nor install_path are given: autodetect Cadet
@@ -396,7 +332,6 @@ class Cadet(H5, metaclass=CadetMeta):
 
         return cadet_root
 
-
     @property
     def cadet_runner(self) -> CadetRunnerBase:
         """
@@ -459,7 +394,6 @@ class Cadet(H5, metaclass=CadetMeta):
             os.remove(file_path)
 
         return self
-
 
     @property
     def found_dll(self):
@@ -568,3 +502,9 @@ class Cadet(H5, metaclass=CadetMeta):
         runner = self.cadet_runner
         if runner is not None:
             runner.clear()
+
+    def __del__(self):
+        self.clear()
+        del self.cadet_runner
+
+        super().__del__()
