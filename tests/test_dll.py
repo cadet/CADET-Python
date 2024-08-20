@@ -1,11 +1,5 @@
-import copy
-import os
 from pathlib import Path
-import platform
 import subprocess
-import sys
-
-from addict import Dict
 import pytest
 
 from cadet import Cadet
@@ -14,7 +8,8 @@ from cadet import Cadet
 # %% Utility methods
 
 # TODO: Remove once #14 is merged
-cadet_root = Path('/home/jo/code/CADET/install/capi/')
+# cadet_root = Path('/home/jo/code/CADET/install/capi/')
+cadet_root = Path(r'C:\Users\ronal\Documents\CADET\out\install\aRELEASE')
 
 def setup_model(
         cadet_root,
