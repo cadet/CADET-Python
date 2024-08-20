@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -76,6 +77,31 @@ class CadetRunnerBase(ABC):
         """
         pass
 
+    @property
+    @abstractmethod
+    def cadet_version(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def cadet_branch(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def cadet_build_type(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def cadet_commit_hash(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def cadet_path(self) -> str:
+        pass
+
 
 class CadetCLIRunner(CadetRunnerBase):
     """
@@ -95,7 +121,8 @@ class CadetCLIRunner(CadetRunnerBase):
         """
         cadet_path = Path(cadet_path)
 
-        self.cadet_path = cadet_path
+        self._cadet_path = cadet_path
+        self._get_cadet_version()
 
     def run(
             self,
@@ -157,3 +184,75 @@ class CadetCLIRunner(CadetRunnerBase):
             The simulation object where results will be loaded.
         """
         sim.load(paths=["/meta", "/output"], update=True)
+
+    def _get_cadet_version(self) -> dict:
+        """
+        Get version and branch name of the currently instanced CADET build.
+        Returns
+        -------
+        dict
+            Dictionary containing: cadet_version as x.x.x, cadet_branch, cadet_build_type, cadet_commit_hash
+        Raises
+        ------
+        ValueError
+            If version and branch name cannot be found in the output string.
+        RuntimeError
+            If any unhandled event during running the subprocess occurs.
+        """
+        try:
+            result = subprocess.run(
+                [self.cadet_path, '--version'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            version_output = result.stdout.strip()
+
+            version_match = re.search(
+                r'cadet-cli version ([\d.]+) \((.*) branch\)\n',
+                version_output
+            )
+
+            commit_hash_match = re.search(
+                "Built from commit (.*)\n",
+                version_output
+            )
+
+            build_variant_match = re.search(
+                "Build variant (.*)\n",
+                version_output
+            )
+
+            if version_match:
+                self._cadet_version = version_match.group(1)
+                self._cadet_branch = version_match.group(2)
+                self._cadet_commit_hash = commit_hash_match.group(1)
+                if build_variant_match:
+                    self._cadet_build_type = build_variant_match.group(1)
+                else:
+                    self._cadet_build_type = None
+            else:
+                raise ValueError("CADET version or branch name missing from output.")
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Command execution failed: {e}")
+
+    @property
+    def cadet_version(self) -> str:
+        return self._cadet_version
+
+    @property
+    def cadet_branch(self) -> str:
+        return self._cadet_branch
+
+    @property
+    def cadet_build_type(self) -> str:
+        return self._cadet_build_type
+
+    @property
+    def cadet_commit_hash(self) -> str:
+        return self._cadet_commit_hash
+
+    @property
+    def cadet_path(self) -> str | os.PathLike:
+        return self._cadet_path

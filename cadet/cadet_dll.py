@@ -1625,25 +1625,25 @@ class CadetDLLRunner(CadetRunnerBase):
         dll_path : os.PathLike or str
             Path to the CADET DLL.
         """
-        self.cadet_path = Path(dll_path)
-        self._lib = ctypes.cdll.LoadLibrary(self.cadet_path.as_posix())
+        self._cadet_path = Path(dll_path)
+        self._lib = ctypes.cdll.LoadLibrary(self._cadet_path.as_posix())
 
         # Query meta information
         cdtGetLibraryVersion = self._lib.cdtGetLibraryVersion
         cdtGetLibraryVersion.restype = ctypes.c_char_p
-        self.cadet_version = cdtGetLibraryVersion().decode('utf-8')
+        self._cadet_version = cdtGetLibraryVersion().decode('utf-8')
 
         cdtGetLibraryCommitHash = self._lib.cdtGetLibraryCommitHash
         cdtGetLibraryCommitHash.restype = ctypes.c_char_p
-        self.cadet_commit_hash = cdtGetLibraryCommitHash().decode('utf-8')
+        self._cadet_commit_hash = cdtGetLibraryCommitHash().decode('utf-8')
 
         cdtGetLibraryBranchRefspec = self._lib.cdtGetLibraryBranchRefspec
         cdtGetLibraryBranchRefspec.restype = ctypes.c_char_p
-        self.cadet_branch = cdtGetLibraryBranchRefspec().decode('utf-8')
+        self._cadet_branch = cdtGetLibraryBranchRefspec().decode('utf-8')
 
         cdtGetLibraryBuildType = self._lib.cdtGetLibraryBuildType
         cdtGetLibraryBuildType.restype = ctypes.c_char_p
-        self.cadet_build_type = cdtGetLibraryBuildType().decode('utf-8')
+        self._cadet_build_type = cdtGetLibraryBuildType().decode('utf-8')
 
         # Define the log handler callback type
         self.LOG_HANDLER_CLBK = ctypes.CFUNCTYPE(
@@ -2097,3 +2097,23 @@ class CadetDLLRunner(CadetRunnerBase):
         sim.root.meta.cadet_version = self.cadet_version
         sim.root.meta.file_format = self.res.file_format()
         sim.root.meta.time_sim = self.res.time_sim()
+
+    @property
+    def cadet_version(self) -> str:
+        return self._cadet_version
+
+    @property
+    def cadet_branch(self) -> str:
+        return self._cadet_branch
+
+    @property
+    def cadet_build_type(self) -> str:
+        return self._cadet_build_type
+
+    @property
+    def cadet_commit_hash(self) -> str:
+        return self._cadet_commit_hash
+
+    @property
+    def cadet_path(self) -> str | os.PathLike:
+        return self._cadet_path
