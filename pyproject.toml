@@ -1,0 +1,53 @@
+[build-system]
+requires = [
+    "setuptools>=69",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CADET-Python"
+dynamic = ["version"]
+authors = [
+    { name = "William Heymann", email = "w.heymann@fz-juelich.de" },
+    { name = "Samuel Leweke", email = "s.leweke@fz-juelich.de" },
+    { name = "Johannes Schmölder", email = "j.schmoelder@fz-juelich.de" },
+    { name = "Ronald Jäpel", email = "r.jaepel@fz-juelich.de" },
+]
+description = "CADET-Python is a Python interface to the CADET-Core simulator"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["process modeling", "process optimization", "chromatography"]
+license = { text = "BSD-3-Clause" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "addict",
+    "numpy",
+    "h5py",
+    "filelock",
+]
+
+[project.optional-dependencies]
+testing = ["pytest"]
+
+[project.urls]
+"homepage" = "https://github.com/cadet/CADET-Python"
+"Bug Tracker" = "https://github.com/cadet/CADET-Python/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "cadet.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["cadet*"]
+
+[tool.ruff]
+src = ["cadet"]
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
