@@ -1668,12 +1668,27 @@ class CadetDLLRunner(CadetRunnerBase):
         self._default_log_level = 2
 
         # Query API
-        cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
-        cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
-        cdtGetAPIv010000.restype = c_cadet_result
+        try:
+            cdtGetLatestCAPIVersion = self._lib.cdtGetLatestCAPIVersion#
+        except AttributeError:
+            raise ValueError(
+                "CADET-Python does not support CADET-CAPI at all."
+            )
+        cdtGetLatestCAPIVersion.restype = ctypes.c_char_p
+        self._cadet_capi_version = cdtGetLatestCAPIVersion().decode('utf-8')
 
-        self._api = CADETAPIV010000()
-        cdtGetAPIv010000(ctypes.byref(self._api))
+        # Check which C-API is provided by CADET (given the current install path)
+        if self._cadet_capi_version == "1.0.0":
+            cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
+            cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
+            cdtGetAPIv010000.restype = c_cadet_result
+            self._api = CADETAPIV010000()
+            cdtGetAPIv010000(ctypes.byref(self._api))
+        else:
+            raise ValueError(
+                "CADET-Python does not support CADET-CAPI version "
+                f"({self._cadet_capi_version})."
+            )
 
         self._driver = self._api.createDriver()
         self.res: Optional[SimulationResult] = None

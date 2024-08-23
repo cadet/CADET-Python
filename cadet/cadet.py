@@ -216,9 +216,14 @@ class Cadet(H5, metaclass=CadetMeta):
             self.use_dll = use_dll
 
         if hasattr(self, "cadet_dll_path") and self.cadet_dll_path is not None:
-            self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
-                self.cadet_dll_path
-            )
+            try:
+                self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
+                    self.cadet_dll_path
+                )
+            except ValueError:
+                self.cadet_dll_path = None
+                self._cadet_dll_runner: Optional[CadetCLIRunner] = None
+                self.use_dll = False
         else:
             self._cadet_dll_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
@@ -263,15 +268,18 @@ class Cadet(H5, metaclass=CadetMeta):
         root_path, cadet_cli_path, cadet_dll_path, create_lwe_path = install_path_to_cadet_paths(install_path)
 
         self._install_path = root_path
-        self.cadet_cli_path = cadet_cli_path
-        self.cadet_dll_path = cadet_dll_path
         self.cadet_create_lwe_path = create_lwe_path
 
-        if self.cadet_cli_path is not None:
-            self._cadet_cli_runner = CadetCLIRunner(self.cadet_cli_path)
-        if self.cadet_dll_path is not None:
-            self._cadet_dll_runner = CadetDLLRunner(self.cadet_dll_path)
+        if cadet_cli_path is not None:
+            self._cadet_cli_runner = CadetCLIRunner(cadet_cli_path)
+            self.cadet_cli_path = cadet_cli_path
 
+        self.cadet_dll_path = cadet_dll_path
+        if cadet_dll_path is not None:
+            try:
+                self._cadet_dll_runner = CadetDLLRunner(cadet_dll_path)
+            except ValueError:
+                pass
 
     @property
     def cadet_path(self) -> Optional[Path]:
