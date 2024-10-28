@@ -1,47 +1,88 @@
-
 import ctypes
 import cadet.cadet_dll_utils as utils
 import addict
+from typing import Any, Dict, Optional, Union
+
 
 c_cadet_result = ctypes.c_int
-
 array_double = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
-
-
 point_int = ctypes.POINTER(ctypes.c_int)
 
-def null(*args):
+
+def null(*args: Any) -> None:
     pass
+
 
 if 0:
     log_print = print
 else:
     log_print = null
 
+
 class NestedDictReader:
+    """
+    Utility class to read and navigate through nested dictionaries.
+    """
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, Any]) -> None:
         self._root = data
-        self._cursor = []
-        self._cursor.append(data)
-        self.buffer = None
+        self._cursor = [data]
+        self.buffer: Optional[Any] = None
 
-    def push_scope(self, scope):
+    def push_scope(self, scope: str) -> bool:
+        """
+        Enter a nested scope within the dictionary.
+
+        Parameters
+        ----------
+        scope : str
+            The key representing the nested scope.
+
+        Returns
+        -------
+        bool
+            True if the scope exists and was entered, otherwise False.
+        """
         if scope in self._cursor[-1]:
-            log_print('Entering scope {}'.format(scope))
+            log_print(f'Entering scope {scope}')
             self._cursor.append(self._cursor[-1][scope])
             return True
-
         return False
 
-    def pop_scope(self):
-        self._cursor.pop()
-        log_print('Exiting scope')
+    def pop_scope(self) -> None:
+        """
+        Exit the current scope.
+        """
+        if len(self._cursor) > 1:
+            self._cursor.pop()
+            log_print('Exiting scope')
 
-    def current(self):
+    def current(self) -> Any:
+        """
+        Get the current scope data.
+
+        Returns
+        -------
+        Any
+            The current data under the scope.
+        """
         return self._cursor[-1]
 
-def recursively_convert_dict(data):
+
+def recursively_convert_dict(data: Dict[str, Any]) -> addict.Dict:
+    """
+    Recursively convert dictionary keys to uppercase while preserving nested structure.
+
+    Parameters
+    ----------
+    data : dict
+        The dictionary to convert.
+
+    Returns
+    -------
+    addict.Dict
+        A new dictionary with all keys converted to uppercase.
+    """
     ans = addict.Dict()
     for key_original, item in data.items():
         if isinstance(item, dict):
@@ -53,20 +94,23 @@ def recursively_convert_dict(data):
 
 
 class PARAMETERPROVIDER(ctypes.Structure):
-    """Implemented the CADET Parameter Provider interface which allows 
-    querying python for the necessary parameters for a CADET simulation
-    
-    _fields_ is a list of function names and signatures exposed by the
-    capi Parameter Provider interface
-    https://docs.python.org/3/library/ctypes.html
-    https://github.com/modsim/CADET/blob/master/src/libcadet/api/CAPIv1.cpp"""
+    """
+    Implement the CADET Parameter Provider interface, allowing querying Python for parameters.
 
-    def __init__(self, simulation):
-        sim_input = recursively_convert_dict(simulation)
+    This class exposes various function pointers as fields in a ctypes structure
+    to be used with CADET's C-API.
 
+    Parameters
+    ----------
+    simulation : Cadet
+        The simulation object containing the input data.
+    """
+
+    def __init__(self, simulation: "Cadet") -> None:
+        sim_input = recursively_convert_dict(simulation.root.input)
         self.userData = NestedDictReader(sim_input)
 
-        #figure out how to add this to the class
+        # Assign function pointers at instance level
         self.getDouble = self._fields_[1][1](utils.param_provider_get_double)
         self.getInt = self._fields_[2][1](utils.param_provider_get_int)
         self.getBool = self._fields_[3][1](utils.param_provider_get_bool)
@@ -112,25 +156,3 @@ class PARAMETERPROVIDER(ctypes.Structure):
         ('pushScope', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object, ctypes.c_char_p)),
         ('popScope', ctypes.CFUNCTYPE(c_cadet_result, ctypes.py_object)),
     ]
-
-    #these don't work right now but work when places on an instance
-    #getDouble = _fields_[1][1](utils.param_provider_get_double)
-    #getInt = _fields_[2][1](utils.param_provider_get_int)
-    #getBool = _fields_[3][1](utils.param_provider_get_bool)
-    #getString = _fields_[4][1](utils.param_provider_get_string)
-
-    #getDoubleArray = _fields_[5][1](utils.param_provider_get_double_array)
-    #getIntArray = _fields_[6][1](utils.param_provider_get_int_array)
-    #getBoolArray = ctypes.cast(None, _fields_[7][1])
-    #getStringArray = ctypes.cast(None, _fields_[8][1])
-
-    #getDoubleArrayItem = _fields_[9][1](utils.param_provider_get_double_array_item)
-    #getIntArrayItem = _fields_[10][1](utils.param_provider_get_int_array_item)
-    #getBoolArrayItem = _fields_[11][1](utils.param_provider_get_bool_array_item)
-    #getStringArrayItem = _fields_[12][1](utils.param_provider_get_string_array_item)
-
-    #exists = _fields_[13][1](utils.param_provider_exists)
-    #isArray = _fields_[14][1](utils.param_provider_is_array)
-    #numElements = _fields_[15][1](utils.param_provider_num_elements)
-    #pushScope = _fields_[16][1](utils.param_provider_push_scope)
-    #popScope = _fields_[17][1](utils.param_provider_pop_scope)
