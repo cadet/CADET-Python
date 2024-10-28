@@ -1,46 +1,71 @@
-CADET-Python is a file based Python interface for CADET. For this, CADET must be installed separately (see https://github.com/modsim/CADET).
+# CADET-Python
 
-CADET-Python almost exactly maps to the documented CADET interface except that all dataset names are lowercase. This simplifies using the interface.
+**CADET-Python** provides a file-based Python interface for **CADET-Core**, which must be installed separately. For this, please refer to the [installation instructions](https://cadet.github.io/master/getting_started/installation.html) and the [CADET-Core repository]((https://github.com/cadet/CADET-Core)).
 
-To install CADET-Python simply
+The CADET-Python package simplifies access by mapping to the [CADET interface](https://cadet.github.io/master/interface/index.html#), **with all dataset names in lowercase**.
+
+## Installation
+
+To install CADET-Python, use:
 
 ```
 pip install cadet-python
 ```
 
-## Usage
-This package includes the `CADET` class and `H5` class. `H5` can be used as a simple generic HDF5 interface.
+## Usage Example
 
-As an example look at setting column porosity for column 1. From the CADET manual, the path for this is:
+The package includes two primary classes:
+
+- **`CADET`**: The main class to configure and run simulations.
+- **`H5`**: A general-purpose HDF5 interface.
+
+### Setting Up a Simulation
+
+To set a simulation parameter, such as the column porosity for column 1.
+
+Referring to this path in the CADET interface:
 ```
 /input/model/unit_001/COL_POROSITY
 ```
-In the Python interface this becomes:
+In CADET-Python, this is now set as:
 ```
+from cadet import Cadet
+
+# Initialize simulation
 sim = Cadet()
+
+# Set column porosity for unit 001
 sim.root.input.model.unit_001.col_porosity = 0.33
 ```
-Once the simulation has been created it must be saved before it can be run.
+### Saving the Simulation File
+
+Before running, save the simulation configuration to a file:
 ```
-sim.filename = "/path/to/where/you/want/the/file.hdf5"
+sim.filename = "/path/to/your/file.hdf5"
 sim.save()
 ```
-Next the path to CADET needs to be set before a simulation can be run. If running on Microsoft Windows you need the path to cadet-cli.exe
+### Setting the Path to CADET
+
+To execute the simulation, specify the path to **CADET-Core**. On Windows, set the path to `cadet-cli.exe`:
 ```
 sim.cadet_path = '/path/to/cadet-cli'
 ```
+### Running the Simulation and Loading Data
 
-run the simulation and load the data
+Run the simulation and load the output data with:
 ```
 print(sim.run())
 sim.load()
 ```
+### Reading Data from a Pre-Simulated File
 
-At this point any data can be read.
-
-If you have a file you want to read that has already been simulated this is also easy to do.
+If you have a pre-simulated file, you can read it directly:
 ```
+# Initialize a new simulation object
 sim = Cadet()
-sim.filename = "/path/to/where/you/want/the/file.hdf5"
+
+# Set the filename for the existing simulation data
+sim.filename = "/path/to/your/file.hdf5"
 sim.load()
 ```
+At this point, any data in the file can be accessed.
