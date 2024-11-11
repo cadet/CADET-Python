@@ -63,4 +63,4 @@ jobs:
       run: |
         pip install .[testing]
         mamba install cadet -c conda-forge
-        pytest tests --rootdir=tests -m "not slow"
+        pytest tests --rootdir=tests -m "not slow and not local"

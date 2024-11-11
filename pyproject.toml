@@ -51,3 +51,7 @@ line-length = 88
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "local: marks tests as only useful on local installs (deselect with '-m \"not local\"')",
+]
