@@ -7,9 +7,8 @@ from cadet import Cadet
 
 # %% Utility methods
 
-# TODO: Remove once #14 is merged
-# cadet_root = Path('/home/jo/code/CADET/install/capi/')
-cadet_root = Path(r'C:\Users\ronal\Documents\CADET\out\install\aRELEASE')
+# Use this to specify custom cadet_roots if you require it.
+cadet_root = None
 
 def setup_model(
         cadet_root,

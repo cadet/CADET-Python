@@ -1,14 +1,18 @@
 from pathlib import Path
+import pytest
 
 from cadet import Cadet
 
 
+""" These tests require two distinct CADET installations to compare between and should not run in the CI"""
+
 # Full path to cadet.dll or cadet.so, that is different from the system/conda cadet
-full_path_dll = Path(r"C:\Users\ronal\Documents\CADET\out\install\aRELEASE\bin\cadet.dll")
+full_path_dll = Path("path/to/cadet")
 
 install_path_conda = Cadet.autodetect_cadet()
 
 
+@pytest.mark.local
 def test_meta_class():
     Cadet.cadet_path = full_path_dll
     assert Cadet.use_dll
