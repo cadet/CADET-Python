@@ -6,6 +6,8 @@ import subprocess
 from typing import Optional
 import warnings
 
+from addict import Dict
+
 from cadet.h5 import H5
 from cadet.runner import CadetRunnerBase, CadetCLIRunner, ReturnInformation
 from cadet.cadet_dll import CadetDLLRunner
@@ -525,3 +527,12 @@ class Cadet(H5, metaclass=CadetMeta):
         self.clear()
         del self._cadet_dll_runner
         del self._cadet_cli_runner
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
+    def __setstate__(self, state):
+        # Restore the state and cast to addict.Dict() to add __frozen attributes
+        state = Dict(state)
+        self.__dict__.update(state)

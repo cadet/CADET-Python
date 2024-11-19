@@ -33,7 +33,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-testing = ["pytest"]
+testing = [
+    "pytest",
+    "joblib"
+]
 
 [project.urls]
 "homepage" = "https://github.com/cadet/CADET-Python"
