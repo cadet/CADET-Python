@@ -1626,6 +1626,9 @@ class CadetDLLRunner(CadetRunnerBase):
             Path to the CADET DLL.
         """
         self._cadet_path = Path(dll_path)
+        self._initialize_dll()
+
+    def _initialize_dll(self):
         self._lib = ctypes.cdll.LoadLibrary(self._cadet_path.as_posix())
 
         # Query meta information
@@ -1692,6 +1695,18 @@ class CadetDLLRunner(CadetRunnerBase):
 
         self._driver = self._api.createDriver()
         self.res: Optional[SimulationResult] = None
+
+    def __getstate__(self):
+        # Exclude all non-pickleable attributes and only keep _cadet_path
+        state = self.__dict__.copy()
+        pickleable_keys = ["_cadet_path"]
+        state = {key: state[key] for key in pickleable_keys}
+        return state
+
+    def __setstate__(self, state):
+        # Restore the state and reinitialize the DLL
+        self.__dict__.update(state)
+        self._initialize_dll()
 
     def clear(self) -> None:
         """
