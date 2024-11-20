@@ -37,6 +37,9 @@ testing = [
     "pytest",
     "joblib"
 ]
+docker = [
+    "docker"
+]
 
 [project.urls]
 "homepage" = "https://github.com/cadet/CADET-Python"
@@ -57,4 +60,5 @@ testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "local: marks tests as only useful on local installs (deselect with '-m \"not local\"')",
+    "docker: marks tests as requiring a docker installation (deselect with '-m \"not docker\"')",
 ]

@@ -1,11 +1,17 @@
 import os
-import pathlib
 import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+try:
+    import docker
+    from docker.types import Mount
+    from docker.errors import ContainerError
+except ImportError:
+    pass
 
 
 @dataclass
@@ -255,3 +261,178 @@ class CadetCLIRunner(CadetRunnerBase):
     @property
     def cadet_path(self) -> os.PathLike:
         return self._cadet_path
+
+
+class CadetDockerRunner(CadetRunnerBase):
+    """
+    Docker-based CADET runner.
+
+    This class runs CADET simulations using a command-line interface (CLI) executable that is
+    contained inside a Docker container. This expects the Docker container to have the
+    root of the installation as the working folder. This gives us access to the cadet-cli and
+    tools such as createLWE.
+    """
+
+    def __init__(self, image_name: str) -> None:
+        """
+        Initialize the CadetFileRunner.
+
+        Parameters
+        ----------
+        image_name : os.PathLike
+            Name of the docker image to use for CADET
+        """
+
+        self.docker_container = image_name
+        try:
+            self.client = docker.from_env()
+        except NameError as e:
+            raise NameError("Could not import Docker.") from e
+
+        self.image = self.client.images.get(name=image_name)
+        self._get_cadet_version()
+
+    def run(
+            self,
+            simulation: "Cadet",
+            timeout: Optional[int] = None,
+    ) -> ReturnInformation:
+        """
+        Run a CADET simulation using the CLI executable.
+
+        Parameters
+        ----------
+        simulation : Cadet
+            Not used in this runner.
+        timeout : Optional[int]
+            Maximum time allowed for the simulation to run, in seconds.
+
+        Raises
+        ------
+        RuntimeError
+            If the simulation process returns a non-zero exit code.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
+        """
+        if simulation.filename is None:
+            raise ValueError("Filename must be set before run can be used")
+
+        filename = Path(simulation.filename)
+
+        mount = Mount(
+            source=filename.parent.absolute().as_posix(),
+            type="bind",
+            target="/data"
+        )
+
+        try:
+            log = self.client.containers.run(
+                image=self.image,
+                mounts=[mount],
+                command=f"cadet-cli /data/{filename.name}",
+                stdout=True,
+                stderr=False
+            )
+
+            return_info = ReturnInformation(
+                return_code=0,
+                error_message="",
+                log=log
+            )
+        except ContainerError as e:
+            return_info = ReturnInformation(
+                return_code=-1,
+                error_message=e.stderr,
+                log=""
+            )
+
+        return return_info
+
+    def clear(self) -> None:
+        """
+        Clear the simulation data.
+
+        This method can be extended if any cleanup is required.
+        """
+        pass
+
+    def load_results(self, sim: "Cadet") -> None:
+        """
+        Load the results of the simulation into the provided object.
+
+        Parameters
+        ----------
+        sim : Cadet
+            The simulation object where results will be loaded.
+        """
+        sim.load(paths=["/meta", "/output"], update=True)
+
+    def _get_cadet_version(self) -> dict:
+        """
+        Get version and branch name of the currently instanced CADET build.
+        Returns
+        -------
+        dict
+            Dictionary containing: cadet_version as x.x.x, cadet_branch, cadet_build_type, cadet_commit_hash
+        Raises
+        ------
+        ValueError
+            If version and branch name cannot be found in the output string.
+        RuntimeError
+            If any unhandled event during running the subprocess occurs.
+        """
+        return_info = self.client.containers.run(
+            image=self.image,
+            command="cadet-cli --version"
+        )
+
+        version_output = return_info.decode()[:10000]
+
+        version_match = re.search(
+            r'cadet-cli version ([\d.]+) \((.*) branch\)\n',
+            version_output
+        )
+
+        commit_hash_match = re.search(
+            "Built from commit (.*)\n",
+            version_output
+        )
+
+        build_variant_match = re.search(
+            "Build variant (.*)\n",
+            version_output
+        )
+
+        if version_match:
+            self._cadet_version = version_match.group(1)
+            self._cadet_branch = version_match.group(2)
+            self._cadet_commit_hash = commit_hash_match.group(1)
+            if build_variant_match:
+                self._cadet_build_type = build_variant_match.group(1)
+            else:
+                self._cadet_build_type = None
+        else:
+            raise ValueError("CADET version or branch name missing from output.")
+
+    @property
+    def cadet_version(self) -> str:
+        return self._cadet_version
+
+    @property
+    def cadet_branch(self) -> str:
+        return self._cadet_branch
+
+    @property
+    def cadet_build_type(self) -> str:
+        return self._cadet_build_type
+
+    @property
+    def cadet_commit_hash(self) -> str:
+        return self._cadet_commit_hash
+
+    @property
+    def cadet_path(self) -> os.PathLike:
+        return self.image.tags[0]

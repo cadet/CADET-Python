@@ -9,7 +9,7 @@ import warnings
 from addict import Dict
 
 from cadet.h5 import H5
-from cadet.runner import CadetRunnerBase, CadetCLIRunner, ReturnInformation
+from cadet.runner import CadetRunnerBase, CadetCLIRunner, ReturnInformation, CadetDockerRunner
 from cadet.cadet_dll import CadetDLLRunner
 
 
@@ -184,7 +184,10 @@ class Cadet(H5, metaclass=CadetMeta):
         Stores the information returned after a simulation run.
     """
 
-    def __init__(self, install_path: Optional[Path] = None, use_dll: bool = False, *data):
+    def __init__(
+            self, install_path: Optional[Path] = None, use_dll: bool = False,
+            docker_container: Optional[str] = None, *data
+    ):
         """
         Initialize a new instance of the Cadet class.
         Priority order of install_paths is:
@@ -194,6 +197,12 @@ class Cadet(H5, metaclass=CadetMeta):
 
         Parameters
         ----------
+        install_path : Optional[Path]
+            The root directory of the CADET installation.
+        use_dll : Optional[bool]
+            Indicates whether to use a DLL or a CLI executable.
+        docker_container : Optional[str]
+            Label of the docker container to use.
         *data : tuple
             Additional data to be passed to the H5 base class initialization.
         """
@@ -207,6 +216,12 @@ class Cadet(H5, metaclass=CadetMeta):
             self.use_dll = use_dll
             self.install_path = install_path  # This will set _cadet_dll_runner and _cadet_cli_runner
             return
+
+        # If we get a docker_container, we use the docker container
+        if docker_container is not None:
+            self._cadet_docker_runner: Optional[CadetDockerRunner] = CadetDockerRunner(
+                docker_container
+            )
 
         # If _cadet_cli_runner_class has been set in the Meta Class, use them, else instantiate Nones
         if hasattr(self, "cadet_cli_path") and self.cadet_cli_path is not None:

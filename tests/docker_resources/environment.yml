@@ -1,0 +1,6 @@
+name: cadet
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - cadet
