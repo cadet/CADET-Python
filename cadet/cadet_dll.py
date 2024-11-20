@@ -7,7 +7,7 @@ from typing import Any, Optional
 import addict
 import numpy
 
-from cadet.runner import CadetRunnerBase
+from cadet.runner import CadetRunnerBase, ReturnInformation
 import cadet.cadet_dll_parameterprovider as cadet_dll_parameterprovider
 
 
@@ -1765,7 +1765,7 @@ class CadetDLLRunner(CadetRunnerBase):
             self,
             simulation: Optional["Cadet"] = None,
             timeout: Optional[int] = None,
-            ) -> None:
+            ) -> ReturnInformation:
         """
         Run a CADET simulation using the DLL interface.
 
@@ -1788,12 +1788,21 @@ class CadetDLLRunner(CadetRunnerBase):
         returncode = self._api.runSimulation(self._driver, ctypes.byref(pp))
 
         if returncode != 0:
+            log = ""
             error_message = log_buffer.getvalue()
-            raise RuntimeError(f"Simulation failed with error: {error_message}")
+        else:
+            log = log_buffer.getvalue()
+            error_message = ""
 
         self.res = SimulationResult(self._api, self._driver)
 
-        return
+        return_info = ReturnInformation(
+            return_code=returncode,
+            error_message=error_message,
+            log=log
+        )
+
+        return return_info
 
     def load_results(self, sim: "Cadet") -> None:
         """
