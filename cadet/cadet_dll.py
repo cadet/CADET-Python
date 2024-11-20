@@ -1717,14 +1717,16 @@ class CadetDLLRunner(CadetRunnerBase):
         if hasattr(self, "res"):
             del self.res
 
-        self._api.deleteDriver(self._driver)
+        if hasattr(self, "_api") and hasattr(self, "_driver"):
+            self._api.deleteDriver(self._driver)
         self._driver = self._api.createDriver()
 
     def __del__(self) -> None:
         """
         Clean up the CADET driver on object deletion.
         """
-        self._api.deleteDriver(self._driver)
+        if hasattr(self, "_api") and hasattr(self, "_driver"):
+            self._api.deleteDriver(self._driver)
 
     def setup_log_buffer(self, log_level: int = None) -> io.StringIO:
         """
