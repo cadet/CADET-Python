@@ -1880,10 +1880,10 @@ class CadetDLLRunner(CadetRunnerBase):
             unit_solution.update(self._load_solution_trivial(sim, unit, 'soldot_flux'))
             unit_solution.update(self._load_solution_trivial(sim, unit, 'soldot_volume'))
 
-            if len(unit_solution) > 1:
+            if len(unit_solution) > 0:
                 solution[unit_index].update(unit_solution)
 
-        if len(solution) > 1:
+        if len(solution) > 0:
             sim.root.output.solution.update(solution)
 
         return solution
