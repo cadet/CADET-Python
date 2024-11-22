@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "CADET-Python"
+name = "CADET"
 dynamic = ["version"]
 authors = [
     { name = "William Heymann", email = "w.heymann@fz-juelich.de" },
@@ -14,7 +14,7 @@ authors = [
     { name = "Johannes Schmölder", email = "j.schmoelder@fz-juelich.de" },
     { name = "Ronald Jäpel", email = "r.jaepel@fz-juelich.de" },
 ]
-description = "CADET-Python is a Python interface to the CADET-Core simulator"
+description = "CADET is an alias for CADET-Python"
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["process modeling", "process optimization", "chromatography"]
