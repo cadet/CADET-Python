@@ -1,3 +1,17 @@
+# ⚠️ WARNING ⚠️
+
+### This package is an alias for [CADET-Python](https://pypi.org/project/CADET-Python/). 
+[CADET-Core](https://github.com/cadet/CADET-Core) is currently distributed via [conda-forge](https://anaconda.org/conda-forge/cadet).
+
+Please **remove** 
+```bash
+pip install cadet
+```
+from your environment or dependency files and instead install [CADET-Python](https://pypi.org/project/CADET-Python/) following the instructions below. If you encounter any issues, please refer to the [CADET-Forum](https://forum.cadet-web.de/).
+ 
+ #### The `cadet` namespace will be reassigned in the future. 
+
+
 # CADET-Python
 
 **CADET-Python** provides a file-based Python interface for **CADET-Core**, which must be installed separately. For this, please refer to the [installation instructions](https://cadet.github.io/master/getting_started/installation.html) and the [CADET-Core repository](https://github.com/cadet/CADET-Core).
