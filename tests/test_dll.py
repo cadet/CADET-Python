@@ -83,7 +83,7 @@ def setup_model(
     interface.
     """
 
-    cadet_model = Cadet(install_path=cadet_root, use_dll=True)
+    cadet_model = Cadet(install_path=cadet_root, use_dll=use_dll)
 
     args = [
         cadet_model.cadet_create_lwe_path,
