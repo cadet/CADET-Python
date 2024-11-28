@@ -141,8 +141,13 @@ def setup_model(
                          'lin_coeff': [0., ], 'quad_coeff': [0., ]},
              'sec_002': {'const_coeff': [100., ], 'cube_coeff': [0., ],
                          'lin_coeff': [0.2], 'quad_coeff': [0., ]}}
-
         )
+        # if we don't save and re-load the model we get windows access violations.
+        # Interesting case for future tests, not what I want to test now.
+        cadet_model.save()
+        cadet_model = Cadet(install_path=cadet_root, use_dll=use_dll)
+        cadet_model.filename = file_name
+        cadet_model.load()
 
     return cadet_model
 
