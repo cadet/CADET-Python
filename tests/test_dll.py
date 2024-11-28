@@ -17,6 +17,7 @@ def setup_model(
         n_partypes=1,
         include_sensitivity=False,
         file_name='LWE.h5',
+        n_components=4
         ):
     """
     Set up and initialize a CADET model template.
@@ -44,6 +45,8 @@ def setup_model(
     file_name : str, optional
         The name of the file to which the CADET model is written.
         The default is 'LWE.h5'.
+    n_components : int, optional
+         Number of components for the simulation. The default is 4.
 
     Returns
     -------
@@ -113,6 +116,32 @@ def setup_model(
 
     cadet_model.filename = file_name
     cadet_model.load()
+    if n_components < 4:
+        unit_000 = cadet_model.root.input.model.unit_000
+        unit_000.update({
+            'adsorption_model': 'LINEAR', 'col_dispersion': 5.75e-08,
+            'col_length': 0.014, 'col_porosity': 0.37,
+            'cross_section_area': 0.0003141592653589793,
+            'film_diffusion': [6.9e-06, ] * n_components,
+            'film_diffusion_multiplex': 0, 'init_c': [0., ] * n_components,
+            'init_q': [0., ] * n_components, 'nbound': [1, ] * n_components,
+            'ncomp': 1, 'npartype': 1, 'par_coreradius': 0.0,
+            'par_diffusion': [7.00e-10, ] * n_components, 'par_geom': 'SPHERE',
+            'par_porosity': 0.75, 'par_radius': 4.5e-05,
+            'par_surfdiffusion': [0., ] * n_components, 'unit_type': 'GENERAL_RATE_MODEL',
+            'velocity': 1.0,
+            'adsorption': {'is_kinetic': 0, 'lin_ka': [0.] * n_components, 'lin_kd': [1.] * n_components},
+        })
+        cadet_model.root.input.model.unit_001.update(
+            {'inlet_type': b'PIECEWISE_CUBIC_POLY', 'ncomp': 1, 'unit_type': b'INLET',
+             'sec_000': {'const_coeff': [50., ], 'cube_coeff': [0., ],
+                         'lin_coeff': [0., ], 'quad_coeff': [0., ]},
+             'sec_001': {'const_coeff': [50., ], 'cube_coeff': [0., ],
+                         'lin_coeff': [0., ], 'quad_coeff': [0., ]},
+             'sec_002': {'const_coeff': [100., ], 'cube_coeff': [0., ],
+                         'lin_coeff': [0.2], 'quad_coeff': [0., ]}}
+
+        )
 
     return cadet_model
 
@@ -254,7 +283,10 @@ def run_simulation_with_options(use_dll, model_options, solution_recorder_option
     model = setup_model(cadet_root, use_dll, **model_options)
     setup_solution_recorder(model, **solution_recorder_options)
 
-    model.run_load()
+    return_info = model.run_load()
+
+    if return_info.return_code != 0:
+        raise RuntimeError(return_info)
 
     return model
 
@@ -283,6 +315,13 @@ grm_template = {
     'model': 'GENERAL_RATE_MODEL',
     'n_partypes': 1,
     'include_sensitivity': False,
+}
+
+grm_template_1_comp = {
+    'model': 'GENERAL_RATE_MODEL',
+    'n_partypes': 1,
+    'include_sensitivity': False,
+    'n_components': 1,
 }
 
 grm_template_sens = {
@@ -494,6 +533,46 @@ grm = Case(
             'soldot_outlet': (1501, 4),
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+        },
+    },
+)
+# %% GRM 1 Comp
+
+grm_1_comp = Case(
+    name='grm_1_comp',
+    model_options=grm_template_1_comp,
+    solution_recorder_options=no_split_options,
+    expected_results={
+        'last_state_y': (103,),
+        'last_state_ydot': (103,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+            'particle_coordinates_000': (4,),
+        },
+        'solution_times': (1501,),
+        'solution_unit_000': {
+            'last_state_y': (101,),
+            'last_state_ydot': (101,),
+            'soldot_bulk': (1501, 10, 1),
+            'soldot_flux': (1501, 1, 10, 1),
+            'soldot_inlet': (1501, 1),
+            'soldot_outlet': (1501, 1),
+            'soldot_particle': (1501, 10, 4, 1),
+            'soldot_solid': (1501, 10, 4, 1),
+            'solution_bulk': (1501, 10, 1),
+            'solution_flux': (1501, 1, 10, 1),
+            'solution_inlet': (1501, 1),
+            'solution_outlet': (1501, 1),
+            'solution_particle': (1501, 10, 4, 1),
+            'solution_solid': (1501, 10, 4, 1),
+        },
+        'solution_unit_001': {
+            'last_state_y': (1,),
+            'last_state_ydot': (1,),
+            'soldot_inlet': (1501, 1),
+            'soldot_outlet': (1501, 1),
+            'solution_inlet': (1501, 1),
+            'solution_outlet': (1501, 1),
         },
     },
 )
@@ -867,6 +946,7 @@ test_cases = [
     lrm,
     lrmp,
     grm,
+    grm_1_comp,
     grm_split,
     grm_sens,
     grm_par_types,
