@@ -2055,20 +2055,20 @@ class CadetDLLRunner(CadetRunnerBase):
                 if nPort == 1:
                     if single_as_multi_port:
                         for comp in range(nComp):
-                            comp_out = numpy.squeeze(out[..., comp])
+                            comp_out = out[..., 0, comp]
                             solution[f'{solution_str}_port_000_comp_{comp:03d}'] = comp_out
                     else:
                         for comp in range(nComp):
-                            comp_out = numpy.squeeze(out[..., comp])
+                            comp_out = out[..., comp]
                             solution[f'{solution_str}_comp_{comp:03d}'] = comp_out
                 else:
                     for port in range(nPort):
                         for comp in range(nComp):
-                            comp_out = numpy.squeeze(out[..., port, comp])
+                            comp_out = out[..., port, comp]
                             solution[f'{solution_str}_port_{port:03d}_comp_{comp:03d}'] = comp_out
             else:
                 for comp in range(nComp):
-                    comp_out = numpy.squeeze(out[..., comp])
+                    comp_out = out[..., comp]
                     solution[f'{solution_str}_comp_{comp:03d}'] = comp_out
         else:
             if split_ports_data:
@@ -2076,14 +2076,14 @@ class CadetDLLRunner(CadetRunnerBase):
                     if single_as_multi_port:
                         solution[f'{solution_str}_port_000'] = out
                     else:
-                        solution[solution_str] = numpy.squeeze(out[..., 0, :])
+                        solution[solution_str] = out[..., 0, :]
                 else:
                     for port in range(nPort):
-                        port_out = numpy.squeeze(out[..., port, :])
+                        port_out = out[..., port, :]
                         solution[f'{solution_str}_port_{port:03d}'] = port_out
             else:
                 if nPort == 1 and nPort_idx is not None:
-                    solution[solution_str] = numpy.squeeze(out[..., 0, :])
+                    solution[solution_str] = out[..., 0, :]
                 else:
                     solution[solution_str] = out
 
