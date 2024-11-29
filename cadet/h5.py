@@ -254,42 +254,47 @@ class H5:
         obj[parts[-1]] = value
 
 
-def convert_from_numpy(data: Dict, func: callable) -> Dict:
+def convert_from_numpy(data: Dict, func: Optional[callable]=None) -> Dict:
     """
-    Convert numpy objects to native Python types.
+    Convert a dictionary with NumPy objects into native Python types.
 
     Parameters
     ----------
-    data : Dict
-        Input dictionary potentially containing numpy objects.
+    data : dict
+        The input dictionary with potential NumPy types.
     func : callable
-        Transformation function for dictionary keys.
+        A function to transform the keys.
 
     Returns
     -------
-    Dict
-        Dictionary with converted data.
+    dict
+        A dictionary with transformed keys and native Python types.
     """
-    ans = Dict()
-    for key_original, item in data.items():
-        key = func(key_original)
+    ans = {}
+    for key, item in data.items():
+        if func is not None:
+            key = func(key)
+
+        # Handle NumPy-specific types
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
-
-        if isinstance(item, numpy.generic):
+        elif isinstance(item, numpy.generic):
             item = item.item()
 
-        if isinstance(item, bytes):
-            item = item.decode('ascii')
+        # Handle bytes
+        elif isinstance(item, bytes):
+            item = item.decode('utf-8')
 
-        if isinstance(item, Dict):
-            ans[key_original] = convert_from_numpy(item, func)
+        # Recursive handling of nested dictionaries
+        if isinstance(item, dict):  # Assuming Dict is replaced with dict
+            ans[key] = convert_from_numpy(item, func)
         else:
             ans[key] = item
+
     return ans
 
 
-def recursively_load_dict(data: dict, func: callable) -> Dict:
+def recursively_load_dict(data: dict, func: Optional[callable]=None) -> Dict:
     """
     Recursively load data from a dictionary.
 
@@ -306,22 +311,30 @@ def recursively_load_dict(data: dict, func: callable) -> Dict:
         Dictionary with loaded data.
     """
     ans = Dict()
-    for key_original, item in data.items():
-        key = func(key_original)
+    for key, item in data.items():
+        if func is not None:
+            key = func(key)
+
         if isinstance(item, dict):
             ans[key] = recursively_load_dict(item, func)
         else:
+            # Handle bytes
+            if isinstance(item, numpy.int32):
+                item = int(item)
+            elif isinstance(item, bytes):
+                item = item.decode('utf-8')
+
             ans[key] = item
     return ans
 
 
-def set_path(obj: Dict, path: str, value: Any) -> None:
+def set_path(obj: Dict[str, Any], path: str, value: Any) -> None:
     """
-    Set a value within a nested dictionary given a path.
+    Set a value within a nested dictionary given a slash-separated path.
 
     Parameters
     ----------
-    obj : Dict
+    obj : Dict[str, Any]
         Dictionary to set the value in.
     path : str
         Slash-separated path indicating where to set the value.
@@ -329,9 +342,15 @@ def set_path(obj: Dict, path: str, value: Any) -> None:
         Value to be set at the specified path.
     """
     path_parts = [i for i in path.split('/') if i]
+
     temp = obj
     for part in path_parts[:-1]:
+        if part not in temp or not isinstance(temp[part], dict):
+            temp[part] = {}  # Create intermediate dictionaries as needed
         temp = temp[part]
+
+    value = recursively_load_dict(value)
+
     temp[path_parts[-1]] = value
 
 
@@ -413,9 +432,9 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
         if isinstance(item, dict):
             recursively_save(h5file, path + key + '/', item, func)
         elif isinstance(item, str):
-            value = numpy.array(item.encode('ascii'))
+            value = numpy.array(item.encode('utf-8'))
         elif isinstance(item, list) and all(isinstance(i, str) for i in item):
-            value = numpy.array([i.encode('ascii') for i in item])
+            value = numpy.array([i.encode('utf-8') for i in item])
         else:
             try:
                 value = numpy.array(item)
