@@ -395,10 +395,7 @@ cstr = Case(
     expected_results={
         'last_state_y': (21,),
         'last_state_ydot': (21,),
-        'coordinates_unit_000': {
-            'axial_coordinates': (1,),
-            'particle_coordinates_000': (1,),
-        },
+        'coordinates_unit_000': {},
         'solution_times': (1501,),
         'solution_unit_000': {
             'solution_inlet': (1501, 4),
@@ -472,7 +469,6 @@ lrmp = Case(
         'last_state_ydot': (172,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
-            'particle_coordinates_000': (1,),
         },
         'solution_times': (1501,),
         'solution_unit_000': {
