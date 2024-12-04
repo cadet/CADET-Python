@@ -47,7 +47,7 @@ def test_install_path():
 def test_dll_runner_attrs():
     cadet = Cadet(full_path_dll.parent.parent)
     cadet_runner = cadet._cadet_dll_runner
-    assert re.match("\d\.\d\.\d", cadet_runner.cadet_version)
+    assert re.match(r"\d\.\d\.\d", cadet_runner.cadet_version)
     assert isinstance(cadet_runner.cadet_branch, str)
     assert isinstance(cadet_runner.cadet_build_type, str | None)
     assert isinstance(cadet_runner.cadet_commit_hash, str)
@@ -58,7 +58,7 @@ def test_dll_runner_attrs():
 def test_cli_runner_attrs():
     cadet = Cadet(full_path_dll.parent.parent)
     cadet_runner = cadet._cadet_cli_runner
-    assert re.match("\d\.\d\.\d", cadet_runner.cadet_version)
+    assert re.match(r"\d\.\d\.\d", cadet_runner.cadet_version)
     assert isinstance(cadet_runner.cadet_branch, str)
     assert isinstance(cadet_runner.cadet_build_type, str | None)
     assert isinstance(cadet_runner.cadet_commit_hash, str)
