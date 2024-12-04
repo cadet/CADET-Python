@@ -22,7 +22,7 @@ def test_meta_class():
     assert sim.use_dll
     assert sim.install_path == full_path_dll.parent.parent
     assert sim.cadet_dll_path == full_path_dll
-    assert sim.cadet_cli_path.parent == full_path_dll.parent
+    assert sim.cadet_cli_path.parent.parent == full_path_dll.parent.parent
 
     # With an install path given, the sim instance should use the given install path
     sim = Cadet(install_path=install_path_conda)
