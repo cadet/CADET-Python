@@ -213,6 +213,9 @@ class Cadet(H5, metaclass=CadetMeta):
         self.cadet_create_lwe_path: Optional[Path] = None
         self.return_information: Optional[dict] = None
 
+        self._cadet_cli_runner: Optional[CadetCLIRunner] = None
+        self._cadet_dll_runner: Optional[CadetDLLRunner] = None
+
         # Regardless of settings in the Meta Class, if we get an install_path, we respect the install_path
         if install_path is not None:
             self.use_dll = use_dll
