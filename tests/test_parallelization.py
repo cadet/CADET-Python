@@ -40,3 +40,7 @@ def test_parallelization_simulation():
         delayed(run_simulation)(model, ) for model in models
     )
     assert results_sequential == results_parallel
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
