@@ -1,0 +1,50 @@
+{
+    "title": "CADET-Python: Version 1.0.3",
+    "upload_type": "software",
+    "creators": [
+        {
+            "name": "Heymann, William",
+            "orcid": "0000-0002-5093-0797",
+            "affiliation": "Forschungszentrum Jülich"
+        },
+        {
+            "name": "Schmölder, Johannes",
+            "orcid": "0000-0003-0446-7209",
+            "affiliation": "Forschungszentrum Jülich"
+        },
+        {
+            "name": "Jäpel, Ronald",
+            "orcid": "0000-0002-4912-5176",
+            "affiliation": "Forschungszentrum Jülich"
+        },
+        {
+            "name": "Lanzrath, Hannah",
+            "orcid": "0000-0002-2675-9002",
+            "affiliation": "Forschungszentrum Jülich"
+        },
+        {
+            "name": "Leweke, Samuel",
+            "orcid": "0000-0001-9471-4511",
+            "affiliation": "Forschungszentrum Jülich"
+        },
+        {
+            "name": "von Lieres, Eric",
+            "orcid": "0000-0002-0309-8408",
+            "affiliation": "Forschungszentrum Jülich"
+        }
+    ],
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "modeling",
+        "simulation",
+        "biotechnology",
+        "process",
+        "chromatography",
+        "CADET",
+        "general rate model",
+        "Python"
+    ],
+    "version": "1.0.3",
+    "access_right": "open",
+    "communities": [{"identifier": "open-source"}]
+}
