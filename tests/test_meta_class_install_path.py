@@ -29,3 +29,10 @@ def test_meta_class():
     assert sim.install_path == install_path_conda
     assert sim.cadet_dll_path.parent.parent == install_path_conda
     assert sim.cadet_cli_path.parent.parent == install_path_conda
+
+    # Reset Path
+    Cadet.cadet_path = None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
