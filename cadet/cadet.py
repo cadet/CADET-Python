@@ -112,6 +112,10 @@ class CadetMeta(type):
     This meta class allows setting the `cadet_path` attribute for all instances of the
     `Cadet` class.
     """
+    use_dll = False
+    cadet_cli_path = None
+    cadet_dll_path = None
+    cadet_create_lwe_path = None
 
     @property
     def cadet_path(cls) -> Optional[Path]:
@@ -131,7 +135,7 @@ class CadetMeta(type):
             return None
 
     @cadet_path.setter
-    def cadet_path(cls, cadet_path: os.PathLike) -> None:
+    def cadet_path(cls, cadet_path: Optional[os.PathLike]) -> None:
         """
         Set the CADET path and initialize the appropriate runner.
 
@@ -145,13 +149,20 @@ class CadetMeta(type):
         If the path is a DLL, a `CadetDLLRunner` runner is used.
         Otherwise, a `CadetFileRunner` runner is used.
         """
-        cadet_path = Path(cadet_path)
-
         warnings.warn(
-            "Support for setting cadet.cadet_path will be removed in a future version. "
-            "TODO: What alternative should be used?",
+            "Support for setting Cadet.cadet_path will be removed in a future version. "
+            "Please set the `install_path` on instance level.",
             DeprecationWarning
         )
+        if cadet_path is None:
+            cls.use_dll = False
+            cls._install_path = None
+            cls.cadet_cli_path = None
+            cls.cadet_dll_path = None
+            cls.cadet_create_lwe_path = None
+            return
+
+        cadet_path = Path(cadet_path)
 
         cls.use_dll = cadet_path.suffix in [".dll", ".so"]
 
@@ -314,9 +325,9 @@ class Cadet(H5, metaclass=CadetMeta):
         Otherwise, a `CadetFileRunner` runner is used.
         """
         cadet_path = Path(cadet_path)
-
         warnings.warn(
-            "Deprecation warning: Support for setting cadet.cadet_path will be removed in a future version.",
+            "Deprecation warning: Support for setting cadet.cadet_path will be removed "
+            " in a future version. Use `install_path` instead.",
             FutureWarning
         )
         self.install_path = cadet_path
