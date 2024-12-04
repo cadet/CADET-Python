@@ -523,6 +523,13 @@ class Cadet(H5, metaclass=CadetMeta):
         if runner is not None:
             runner.clear()
 
+    def delete_file(self) -> None:
+        if self.filename is not None:
+            try:
+                os.remove(self.filename)
+            except FileNotFoundError:
+                pass
+
     def __del__(self):
         self.clear()
         del self._cadet_dll_runner
