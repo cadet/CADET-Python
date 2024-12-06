@@ -120,27 +120,54 @@ def setup_model(
     if n_components < 4:
         unit_000 = cadet_model.root.input.model.unit_000
         unit_000.update({
-            'adsorption_model': 'LINEAR', 'col_dispersion': 5.75e-08,
-            'col_length': 0.014, 'col_porosity': 0.37,
+            'adsorption_model': 'LINEAR',
+            'col_dispersion': 5.75e-08,
+            'col_length': 0.014,
+            'col_porosity': 0.37,
             'cross_section_area': 0.0003141592653589793,
             'film_diffusion': [6.9e-06, ] * n_components,
-            'film_diffusion_multiplex': 0, 'init_c': [0., ] * n_components,
-            'init_q': [0., ] * n_components, 'nbound': [1, ] * n_components,
-            'ncomp': 1, 'npartype': 1, 'par_coreradius': 0.0,
-            'par_diffusion': [7.00e-10, ] * n_components, 'par_geom': 'SPHERE',
-            'par_porosity': 0.75, 'par_radius': 4.5e-05,
-            'par_surfdiffusion': [0., ] * n_components, 'unit_type': 'GENERAL_RATE_MODEL',
+            'film_diffusion_multiplex': 0,
+            'init_c': [0., ] * n_components,
+            'init_q': [0., ] * n_components,
+            'nbound': [1, ] * n_components,
+            'ncomp': 1,
+            'npartype': 1,
+            'par_coreradius': 0.0,
+            'par_diffusion': [7.00e-10, ] * n_components,
+            'par_geom': 'SPHERE',
+            'par_porosity': 0.75,
+            'par_radius': 4.5e-05,
+            'par_surfdiffusion': [0., ] * n_components,
+            'unit_type': 'GENERAL_RATE_MODEL',
             'velocity': 1.0,
-            'adsorption': {'is_kinetic': 0, 'lin_ka': [0.] * n_components, 'lin_kd': [1.] * n_components},
+            'adsorption': {
+                'is_kinetic': 0,
+                'lin_ka': [0.] * n_components,
+                'lin_kd': [1.] * n_components
+            },
         })
-        cadet_model.root.input.model.unit_001.update(
-            {'inlet_type': b'PIECEWISE_CUBIC_POLY', 'ncomp': 1, 'unit_type': b'INLET',
-             'sec_000': {'const_coeff': [50., ], 'cube_coeff': [0., ],
-                         'lin_coeff': [0., ], 'quad_coeff': [0., ]},
-             'sec_001': {'const_coeff': [50., ], 'cube_coeff': [0., ],
-                         'lin_coeff': [0., ], 'quad_coeff': [0., ]},
-             'sec_002': {'const_coeff': [100., ], 'cube_coeff': [0., ],
-                         'lin_coeff': [0.2], 'quad_coeff': [0., ]}}
+        cadet_model.root.input.model.unit_001.update({
+             'inlet_type': b'PIECEWISE_CUBIC_POLY',
+             'ncomp': 1, 'unit_type': b'INLET',
+             'sec_000': {
+                 'const_coeff': [50., ],
+                 'cube_coeff': [0., ],
+                 'lin_coeff': [0., ],
+                 'quad_coeff': [0., ]
+             },
+             'sec_001': {
+                 'const_coeff': [50., ],
+                 'cube_coeff': [0., ],
+                 'lin_coeff': [0., ],
+                 'quad_coeff': [0., ]
+             },
+             'sec_002': {
+                 'const_coeff': [100., ],
+                 'cube_coeff': [0.2, ],
+                 'lin_coeff': [0., ],
+                 'quad_coeff': [0., ]
+             }
+         }
         )
         # if we don't save and re-load the model we get windows access violations.
         # Interesting case for future tests, not what I want to test now.
@@ -351,23 +378,36 @@ _2dgrm_template = {
 
 # %% Solution recorder templates
 
-no_split_options = {
+no_split = {
     'split_components': 0,
     'split_ports': 0,
     'single_as_multi_port': 0,
 }
 
-split_ports_options = {
+split_components = {
+    'split_components': 1,
+    'split_ports': 0,
+    'single_as_multi_port': 0,
+}
+
+split_ports = {
     'split_components': 0,
     'split_ports': 1,
     'single_as_multi_port': 0,
 }
 
-split_all_options = {
+split_ports_single_as_multi = {
+    'split_components': 0,
+    'split_ports': 1,
+    'single_as_multi_port': 1,
+}
+
+split_all = {
     'split_components': 1,
     'split_ports': 1,
     'single_as_multi_port': 1,
 }
+
 
 # %% Test cases
 
@@ -386,321 +426,530 @@ class Case():
             f"Case('{self.name}', {self.model_options}, " \
             f"{self.solution_recorder_options}, {self.expected_results})"
 
+
 # %% CSTR
 
 cstr = Case(
     name='cstr',
     model_options=cstr_template,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (21,),
         'last_state_ydot': (21,),
         'coordinates_unit_000': {},
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
+            'last_state_y': (13,),
+            'last_state_ydot': (13,),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
             'solution_bulk': (1501, 4),
             'solution_solid': (1501, 4),
             'solution_volume': (1501,),
+
             'soldot_inlet': (1501, 4),
             'soldot_outlet': (1501, 4),
             'soldot_bulk': (1501, 4),
             'soldot_solid': (1501, 4),
-            'soldot_volume': (1501, ),
-            'last_state_y': (13,),
-            'last_state_ydot': (13,),
+            'soldot_volume': (1501,),
         },
         'solution_unit_001': {
-            'solution_inlet': (1501, 4),
-            'solution_outlet': (1501, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
             'last_state_y': (4,),
             'last_state_ydot': (4,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
     },
 )
+
 
 # %% LRM
 
 lrm = Case(
     name='lrm',
     model_options=lrm_template,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (92,),
         'last_state_ydot': (92,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
+            'last_state_y': (84,),
+            'last_state_ydot': (84,),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
             'solution_bulk': (1501, 10, 4),
             'solution_solid': (1501, 10, 4),
+
             'soldot_inlet': (1501, 4),
             'soldot_outlet': (1501, 4),
             'soldot_bulk': (1501, 10, 4),
             'soldot_solid': (1501, 10, 4),
-            'last_state_y': (84,),
-            'last_state_ydot': (84,),
         },
         'solution_unit_001': {
-            'solution_inlet': (1501, 4),
-            'solution_outlet': (1501, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
             'last_state_y': (4,),
             'last_state_ydot': (4,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+
         },
     },
 )
+
 
 # %% LRMP
 
 lrmp = Case(
     name='lrmp',
     model_options=lrmp_template,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (172,),
         'last_state_ydot': (172,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (164,),
             'last_state_ydot': (164,),
-            'soldot_bulk': (1501, 10, 4),
-            'soldot_flux': (1501, 1, 10, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
-            'soldot_particle': (1501, 10, 4),
-            'soldot_solid': (1501, 10, 4),
-            'solution_bulk': (1501, 10, 4),
-            'solution_flux': (1501, 1, 10, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
             'solution_particle': (1501, 10, 4),
             'solution_solid': (1501, 10, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4),
+            'soldot_solid': (1501, 10, 4),
+            'soldot_flux': (1501, 1, 10, 4),
         },
         'solution_unit_001': {
             'last_state_y': (4,),
             'last_state_ydot': (4,),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
     },
 )
 
-# %% GRM
+
+# %% GRM (no_split)
 
 grm = Case(
     name='grm',
     model_options=grm_template,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (412,),
         'last_state_ydot': (412,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
             'particle_coordinates_000': (4,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (404,),
             'last_state_ydot': (404,),
-            'soldot_bulk': (1501, 10, 4),
-            'soldot_flux': (1501, 1, 10, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
-            'soldot_particle': (1501, 10, 4, 4),
-            'soldot_solid': (1501, 10, 4, 4),
-            'solution_bulk': (1501, 10, 4),
-            'solution_flux': (1501, 1, 10, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
             'solution_particle': (1501, 10, 4, 4),
             'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
         },
         'solution_unit_001': {
             'last_state_y': (4,),
             'last_state_ydot': (4,),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
     },
 )
+
+
+# %% GRM (split_components)
+
+grm_split_components = Case(
+    name='grm_split_components',
+    model_options=grm_template,
+    solution_recorder_options=split_components,
+    expected_results={
+        'solution_times': (1501,),
+        'last_state_y': (412,),
+        'last_state_ydot': (412,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+            'particle_coordinates_000': (4,),
+        },
+        'coordinates_unit_001': {},
+        'solution_unit_000': {
+            'last_state_y': (404,),
+            'last_state_ydot': (404,),
+
+            'solution_inlet_comp_000': (1501,),
+            'solution_inlet_comp_001': (1501,),
+            'solution_inlet_comp_002': (1501,),
+            'solution_inlet_comp_003': (1501,),
+            'solution_outlet_comp_000': (1501,),
+            'solution_outlet_comp_001': (1501,),
+            'solution_outlet_comp_002': (1501,),
+            'solution_outlet_comp_003': (1501,),
+            'solution_bulk': (1501, 10, 4),
+            'solution_particle': (1501, 10, 4, 4),
+            'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet_comp_000': (1501,),
+            'soldot_inlet_comp_001': (1501,),
+            'soldot_inlet_comp_002': (1501,),
+            'soldot_inlet_comp_003': (1501,),
+            'soldot_outlet_comp_000': (1501,),
+            'soldot_outlet_comp_001': (1501,),
+            'soldot_outlet_comp_002': (1501,),
+            'soldot_outlet_comp_003': (1501,),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
+
+            'solution_inlet_comp_000': (1501,),
+            'solution_inlet_comp_001': (1501,),
+            'solution_inlet_comp_002': (1501,),
+            'solution_inlet_comp_003': (1501,),
+            'solution_outlet_comp_000': (1501,),
+            'solution_outlet_comp_001': (1501,),
+            'solution_outlet_comp_002': (1501,),
+            'solution_outlet_comp_003': (1501,),
+
+            'soldot_inlet_comp_000': (1501,),
+            'soldot_inlet_comp_001': (1501,),
+            'soldot_inlet_comp_002': (1501,),
+            'soldot_inlet_comp_003': (1501,),
+            'soldot_outlet_comp_000': (1501,),
+            'soldot_outlet_comp_001': (1501,),
+            'soldot_outlet_comp_002': (1501,),
+            'soldot_outlet_comp_003': (1501,),
+        },
+    },
+)
+
+
+# %% GRM (split_ports)
+
+grm_split_ports = Case(
+    name='grm_split_ports',
+    model_options=grm_template,
+    solution_recorder_options=split_ports,
+    expected_results={
+        'solution_times': (1501,),
+        'last_state_y': (412,),
+        'last_state_ydot': (412,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+            'particle_coordinates_000': (4,),
+        },
+        'coordinates_unit_001': {},
+        'solution_unit_000': {
+            'last_state_y': (404,),
+            'last_state_ydot': (404,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
+            'solution_particle': (1501, 10, 4, 4),
+            'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+        },
+    },
+)
+
+# %% GRM (split_ports_single_as_multi)
+
+grm_split_ports_single_as_multi = Case(
+    name='grm_split_ports_single_as_multi',
+    model_options=grm_template,
+    solution_recorder_options=split_ports_single_as_multi,
+    expected_results={
+        'solution_times': (1501,),
+        'last_state_y': (412,),
+        'last_state_ydot': (412,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+            'particle_coordinates_000': (4,),
+        },
+        'coordinates_unit_001': {},
+        'solution_unit_000': {
+            'last_state_y': (404,),
+            'last_state_ydot': (404,),
+
+            'solution_inlet_port_000': (1501, 4),
+            'solution_outlet_port_000': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
+            'solution_particle': (1501, 10, 4, 4),
+            'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet_port_000': (1501, 4),
+            'soldot_outlet_port_000': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
+
+            'solution_inlet_port_000': (1501, 4),
+            'solution_outlet_port_000': (1501, 4),
+
+            'soldot_inlet_port_000': (1501, 4),
+            'soldot_outlet_port_000': (1501, 4),
+        },
+    },
+)
+
+
+# %% GRM (split_all)
+
+grm_split_all = Case(
+    name='grm_split_all',
+    model_options=grm_template,
+    solution_recorder_options=split_all,
+    expected_results={
+        'solution_times': (1501,),
+        'last_state_y': (412,),
+        'last_state_ydot': (412,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+            'particle_coordinates_000': (4,),
+        },
+        'coordinates_unit_001': {},
+        'solution_unit_000': {
+            'last_state_y': (404,),
+            'last_state_ydot': (404,),
+
+            'solution_inlet_port_000_comp_000': (1501,),
+            'solution_inlet_port_000_comp_001': (1501,),
+            'solution_inlet_port_000_comp_002': (1501,),
+            'solution_inlet_port_000_comp_003': (1501,),
+            'solution_outlet_port_000_comp_000': (1501,),
+            'solution_outlet_port_000_comp_001': (1501,),
+            'solution_outlet_port_000_comp_002': (1501,),
+            'solution_outlet_port_000_comp_003': (1501,),
+            'solution_bulk': (1501, 10, 4),
+            'solution_particle': (1501, 10, 4, 4),
+            'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet_port_000_comp_000': (1501,),
+            'soldot_inlet_port_000_comp_001': (1501,),
+            'soldot_inlet_port_000_comp_002': (1501,),
+            'soldot_inlet_port_000_comp_003': (1501,),
+            'soldot_outlet_port_000_comp_000': (1501,),
+            'soldot_outlet_port_000_comp_001': (1501,),
+            'soldot_outlet_port_000_comp_002': (1501,),
+            'soldot_outlet_port_000_comp_003': (1501,),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
+
+            'solution_inlet_port_000_comp_000': (1501,),
+            'solution_inlet_port_000_comp_001': (1501,),
+            'solution_inlet_port_000_comp_002': (1501,),
+            'solution_inlet_port_000_comp_003': (1501,),
+            'solution_outlet_port_000_comp_000': (1501,),
+            'solution_outlet_port_000_comp_001': (1501,),
+            'solution_outlet_port_000_comp_002': (1501,),
+            'solution_outlet_port_000_comp_003': (1501,),
+
+            'soldot_inlet_port_000_comp_000': (1501,),
+            'soldot_inlet_port_000_comp_001': (1501,),
+            'soldot_inlet_port_000_comp_002': (1501,),
+            'soldot_inlet_port_000_comp_003': (1501,),
+            'soldot_outlet_port_000_comp_000': (1501,),
+            'soldot_outlet_port_000_comp_001': (1501,),
+            'soldot_outlet_port_000_comp_002': (1501,),
+            'soldot_outlet_port_000_comp_003': (1501,),
+        },
+    },
+)
+
+
 # %% GRM 1 Comp
 
 grm_1_comp = Case(
     name='grm_1_comp',
     model_options=grm_template_1_comp,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (103,),
         'last_state_ydot': (103,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
             'particle_coordinates_000': (4,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (101,),
             'last_state_ydot': (101,),
-            'soldot_bulk': (1501, 10, 1),
-            'soldot_flux': (1501, 1, 10, 1),
-            'soldot_inlet': (1501, 1),
-            'soldot_outlet': (1501, 1),
-            'soldot_particle': (1501, 10, 4, 1),
-            'soldot_solid': (1501, 10, 4, 1),
-            'solution_bulk': (1501, 10, 1),
-            'solution_flux': (1501, 1, 10, 1),
+
             'solution_inlet': (1501, 1),
             'solution_outlet': (1501, 1),
+            'solution_bulk': (1501, 10, 1),
             'solution_particle': (1501, 10, 4, 1),
             'solution_solid': (1501, 10, 4, 1),
+            'solution_flux': (1501, 1, 10, 1),
+
+            'soldot_inlet': (1501, 1),
+            'soldot_outlet': (1501, 1),
+            'soldot_bulk': (1501, 10, 1),
+            'soldot_particle': (1501, 10, 4, 1),
+            'soldot_solid': (1501, 10, 4, 1),
+            'soldot_flux': (1501, 1, 10, 1),
         },
         'solution_unit_001': {
             'last_state_y': (1,),
             'last_state_ydot': (1,),
-            'soldot_inlet': (1501, 1),
-            'soldot_outlet': (1501, 1),
+
             'solution_inlet': (1501, 1),
             'solution_outlet': (1501, 1),
+            'soldot_inlet': (1501, 1),
+            'soldot_outlet': (1501, 1),
         },
     },
 )
 
-# %% GRM Split
-
-grm_split = Case(
-    name='grm_split',
-    model_options=grm_template,
-    solution_recorder_options=split_all_options,
-    expected_results={
-        'last_state_y': (412,),
-        'last_state_ydot': (412,),
-        'coordinates_unit_000': {
-            'axial_coordinates': (10,),
-            'particle_coordinates_000': (4,),
-        },
-        'solution_times': (1501,),
-        'solution_unit_000': {
-            'last_state_y': (404,),
-            'last_state_ydot': (404,),
-            'soldot_bulk': (1501, 10, 4),
-            'soldot_flux': (1501, 1, 10, 4),
-            'soldot_inlet_port_000_comp_000': (1501,),
-            'soldot_inlet_port_000_comp_001': (1501,),
-            'soldot_inlet_port_000_comp_002': (1501,),
-            'soldot_inlet_port_000_comp_003': (1501,),
-            'soldot_outlet_port_000_comp_000': (1501,),
-            'soldot_outlet_port_000_comp_001': (1501,),
-            'soldot_outlet_port_000_comp_002': (1501,),
-            'soldot_outlet_port_000_comp_003': (1501,),
-            'soldot_particle': (1501, 10, 4, 4),
-            'soldot_solid': (1501, 10, 4, 4),
-            'solution_bulk': (1501, 10, 4),
-            'solution_flux': (1501, 1, 10, 4),
-            'solution_inlet_port_000_comp_000': (1501,),
-            'solution_inlet_port_000_comp_001': (1501,),
-            'solution_inlet_port_000_comp_002': (1501,),
-            'solution_inlet_port_000_comp_003': (1501,),
-            'solution_outlet_port_000_comp_000': (1501,),
-            'solution_outlet_port_000_comp_001': (1501,),
-            'solution_outlet_port_000_comp_002': (1501,),
-            'solution_outlet_port_000_comp_003': (1501,),
-            'solution_particle': (1501, 10, 4, 4),
-            'solution_solid': (1501, 10, 4, 4),
-        },
-        'solution_unit_001': {
-            'last_state_y': (4,),
-            'last_state_ydot': (4,),
-            'soldot_inlet_port_000_comp_000': (1501,),
-            'soldot_inlet_port_000_comp_001': (1501,),
-            'soldot_inlet_port_000_comp_002': (1501,),
-            'soldot_inlet_port_000_comp_003': (1501,),
-            'soldot_outlet_port_000_comp_000': (1501,),
-            'soldot_outlet_port_000_comp_001': (1501,),
-            'soldot_outlet_port_000_comp_002': (1501,),
-            'soldot_outlet_port_000_comp_003': (1501,),
-            'solution_inlet_port_000_comp_000': (1501,),
-            'solution_inlet_port_000_comp_001': (1501,),
-            'solution_inlet_port_000_comp_002': (1501,),
-            'solution_inlet_port_000_comp_003': (1501,),
-            'solution_outlet_port_000_comp_000': (1501,),
-            'solution_outlet_port_000_comp_001': (1501,),
-            'solution_outlet_port_000_comp_002': (1501,),
-            'solution_outlet_port_000_comp_003': (1501,),
-        },
-    },
-)
 
 # %% GRM Sens
 
 grm_sens = Case(
     name='grm_sens',
     model_options=grm_template_sens,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (412,),
         'last_state_ydot': (412,),
         'coordinates_unit_000': {
             'axial_coordinates': (10,),
             'particle_coordinates_000': (4,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (404,),
             'last_state_ydot': (404,),
-            'soldot_bulk': (1501, 10, 4),
-            'soldot_flux': (1501, 1, 10, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
-            'soldot_particle': (1501, 10, 4, 4),
-            'soldot_solid': (1501, 10, 4, 4),
-            'solution_bulk': (1501, 10, 4),
-            'solution_flux': (1501, 1, 10, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
             'solution_particle': (1501, 10, 4, 4),
             'solution_solid': (1501, 10, 4, 4),
+            'solution_flux': (1501, 1, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle': (1501, 10, 4, 4),
+            'soldot_solid': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 1, 10, 4),
         },
         'solution_unit_001': {
             'last_state_y': (4,),
             'last_state_ydot': (4,),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
         'sens_param_000_unit_000': {
-            'sensdot_bulk': (1501, 10, 4),
-            'sensdot_flux': (1501, 1, 10, 4),
-            'sensdot_inlet': (1501, 4),
-            'sensdot_outlet': (1501, 4),
-            'sensdot_particle': (1501, 10, 4, 4),
-            'sensdot_solid': (1501, 10, 4, 4),
-            'sens_bulk': (1501, 10, 4),
-            'sens_flux': (1501, 1, 10, 4),
             'sens_inlet': (1501, 4),
             'sens_outlet': (1501, 4),
+            'sens_bulk': (1501, 10, 4),
             'sens_particle': (1501, 10, 4, 4),
             'sens_solid': (1501, 10, 4, 4),
-        },
-        'sens_param_000_unit_001': {
+            'sens_flux': (1501, 1, 10, 4),
+
             'sensdot_inlet': (1501, 4),
             'sensdot_outlet': (1501, 4),
+            'sensdot_bulk': (1501, 10, 4),
+            'sensdot_particle': (1501, 10, 4, 4),
+            'sensdot_solid': (1501, 10, 4, 4),
+            'sensdot_flux': (1501, 1, 10, 4),
+        },
+        'sens_param_000_unit_001': {
             'sens_inlet': (1501, 4),
             'sens_outlet': (1501, 4),
+
+            'sensdot_inlet': (1501, 4),
+            'sensdot_outlet': (1501, 4),
         },
     },
 )
@@ -710,8 +959,9 @@ grm_sens = Case(
 grm_par_types = Case(
     name='grm_par_types',
     model_options=grm_template_partypes,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (772,),
         'last_state_ydot': (772,),
         'coordinates_unit_000': {
@@ -719,34 +969,38 @@ grm_par_types = Case(
             'particle_coordinates_000': (4,),
             'particle_coordinates_001': (4,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (764,),
             'last_state_ydot': (764,),
-            'soldot_bulk': (1501, 10, 4),
-            'soldot_flux': (1501, 2, 10, 4),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
-            'soldot_particle_partype_000': (1501, 10, 4, 4),
-            'soldot_particle_partype_001': (1501, 10, 4, 4),
-            'soldot_solid_partype_000': (1501, 10, 4, 4),
-            'soldot_solid_partype_001': (1501, 10, 4, 4),
-            'solution_bulk': (1501, 10, 4),
-            'solution_flux': (1501, 2, 10, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
             'solution_particle_partype_000': (1501, 10, 4, 4),
             'solution_particle_partype_001': (1501, 10, 4, 4),
             'solution_solid_partype_000': (1501, 10, 4, 4),
             'solution_solid_partype_001': (1501, 10, 4, 4),
+            'solution_flux': (1501, 2, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_particle_partype_000': (1501, 10, 4, 4),
+            'soldot_particle_partype_001': (1501, 10, 4, 4),
+            'soldot_solid_partype_000': (1501, 10, 4, 4),
+            'soldot_solid_partype_001': (1501, 10, 4, 4),
+            'soldot_flux': (1501, 2, 10, 4),
         },
         'solution_unit_001': {
             'last_state_y': (4,),
             'last_state_ydot': (4,),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
     },
 )
@@ -755,8 +1009,9 @@ grm_par_types = Case(
 _2dgrm = Case(
     name='_2dgrm',
     model_options=_2dgrm_template,
-    solution_recorder_options=no_split_options,
+    solution_recorder_options=no_split,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (1228,),
         'last_state_ydot': (1228,),
         'coordinates_unit_000': {
@@ -764,7 +1019,7 @@ _2dgrm = Case(
             'particle_coordinates_000': (4,),
             'radial_coordinates': (3,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (1212,),
             'last_state_ydot': (1212,),
@@ -797,8 +1052,9 @@ _2dgrm = Case(
 _2dgrm_split_ports = Case(
     name='_2dgrm_split_ports',
     model_options=_2dgrm_template,
-    solution_recorder_options=split_ports_options,
+    solution_recorder_options=split_ports,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (1228,),
         'last_state_ydot': (1228,),
         'coordinates_unit_000': {
@@ -806,38 +1062,43 @@ _2dgrm_split_ports = Case(
             'particle_coordinates_000': (4,),
             'radial_coordinates': (3,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (1212,),
             'last_state_ydot': (1212,),
-            'soldot_bulk': (1501, 10, 3, 4),
-            'soldot_flux': (1501, 1, 10, 3, 4),
-            'soldot_inlet_port_000': (1501, 4),
-            'soldot_inlet_port_001': (1501, 4),
-            'soldot_inlet_port_002': (1501, 4),
-            'soldot_outlet_port_000': (1501, 4),
-            'soldot_outlet_port_001': (1501, 4),
-            'soldot_outlet_port_002': (1501, 4),
-            'soldot_particle': (1501, 10, 3, 4, 4),
-            'soldot_solid': (1501, 10, 3, 4, 4),
-            'solution_bulk': (1501, 10, 3, 4),
-            'solution_flux': (1501, 1, 10, 3, 4),
+
             'solution_inlet_port_000': (1501, 4),
             'solution_inlet_port_001': (1501, 4),
             'solution_inlet_port_002': (1501, 4),
             'solution_outlet_port_000': (1501, 4),
             'solution_outlet_port_001': (1501, 4),
             'solution_outlet_port_002': (1501, 4),
+            'solution_bulk': (1501, 10, 3, 4),
             'solution_particle': (1501, 10, 3, 4, 4),
             'solution_solid': (1501, 10, 3, 4, 4),
+            'solution_flux': (1501, 1, 10, 3, 4),
+
+            'soldot_inlet_port_000': (1501, 4),
+            'soldot_inlet_port_001': (1501, 4),
+            'soldot_inlet_port_002': (1501, 4),
+            'soldot_outlet_port_000': (1501, 4),
+            'soldot_outlet_port_001': (1501, 4),
+            'soldot_outlet_port_002': (1501, 4),
+            'soldot_bulk': (1501, 10, 3, 4),
+            'soldot_particle': (1501, 10, 3, 4, 4),
+            'soldot_solid': (1501, 10, 3, 4, 4),
+            'soldot_flux': (1501, 1, 10, 3, 4),
+
         },
         'solution_unit_001': {
             'last_state_y': (4,),
             'last_state_ydot': (4,),
-            'soldot_inlet': (1501, 4),
-            'soldot_outlet': (1501, 4),
+
             'solution_inlet': (1501, 4),
             'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
         },
     },
 )
@@ -847,8 +1108,9 @@ _2dgrm_split_ports = Case(
 _2dgrm_split_all = Case(
     name='_2dgrm_split_all',
     model_options=_2dgrm_template,
-    solution_recorder_options=split_all_options,
+    solution_recorder_options=split_all,
     expected_results={
+        'solution_times': (1501,),
         'last_state_y': (1228,),
         'last_state_ydot': (1228,),
         'coordinates_unit_000': {
@@ -856,40 +1118,11 @@ _2dgrm_split_all = Case(
             'particle_coordinates_000': (4,),
             'radial_coordinates': (3,),
         },
-        'solution_times': (1501,),
+        'coordinates_unit_001': {},
         'solution_unit_000': {
             'last_state_y': (1212,),
             'last_state_ydot': (1212,),
-            'soldot_bulk': (1501, 10, 3, 4),
-            'soldot_flux': (1501, 1, 10, 3, 4),
-            'soldot_inlet_port_000_comp_000': (1501,),
-            'soldot_inlet_port_000_comp_001': (1501,),
-            'soldot_inlet_port_000_comp_002': (1501,),
-            'soldot_inlet_port_000_comp_003': (1501,),
-            'soldot_inlet_port_001_comp_000': (1501,),
-            'soldot_inlet_port_001_comp_001': (1501,),
-            'soldot_inlet_port_001_comp_002': (1501,),
-            'soldot_inlet_port_001_comp_003': (1501,),
-            'soldot_inlet_port_002_comp_000': (1501,),
-            'soldot_inlet_port_002_comp_001': (1501,),
-            'soldot_inlet_port_002_comp_002': (1501,),
-            'soldot_inlet_port_002_comp_003': (1501,),
-            'soldot_outlet_port_000_comp_000': (1501,),
-            'soldot_outlet_port_000_comp_001': (1501,),
-            'soldot_outlet_port_000_comp_002': (1501,),
-            'soldot_outlet_port_000_comp_003': (1501,),
-            'soldot_outlet_port_001_comp_000': (1501,),
-            'soldot_outlet_port_001_comp_001': (1501,),
-            'soldot_outlet_port_001_comp_002': (1501,),
-            'soldot_outlet_port_001_comp_003': (1501,),
-            'soldot_outlet_port_002_comp_000': (1501,),
-            'soldot_outlet_port_002_comp_001': (1501,),
-            'soldot_outlet_port_002_comp_002': (1501,),
-            'soldot_outlet_port_002_comp_003': (1501,),
-            'soldot_particle': (1501, 10, 3, 4, 4),
-            'soldot_solid': (1501, 10, 3, 4, 4),
-            'solution_bulk': (1501, 10, 3, 4),
-            'solution_flux': (1501, 1, 10, 3, 4),
+
             'solution_inlet_port_000_comp_000': (1501,),
             'solution_inlet_port_000_comp_001': (1501,),
             'solution_inlet_port_000_comp_002': (1501,),
@@ -914,20 +1147,43 @@ _2dgrm_split_all = Case(
             'solution_outlet_port_002_comp_001': (1501,),
             'solution_outlet_port_002_comp_002': (1501,),
             'solution_outlet_port_002_comp_003': (1501,),
+            'solution_bulk': (1501, 10, 3, 4),
             'solution_particle': (1501, 10, 3, 4, 4),
             'solution_solid': (1501, 10, 3, 4, 4),
-        },
-        'solution_unit_001': {
-            'last_state_y': (4,),
-            'last_state_ydot': (4,),
+            'solution_flux': (1501, 1, 10, 3, 4),
+
             'soldot_inlet_port_000_comp_000': (1501,),
             'soldot_inlet_port_000_comp_001': (1501,),
             'soldot_inlet_port_000_comp_002': (1501,),
             'soldot_inlet_port_000_comp_003': (1501,),
+            'soldot_inlet_port_001_comp_000': (1501,),
+            'soldot_inlet_port_001_comp_001': (1501,),
+            'soldot_inlet_port_001_comp_002': (1501,),
+            'soldot_inlet_port_001_comp_003': (1501,),
+            'soldot_inlet_port_002_comp_000': (1501,),
+            'soldot_inlet_port_002_comp_001': (1501,),
+            'soldot_inlet_port_002_comp_002': (1501,),
+            'soldot_inlet_port_002_comp_003': (1501,),
             'soldot_outlet_port_000_comp_000': (1501,),
             'soldot_outlet_port_000_comp_001': (1501,),
             'soldot_outlet_port_000_comp_002': (1501,),
             'soldot_outlet_port_000_comp_003': (1501,),
+            'soldot_outlet_port_001_comp_000': (1501,),
+            'soldot_outlet_port_001_comp_001': (1501,),
+            'soldot_outlet_port_001_comp_002': (1501,),
+            'soldot_outlet_port_001_comp_003': (1501,),
+            'soldot_outlet_port_002_comp_000': (1501,),
+            'soldot_outlet_port_002_comp_001': (1501,),
+            'soldot_outlet_port_002_comp_002': (1501,),
+            'soldot_outlet_port_002_comp_003': (1501,),
+            'soldot_bulk': (1501, 10, 3, 4),
+            'soldot_particle': (1501, 10, 3, 4, 4),
+            'soldot_solid': (1501, 10, 3, 4, 4),
+            'soldot_flux': (1501, 1, 10, 3, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
             'solution_inlet_port_000_comp_000': (1501,),
             'solution_inlet_port_000_comp_001': (1501,),
             'solution_inlet_port_000_comp_002': (1501,),
@@ -936,26 +1192,53 @@ _2dgrm_split_all = Case(
             'solution_outlet_port_000_comp_001': (1501,),
             'solution_outlet_port_000_comp_002': (1501,),
             'solution_outlet_port_000_comp_003': (1501,),
+
+            'soldot_inlet_port_000_comp_000': (1501,),
+            'soldot_inlet_port_000_comp_001': (1501,),
+            'soldot_inlet_port_000_comp_002': (1501,),
+            'soldot_inlet_port_000_comp_003': (1501,),
+            'soldot_outlet_port_000_comp_000': (1501,),
+            'soldot_outlet_port_000_comp_001': (1501,),
+            'soldot_outlet_port_000_comp_002': (1501,),
+            'soldot_outlet_port_000_comp_003': (1501,),
         },
     },
 )
 
-# %% Actual tests
 
-use_dll = [False, True]
-test_cases = [
-    cstr,
-    lrm,
-    lrmp,
-    grm,
-    grm_1_comp,
-    grm_split,
-    grm_sens,
-    grm_par_types,
-    _2dgrm,
-    _2dgrm_split_ports,
-    _2dgrm_split_all
-]
+
+# %% Testing utils
+
+def assert_keys(model_dict: dict, expected_dict: dict):
+    """
+    Assert that the keys of two dictionaries are identical.
+
+    Parameters
+    ----------
+    model_dict : dict
+        The dictionary whose keys are to be compared.
+    expected_dict : dict
+        The dictionary containing the expected set of keys.
+
+    Raises
+    ------
+    AssertionError
+        If the keys of `model_dict` and `expected_dict` do not match.
+
+    Examples
+    --------
+    >>> assert_keys({"a": 1, "b": 2}, {"b": 3, "a": 4})
+    True
+    >>> assert_keys({"a": 1, "b": 2}, {"b": 3, "c": 4})
+    Traceback (most recent call last):
+    ...
+    AssertionError: Key mismatch. Expected {'b', 'c'}, but got {'b', 'a'}.
+    """
+    model_keys = set(model_dict.keys())
+    expected_keys = set(expected_dict.keys())
+    assert model_keys == expected_keys, (
+        f"Key mismatch. Expected {expected_keys}, but got {model_keys}."
+    )
 
 
 def assert_shape(array_shape, expected_shape, context, key, unit_id=None):
@@ -990,8 +1273,30 @@ def assert_shape(array_shape, expected_shape, context, key, unit_id=None):
     )
 
 
-@pytest.mark.parametrize("use_dll", use_dll)
-@pytest.mark.parametrize("test_case", test_cases)
+# %% Actual tests
+
+use_dll = [False, True]
+
+test_cases = [
+    cstr,
+    lrm,
+    lrmp,
+    grm,
+    grm_split_components,
+    grm_split_ports,
+    grm_split_ports_single_as_multi,
+    grm_split_all,
+    grm_1_comp,
+    grm_sens,
+    grm_par_types,
+    _2dgrm,
+    _2dgrm_split_ports,
+    _2dgrm_split_all
+]
+
+
+@pytest.mark.parametrize("use_dll", use_dll, ids=[f"{case}" for case in use_dll])
+@pytest.mark.parametrize("test_case", test_cases, ids=[case.name for case in test_cases])
 def test_simulator_options(use_dll, test_case):
     model_options = test_case.model_options
     solution_recorder_options = test_case.solution_recorder_options
@@ -999,6 +1304,14 @@ def test_simulator_options(use_dll, test_case):
 
     model = run_simulation_with_options(
         use_dll, model_options, solution_recorder_options
+    )
+
+    # Assert solution_times shape
+    assert_shape(
+        model.root.output.solution.solution_times.shape,
+        expected_results['solution_times'],
+        context="solution",
+        key="solution_times"
     )
 
     # Assert last_state shapes
@@ -1015,40 +1328,98 @@ def test_simulator_options(use_dll, test_case):
         key="ydot"
     )
 
-    # Check coordinates for unit_000
-    for key, value in expected_results['coordinates_unit_000'].items():
-        coordinates_shape = model.root.output.coordinates.unit_000[key].shape
-        assert_shape(coordinates_shape, value, context="coordinates", key=key, unit_id="unit_000")
+    # Check coordinates
+    unit = "unit_000"
+    excpected_coordinates = expected_results[f'coordinates_{unit}']
+    coordinates_unit = model.root.output.coordinates[unit]
+    assert_keys(coordinates_unit, excpected_coordinates)
 
-    # Assert solution_times shape
-    assert_shape(
-        model.root.output.solution.solution_times.shape,
-        expected_results['solution_times'],
-        context="solution",
-        key="solution_times"
-    )
+    for key, value in excpected_coordinates.items():
+        coordinates_shape = coordinates_unit[key].shape
+        assert_shape(
+            coordinates_shape,
+            value,
+            context="coordinates",
+            key=key,
+            unit_id=unit,
+        )
 
-    # Check solution for unit_000
-    for key, value in expected_results['solution_unit_000'].items():
-        shape = model.root.output.solution.unit_000[key].shape
-        assert_shape(shape, value, context="solution", key=key, unit_id="unit_000")
+    unit = "unit_001"
+    excpected_coordinates = expected_results[f'coordinates_{unit}']
+    coordinates_unit = model.root.output.coordinates[unit]
+    assert_keys(coordinates_unit, excpected_coordinates)
 
-    # Check solution for unit_001
-    for key, value in expected_results['solution_unit_001'].items():
-        shape = model.root.output.solution.unit_001[key].shape
-        assert_shape(shape, value, context="solution", key=key, unit_id="unit_001")
+    for key, value in excpected_coordinates.items():
+        coordinates_shape = coordinates_unit[key].shape
+        assert_shape(
+            coordinates_shape,
+            value,
+            context="coordinates",
+            key=key,
+            unit_id=unit,
+        )
 
+    # Check solution
+    unit = "unit_000"
+    excpected_solution = expected_results[f'solution_{unit}']
+    solution_unit = model.root.output.solution[unit]
+    assert_keys(excpected_solution, solution_unit)
+
+    for key, value in excpected_solution.items():
+        shape = solution_unit[key].shape
+        assert_shape(
+            shape,
+            value,
+            context="solution",
+            key=key,
+            unit_id=unit,
+        )
+
+    unit = "unit_001"
+    excpected_solution = expected_results[f'solution_{unit}']
+    solution_unit = model.root.output.solution[unit]
+    assert_keys(excpected_solution, solution_unit)
+
+    for key, value in excpected_solution.items():
+        shape = solution_unit[key].shape
+        assert_shape(
+            shape,
+            value,
+            context="solution",
+            key=key,
+            unit_id=unit,
+        )
+
+    # Check sensitivity
     if model_options['include_sensitivity']:
-        for key, value in expected_results['sens_param_000_unit_000'].items():
-            shape = model.root.output.sensitivity.param_000.unit_000[key].shape
+        unit = "unit_000"
+        excpected_sensitivity = expected_results[f'sens_param_000_{unit}']
+        sensitivity_unit = model.root.output.sensitivity.param_000[unit]
+        assert_keys(excpected_sensitivity, sensitivity_unit)
+
+        for key, value in excpected_sensitivity.items():
+            shape = sensitivity_unit[key].shape
             assert_shape(
-                shape, value, context="sensitivity", key=key, unit_id="unit_000"
+                shape,
+                value,
+                context="sensitivity",
+                key=key,
+                unit_id=unit,
             )
 
-        for key, value in expected_results['sens_param_000_unit_001'].items():
-            shape = model.root.output.sensitivity.param_000.unit_001[key].shape
+        unit = "unit_001"
+        excpected_sensitivity = expected_results[f'sens_param_000_{unit}']
+        sensitivity_unit = model.root.output.sensitivity.param_000[unit]
+        assert_keys(excpected_sensitivity, sensitivity_unit)
+
+        for key, value in excpected_sensitivity.items():
+            shape = sensitivity_unit[key].shape
             assert_shape(
-                shape, value, context="sensitivity", key=key, unit_id="unit_001"
+                shape,
+                value,
+                context="sensitivity",
+                key=key,
+                unit_id=unit,
             )
 
 
