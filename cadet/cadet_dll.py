@@ -2037,51 +2037,62 @@ class CadetDLLRunner(CadetRunnerBase):
         solution = addict.Dict()
         _, out, dims = data
 
+        # Retrieve configuration options
         split_components_data = sim.root.input['return'].get('split_components_data', 1)
         split_ports_data = sim.root.input['return'].get('split_ports_data', 1)
         single_as_multi_port = sim.root.input['return'].get('single_as_multi_port', 0)
 
+        # Identify dimension indices and sizes
         nComp_idx = dims.index('nComp')
         nComp = out.shape[nComp_idx]
-        try:
-            nPort_idx = dims.index('nPort')
-            nPort = out.shape[nPort_idx]
-        except ValueError:
-            nPort_idx = None
-            nPort = 1
+        nPort_idx = dims.index('nPort') if 'nPort' in dims else None
+        nPort = out.shape[nPort_idx] if nPort_idx is not None else 1
 
+        # Process data based on the split settings
         if split_components_data:
             if split_ports_data:
+                # Case: Split both components and ports
                 if nPort == 1:
                     if single_as_multi_port:
+                        # Treat single port as multiple ports
                         for comp in range(nComp):
                             comp_out = out[..., 0, comp]
                             solution[f'{solution_str}_port_000_comp_{comp:03d}'] = comp_out
                     else:
+                        # Default case for single port
                         for comp in range(nComp):
                             comp_out = out[..., comp]
                             solution[f'{solution_str}_comp_{comp:03d}'] = comp_out
                 else:
+                    # Multi-port case
                     for port in range(nPort):
                         for comp in range(nComp):
                             comp_out = out[..., port, comp]
                             solution[f'{solution_str}_port_{port:03d}_comp_{comp:03d}'] = comp_out
             else:
+                # Case: Split components only
                 for comp in range(nComp):
                     comp_out = out[..., comp]
+                    if nPort == 1 and nPort_idx is not None:
+                        comp_out = comp_out[:, 0]  # Single-port adjustment
                     solution[f'{solution_str}_comp_{comp:03d}'] = comp_out
         else:
             if split_ports_data:
+                # Case: Split ports only
                 if nPort == 1:
                     if single_as_multi_port:
+                        if nPort_idx is not None:
+                            out = out[:, 0]  # Adjust for single-port case
                         solution[f'{solution_str}_port_000'] = out
                     else:
                         solution[solution_str] = out[..., 0, :]
                 else:
+                    # Multi-port case
                     for port in range(nPort):
                         port_out = out[..., port, :]
                         solution[f'{solution_str}_port_{port:03d}'] = port_out
             else:
+                # Default case: No splitting
                 if nPort == 1 and nPort_idx is not None:
                     solution[solution_str] = out[..., 0, :]
                 else:
