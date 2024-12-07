@@ -16,6 +16,8 @@ def setup_model(
         use_dll=True,
         model='GENERAL_RATE_MODEL',
         n_partypes=1,
+        ncol=10,
+        npar=4,
         include_sensitivity=False,
         file_name='LWE.h5',
         n_components=4
@@ -41,6 +43,10 @@ def setup_model(
         The model type to set up. The default is 'GENERAL_RATE_MODEL'.
     n_partypes : int, optional
         The number of particle types. The default is 1.
+    ncol : int, optional
+        The number of axial cells in the unit operation. The default is 10.
+    npar : int, optional
+        The number of particle cells in the unit operation. The default is 4.
     include_sensitivity : bool, optional
         If True, included parameter sensitivities in template. The default is False.
     file_name : str, optional
@@ -94,6 +100,8 @@ def setup_model(
         f'--out {file_name}',
         f'--unit {model}',
         f'--parTypes {n_partypes}',
+        f'--col {ncol}',
+        f'--par {npar}',
     ]
 
     if include_sensitivity:
