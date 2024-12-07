@@ -413,8 +413,15 @@ def param_provider_get_string_array_item(
         str_value = current_reader[name_str]
         if isinstance(str_value, bytes):
             bytes_val = str_value
-        else:
+        elif isinstance(str_value, str):
+            bytes_val = str_value.encode('utf-8')
+        elif isinstance(str_value, np.ndarray):
             bytes_val = str_value[index]
+        else:
+            raise TypeError(
+                "Unexpected type for str_value. "
+                "Must be of type bytes, str, or np.ndarray."
+            )
 
         reader.buffer = bytes_val
         val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
