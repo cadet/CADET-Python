@@ -1,13 +1,18 @@
 import ctypes
+from typing import Any
+
 import numpy as np
-from typing import Any, Optional
 
 
 def null(*args: Any) -> None:
     """Do nothing (used as a placeholder function)."""
     pass
 
+
 log_print = print if 0 else null
+
+
+# %% Single entries
 
 def param_provider_get_double(
         reader: Any,
@@ -34,18 +39,19 @@ def param_provider_get_double(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
-        try:
-            float_val = float(o)
-        except TypeError:
-            float_val = float(o[0])
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        val[0] = ctypes.c_double(float_val)
-        log_print(f"GET scalar [double] {n}: {float(val[0])}")
-        return 0
+    o = c[n]
+    try:
+        float_val = float(o)
+    except TypeError:
+        float_val = float(o[0])
 
-    return -1
+    val[0] = ctypes.c_double(float_val)
+    log_print(f"GET scalar [double] {n}: {float(val[0])}")
+    return 0
 
 
 def param_provider_get_int(
@@ -73,18 +79,20 @@ def param_provider_get_int(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
-        try:
-            int_val = int(o)
-        except TypeError:
-            int_val = int(o[0])
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        val[0] = ctypes.c_int(int_val)
-        log_print(f"GET scalar [int] {n}: {int(val[0])}")
-        return 0
+    o = c[n]
+    try:
+        int_val = int(o)
+    except TypeError:
+        int_val = int(o[0])
 
-    return -1
+    val[0] = ctypes.c_int(int_val)
+
+    log_print(f"GET scalar [int] {n}: {int(val[0])}")
+    return 0
 
 
 def param_provider_get_bool(
@@ -112,18 +120,20 @@ def param_provider_get_bool(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
-        try:
-            int_val = int(o)
-        except TypeError:
-            int_val = int(o[0])
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        val[0] = ctypes.c_uint8(int_val)
-        log_print(f"GET scalar [bool] {n}: {bool(val[0])}")
-        return 0
+    o = c[n]
+    try:
+        int_val = int(o)
+    except TypeError:
+        int_val = int(o[0])
 
-    return -1
+    val[0] = ctypes.c_uint8(int_val)
+
+    log_print(f"GET scalar [bool] {n}: {bool(val[0])}")
+    return 0
 
 
 def param_provider_get_string(
@@ -151,24 +161,27 @@ def param_provider_get_string(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        if hasattr(o, 'encode'):
-            bytes_val = o.encode('utf-8')
-        elif hasattr(o, 'decode'):
-            bytes_val = o
-        elif hasattr(o[0], 'encode'):
-            bytes_val = o[0].encode('utf-8')
-        elif hasattr(o[0], 'decode'):
-            bytes_val = o[0]
+    o = c[n]
 
-        reader.buffer = bytes_val
-        val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
-        return 0
+    if hasattr(o, 'encode'):
+        bytes_val = o.encode('utf-8')
+    elif hasattr(o, 'decode'):
+        bytes_val = o
+    elif hasattr(o[0], 'encode'):
+        bytes_val = o[0].encode('utf-8')
+    elif hasattr(o[0], 'decode'):
+        bytes_val = o[0]
 
-    return -1
+    reader.buffer = bytes_val
+    val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
+    return 0
 
+
+# %% Arrays
 
 def param_provider_get_double_array(
         reader: Any,
@@ -256,10 +269,13 @@ def param_provider_get_int_array(
     return -1
 
 
+# %% Array items
+
 def param_provider_get_double_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_double)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_double)
         ) -> int:
     """
     Retrieve an item from a double array in the reader based on the provided name and index.
@@ -283,25 +299,28 @@ def param_provider_get_double_array_item(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        try:
-            float_val = float(o)
-        except TypeError:
-            float_val = float(o[index])
+    o = c[n]
 
-        val[0] = ctypes.c_double(float_val)
-        log_print(f"GET array [double] ({index}) {n}: {val[0]}")
-        return 0
+    try:
+        float_val = float(o)
+    except TypeError:
+        float_val = float(o[index])
 
-    return -1
+    val[0] = ctypes.c_double(float_val)
+
+    log_print(f"GET array [double] ({index}) {n}: {val[0]}")
+    return 0
 
 
 def param_provider_get_int_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_int)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_int)
         ) -> int:
     """
     Retrieve an item from an integer array in the reader based on the provided name and index.
@@ -325,25 +344,28 @@ def param_provider_get_int_array_item(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        try:
-            int_val = int(o)
-        except TypeError:
-            int_val = int(o[index])
+    o = c[n]
 
-        val[0] = ctypes.c_int(int_val)
-        log_print(f"GET array [int] ({index}) {n}: {val[0]}")
-        return 0
+    try:
+        int_val = int(o)
+    except TypeError:
+        int_val = int(o[index])
 
-    return -1
+    val[0] = ctypes.c_int(int_val)
+
+    log_print(f"GET array [int] ({index}) {n}: {val[0]}")
+    return 0
 
 
 def param_provider_get_bool_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_uint8)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_uint8)
         ) -> int:
     """
     Retrieve an item from a boolean array in the reader based on the provided name and index.
@@ -367,25 +389,28 @@ def param_provider_get_bool_array_item(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        try:
-            int_val = int(o)
-        except TypeError:
-            int_val = int(o[index])
+    o = c[n]
 
-        val[0] = ctypes.c_uint8(int_val)
-        log_print(f"GET array [bool] ({index}) {n}: {bool(val[0])}")
-        return 0
+    try:
+        int_val = int(o)
+    except TypeError:
+        int_val = int(o[index])
 
-    return -1
+    val[0] = ctypes.c_uint8(int_val)
+
+    log_print(f"GET array [bool] ({index}) {n}: {bool(val[0])}")
+    return 0
 
 
 def param_provider_get_string_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_char_p)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_char_p)
         ) -> int:
     """
     Retrieve an item from a string array in the reader based on the provided name and index.
@@ -406,30 +431,34 @@ def param_provider_get_string_array_item(
     int
         0 if the value was found and retrieved successfully, -1 otherwise.
     """
-    name_str = name.decode('utf-8')
-    current_reader = reader.current()
+    n = name.decode('utf-8')
+    c = reader.current()
 
-    if name_str in current_reader:
-        str_value = current_reader[name_str]
-        if isinstance(str_value, bytes):
-            bytes_val = str_value
-        elif isinstance(str_value, str):
-            bytes_val = str_value.encode('utf-8')
-        elif isinstance(str_value, np.ndarray):
-            bytes_val = str_value[index]
-        else:
-            raise TypeError(
-                "Unexpected type for str_value. "
-                "Must be of type bytes, str, or np.ndarray."
-            )
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        reader.buffer = bytes_val
-        val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
-        log_print(f"GET array [string] ({index}) {name_str}: {reader.buffer.decode('utf-8')}")
-        return 0
+    o = c[n]
+    if isinstance(o, bytes):
+        bytes_val = o
+    elif isinstance(o, str):
+        bytes_val = o.encode('utf-8')
+    elif isinstance(o, np.ndarray):
+        bytes_val = o[index]
+    else:
+        raise TypeError(
+            "Unexpected type for name {n}: {type(o)}. "
+            "Must be of type bytes, str, or np.ndarray."
+        )
 
-    return -1
+    reader.buffer = bytes_val
+    val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
 
+    log_print(f"GET array [string] ({index}) {n}: {reader.buffer.decode('utf-8')}")
+    return 0
+
+
+# %% Misc
 
 def param_provider_exists(
         reader: Any,
@@ -484,6 +513,7 @@ def param_provider_is_array(
     c = reader.current()
 
     if n not in c:
+        log_print(f"Parameter {n} not found.")
         return -1
 
     o = c[n]
@@ -516,6 +546,7 @@ def param_provider_num_elements(
     c = reader.current()
 
     if n not in c:
+        log_print(f"Parameter {n} not found.")
         return -1
 
     o = c[n]
