@@ -1,13 +1,18 @@
 import ctypes
+from typing import Any
+
 import numpy as np
-from typing import Any, Optional
 
 
 def null(*args: Any) -> None:
     """Do nothing (used as a placeholder function)."""
     pass
 
+
 log_print = print if 0 else null
+
+
+# %% Single entries
 
 def param_provider_get_double(
         reader: Any,
@@ -41,8 +46,9 @@ def param_provider_get_double(
         except TypeError:
             float_val = float(o[0])
 
-        val[0] = ctypes.c_double(float_val)
-        log_print(f"GET scalar [double] {n}: {float(val[0])}")
+        np_val = np.ctypeslib.as_array(val, shape=(1,))
+        np_val[0] = float_val
+        log_print(f"GET scalar [double] {n}: {np_val[0]}")
         return 0
 
     return -1
@@ -80,8 +86,9 @@ def param_provider_get_int(
         except TypeError:
             int_val = int(o[0])
 
-        val[0] = ctypes.c_int(int_val)
-        log_print(f"GET scalar [int] {n}: {int(val[0])}")
+        np_val = np.ctypeslib.as_array(val, shape=(1,))
+        np_val[0] = int_val
+        log_print(f"GET scalar [int] {n}: {np_val[0]}")
         return 0
 
     return -1
@@ -119,8 +126,9 @@ def param_provider_get_bool(
         except TypeError:
             int_val = int(o[0])
 
-        val[0] = ctypes.c_uint8(int_val)
-        log_print(f"GET scalar [bool] {n}: {bool(val[0])}")
+        np_val = np.ctypeslib.as_array(val, shape=(1,))
+        np_val[0] = int_val
+        log_print(f"GET scalar [bool] {n}: {bool(np_val[0])}")
         return 0
 
     return -1
@@ -170,6 +178,8 @@ def param_provider_get_string(
     return -1
 
 
+# %% Arrays
+
 def param_provider_get_double_array(
         reader: Any,
         name: ctypes.c_char_p,
@@ -201,8 +211,9 @@ def param_provider_get_double_array(
     if n in c:
         o = c[n]
         if isinstance(o, list):
-            o = np.ascontiguousarray(o)
-        if not isinstance(o, np.ndarray) or o.dtype != np.double or not o.flags.c_contiguous:
+            o = np.ascontiguousarray(o, dtype=np.float64)
+
+        if not isinstance(o, np.ndarray) or o.dtype != np.float64 or not o.flags.c_contiguous:
             return -1
 
         n_elem[0] = ctypes.c_int(o.size)
@@ -244,8 +255,9 @@ def param_provider_get_int_array(
     if n in c:
         o = c[n]
         if isinstance(o, list):
-            o = np.ascontiguousarray(o)
-        if not isinstance(o, np.ndarray) or o.dtype != int or not o.flags.c_contiguous:
+            o = np.ascontiguousarray(o, dtype=np.int32)
+
+        if not isinstance(o, np.ndarray) or o.dtype != np.int32 or not o.flags.c_contiguous:
             return -1
 
         n_elem[0] = ctypes.c_int(o.size)
@@ -255,6 +267,8 @@ def param_provider_get_int_array(
 
     return -1
 
+
+# %% Array items
 
 def param_provider_get_double_array_item(
         reader: Any,
@@ -301,7 +315,8 @@ def param_provider_get_double_array_item(
 def param_provider_get_int_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_int)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_int)
         ) -> int:
     """
     Retrieve an item from an integer array in the reader based on the provided name and index.
@@ -329,15 +344,27 @@ def param_provider_get_int_array_item(
         o = c[n]
 
         try:
-            int_val = int(o)
-        except TypeError:
-            int_val = int(o[index])
+            # If it's a list, convert it to a NumPy array
+            if isinstance(o, list):
+                o = np.ascontiguousarray(o, dtype=np.int32)
+
+            # Validate it's a NumPy array with appropriate dtype
+            if isinstance(o, np.ndarray) and o.dtype == np.int32:
+                int_val = o[index]  # Retrieve the value by index
+            else:
+                # Handle scalar values
+                int_val = int(o)
+
+        except (TypeError, IndexError) as e:
+            log_print(f"ERROR retrieving array item for {n} at index {index}: {e}")
+            return -1
 
         val[0] = ctypes.c_int(int_val)
         log_print(f"GET array [int] ({index}) {n}: {val[0]}")
         return 0
 
     return -1
+
 
 
 def param_provider_get_bool_array_item(
@@ -413,8 +440,15 @@ def param_provider_get_string_array_item(
         str_value = current_reader[name_str]
         if isinstance(str_value, bytes):
             bytes_val = str_value
-        else:
+        elif isinstance(str_value, str):
+            bytes_val = str_value.encode('utf-8')
+        elif isinstance(str_value, np.ndarray):
             bytes_val = str_value[index]
+        else:
+            raise TypeError(
+                "Unexpected type for str_value. "
+                "Must be of type bytes, str, or np.ndarray."
+            )
 
         reader.buffer = bytes_val
         val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
@@ -423,6 +457,8 @@ def param_provider_get_string_array_item(
 
     return -1
 
+
+# %% Misc
 
 def param_provider_exists(
         reader: Any,
