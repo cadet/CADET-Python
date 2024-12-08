@@ -474,6 +474,34 @@ class Cadet(H5, metaclass=CadetMeta):
         """
         return str.lower(x)
 
+    def run_load(
+            self,
+            timeout: Optional[int] = None,
+            clear: bool = True
+    ) -> ReturnInformation:
+        """
+        Run the CADET simulation and load the results.
+
+        Parameters
+        ----------
+        timeout : Optional[int]
+            Maximum time allowed for the simulation to run, in seconds.
+        clear : bool
+            If True, clear previous results after loading new ones.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
+        """
+        return_information = self.run(timeout)
+        print(return_information)
+        self.load_results()
+
+        if clear:
+            self.clear()
+        return return_information
+
     def run(
             self,
             timeout: Optional[int] = None,
@@ -496,33 +524,6 @@ class Cadet(H5, metaclass=CadetMeta):
             timeout=timeout,
         )
 
-        return return_information
-
-    def run_load(
-            self,
-            timeout: Optional[int] = None,
-            clear: bool = True
-    ) -> ReturnInformation:
-        """
-        Run the CADET simulation and load the results.
-
-        Parameters
-        ----------
-        timeout : Optional[int]
-            Maximum time allowed for the simulation to run, in seconds.
-        clear : bool
-            If True, clear previous results after loading new ones.
-
-        Returns
-        -------
-        ReturnInformation
-            Information about the simulation run.
-        """
-        return_information = self.run(timeout)
-        self.load_results()
-
-        if clear:
-            self.clear()
         return return_information
 
     def load_results(self) -> None:

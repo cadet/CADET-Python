@@ -1,13 +1,18 @@
 import ctypes
+from typing import Any
+
 import numpy as np
-from typing import Any, Optional
 
 
 def null(*args: Any) -> None:
     """Do nothing (used as a placeholder function)."""
     pass
 
+
 log_print = print if 0 else null
+
+
+# %% Single entries
 
 def param_provider_get_double(
         reader: Any,
@@ -170,6 +175,8 @@ def param_provider_get_string(
     return -1
 
 
+# %% Arrays
+
 def param_provider_get_double_array(
         reader: Any,
         name: ctypes.c_char_p,
@@ -256,6 +263,8 @@ def param_provider_get_int_array(
     return -1
 
 
+# %% Array items
+
 def param_provider_get_double_array_item(
         reader: Any,
         name: ctypes.c_char_p,
@@ -301,7 +310,8 @@ def param_provider_get_double_array_item(
 def param_provider_get_int_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_int)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_int)
         ) -> int:
     """
     Retrieve an item from an integer array in the reader based on the provided name and index.
@@ -343,7 +353,8 @@ def param_provider_get_int_array_item(
 def param_provider_get_bool_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_uint8)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_uint8)
         ) -> int:
     """
     Retrieve an item from a boolean array in the reader based on the provided name and index.
@@ -385,7 +396,8 @@ def param_provider_get_bool_array_item(
 def param_provider_get_string_array_item(
         reader: Any,
         name: ctypes.c_char_p,
-        index: int, val: ctypes.POINTER(ctypes.c_char_p)
+        index: int,
+        val: ctypes.POINTER(ctypes.c_char_p)
         ) -> int:
     """
     Retrieve an item from a string array in the reader based on the provided name and index.
@@ -430,6 +442,8 @@ def param_provider_get_string_array_item(
 
     return -1
 
+
+# %% Misc
 
 def param_provider_exists(
         reader: Any,
