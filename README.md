@@ -12,6 +12,8 @@ To install CADET-Python, use:
 pip install cadet-python
 ```
 
+For a guide on good practices for python environments, please refer to [this guide](https://forum.cadet-web.de/t/a-guide-to-reproducible-python-environments-and-cadet-installations/766).
+
 ## Usage Example
 
 The package includes two primary classes:
