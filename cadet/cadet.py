@@ -495,8 +495,9 @@ class Cadet(H5, metaclass=CadetMeta):
             Information about the simulation run.
         """
         return_information = self.run(timeout)
-        print(return_information)
-        self.load_results()
+
+        if return_information.return_code == 0:
+            self.load_results()
 
         if clear:
             self.clear()
