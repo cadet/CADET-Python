@@ -211,19 +211,28 @@ def param_provider_get_double_array(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
-        if isinstance(o, list):
-            o = np.ascontiguousarray(o)
-        if not isinstance(o, np.ndarray) or o.dtype != np.double or not o.flags.c_contiguous:
-            return -1
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        n_elem[0] = ctypes.c_int(o.size)
-        val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-        log_print(f"GET array [double] {n}: {o}")
-        return 0
+    o = c[n]
 
-    return -1
+    # Ensure object is a properly aligned numpy array
+    if isinstance(o, list):  # Convert lists to numpy arrays
+        o = np.array(o, dtype=np.double)
+        c[n] = o  # Update the reader's storage
+
+    # Validate the array
+    if not isinstance(o, np.ndarray) or o.dtype != np.double or not o.flags.c_contiguous:
+        log_print(f"Error: Parameter {n} is not a contiguous double array.")
+        return -1
+
+    # Provide array data to the caller
+    n_elem[0] = ctypes.c_int(o.size)
+    val[0] = np.ctypeslib.as_ctypes(o)
+
+    log_print(f"GET array [double] {n}: {o}")
+    return 0
 
 
 def param_provider_get_int_array(
@@ -254,19 +263,28 @@ def param_provider_get_int_array(
     n = name.decode('utf-8')
     c = reader.current()
 
-    if n in c:
-        o = c[n]
-        if isinstance(o, list):
-            o = np.ascontiguousarray(o)
-        if not isinstance(o, np.ndarray) or o.dtype != int or not o.flags.c_contiguous:
-            return -1
+    if n not in c:
+        log_print(f"Parameter {n} not found.")
+        return -1
 
-        n_elem[0] = ctypes.c_int(o.size)
-        val[0] = o.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
-        log_print(f"GET array [int] {n}: {o}")
-        return 0
+    o = c[n]
 
-    return -1
+    # Ensure object is a properly aligned numpy array
+    if isinstance(o, list):  # Convert lists to numpy arrays
+        o = np.array(o, dtype=np.double)
+        c[n] = o  # Update the reader's storage
+
+    # Validate the array
+    if not isinstance(o, np.ndarray) or o.dtype != np.int32 or not o.flags.c_contiguous:
+        log_print(f"Error: Parameter {n} is not a contiguous int array.")
+        return -1
+
+    # Provide array data to the caller
+    n_elem[0] = ctypes.c_int(o.size)
+    val[0] = np.ctypeslib.as_ctypes(o)
+
+    log_print(f"GET array [int] {n}: {o}")
+    return 0
 
 
 # %% Array items
