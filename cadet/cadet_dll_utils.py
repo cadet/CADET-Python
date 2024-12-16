@@ -461,7 +461,7 @@ def param_provider_get_string_array_item(
         bytes_val = o
     elif isinstance(o, str):
         bytes_val = o.encode('utf-8')
-    elif isinstance(o, np.ndarray):
+    elif isinstance(o, (np.ndarray, list)):
         bytes_val = o[index]
     else:
         raise TypeError(
