@@ -472,7 +472,7 @@ def param_provider_get_string_array_item(
     reader.buffer = bytes_val
     val[0] = ctypes.cast(reader.buffer, ctypes.c_char_p)
 
-    log_print(f"GET array [string] ({index}) {n}: {reader.buffer.decode('utf-8')}")
+    log_print(f"GET array [string] ({index}) {n}: {bytes_val}")
     return 0
 
 
