@@ -1,0 +1,31 @@
+[build-system]
+requires = [
+    "setuptools>=69",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CADET"
+version = "0.0.4"
+authors = [
+    { name = "Samuel Leweke", email = "s.leweke@fz-juelich.de" },
+    { name = "Johannes Schmölder", email = "j.schmoelder@fz-juelich.de" },
+    { name = "Ronald Jäpel", email = "r.jaepel@fz-juelich.de" },
+]
+description = "An empty namespace reserved for a future CADET meta package. Refer to our Homepage for more info on our package distributions."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["process modeling", "process optimization", "chromatography"]
+license = {text = "GNU General Public License v3 (GPLv3)"}
+
+[project.urls]
+"Homepage" = "https://cadet.github.io/"
+
+[tool.setuptools.packages.find]
+include = ["cadet*"]
+
+[tool.ruff]
+src = ["cadet"]
+line-length = 88
+
