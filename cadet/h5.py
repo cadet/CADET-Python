@@ -424,13 +424,16 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
 
     for key, item in dic.items():
         key = str(key)
-        value = None
+
+        if item is None:
+            continue
 
         if not isinstance(key, str):
             raise ValueError("dict keys must be strings to save to hdf5")
 
         if isinstance(item, dict):
             recursively_save(h5file, path + key + '/', item, func)
+            continue
         elif isinstance(item, str):
             value = numpy.array(item.encode('utf-8'))
         elif isinstance(item, list) and all(isinstance(i, str) for i in item):
@@ -441,11 +444,10 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
             except TypeError:
                 raise ValueError(f'Cannot save {path}/{func(key)} key with {type(item)} type.')
 
-        if value is not None:
-            try:
-                h5file[path + func(key)] = value
-            except OSError as e:
-                if str(e) == 'Unable to create link (name already exists)':
-                    raise KeyError(f'Name conflict with upper and lower case entries for key "{path}{key}".')
-                else:
-                    raise
+        try:
+            h5file[path + func(key)] = value
+        except OSError as e:
+            if str(e) == 'Unable to create link (name already exists)':
+                raise KeyError(f'Name conflict with upper and lower case entries for key "{path}{key}".')
+            else:
+                raise
