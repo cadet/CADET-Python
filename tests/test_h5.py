@@ -164,9 +164,9 @@ def test_load_nonexistent_file():
         instance.load()
 
 
-# def test_save_without_filename(h5_instance):
-#     with pytest.raises(ValueError):
-#         h5_instance.save()
+def test_save_without_filename(h5_instance):
+    with pytest.raises(ValueError):
+        h5_instance.save()
 
 
 def test_load_json_with_invalid_data(temp_json_file):

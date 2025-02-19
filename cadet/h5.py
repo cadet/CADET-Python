@@ -136,7 +136,7 @@ class H5:
                 with h5py.File(self.filename, 'w') as h5file:
                     recursively_save(h5file, '/', self.root, self.transform)
         else:
-            print("Filename must be set before save can be used")
+            raise ValueError("Filename must be set before save can be used")
 
     def save_json(self, filename: str | Path) -> None:
         """
