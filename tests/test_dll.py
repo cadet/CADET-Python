@@ -180,14 +180,14 @@ def setup_model(
         )
 
         if model == 'MULTI_CHANNEL_TRANSPORT':
-        cadet_model.root.input.model.unit_001.update({
-            'n_channel': 2,
-            'exchange_matrix': np.array([
-                [[0.0], [1e-4]],
-                [[0.0], [0.0]],
-            ])
-        })
-        
+            cadet_model.root.input.model.unit_001.update({
+                'n_channel': 2,
+                'exchange_matrix': np.array([
+                    [[0.0], [1e-4]],
+                    [[0.0], [0.0]],
+                ])
+            })
+
         # if we don't save and re-load the model we get windows access violations.
         # Interesting case for future tests, not what I want to test now.
         cadet_model.save()
