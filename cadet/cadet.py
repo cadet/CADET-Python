@@ -422,7 +422,7 @@ class Cadet(H5, metaclass=CadetMeta):
 
         self.filename = file_path
 
-        self.load()
+        self.load_from_file()
 
         if file_path_input is None:
             os.remove(file_path)
@@ -487,17 +487,47 @@ class Cadet(H5, metaclass=CadetMeta):
         timeout : Optional[int]
             Maximum time allowed for the simulation to run, in seconds.
         clear : bool
-            If True, clear previous results after loading new ones.
+            If True, clean up the simulation after loading the results, e.g. reset the driver.
 
         Returns
         -------
         ReturnInformation
             Information about the simulation run.
         """
-        return_information = self.run(timeout)
+        warnings.warn(
+            message="Cadet.run_load() will be removed in a future release. Please use Cadet.run_simulation()",
+            category=FutureWarning
+        )
+        return_information = self.run_simulation(timeout=timeout, clear=clear)
+        return return_information
+
+    def run_simulation(
+            self,
+            timeout: Optional[int] = None,
+            clear: bool = True
+    ) -> ReturnInformation:
+        """
+        Run the CADET simulation and load the results.
+
+        Parameters
+        ----------
+        timeout : Optional[int]
+            Maximum time allowed for the simulation to run, in seconds.
+        clear : bool
+            If True, clean up the simulation after loading the results, e.g. reset the driver.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
+        """
+        return_information = self.cadet_runner.run(
+            simulation=self,
+            timeout=timeout
+        )
 
         if return_information.return_code == 0:
-            self.load_results()
+            self.cadet_runner.load_results(self)
 
         if clear:
             self.clear()
@@ -520,6 +550,10 @@ class Cadet(H5, metaclass=CadetMeta):
         ReturnInformation
             Information about the simulation run.
         """
+        warnings.warn(
+            message="Cadet.run() will be removed in a future release. Please use Cadet.run_simulation()",
+            category=FutureWarning
+        )
         return_information = self.cadet_runner.run(
             self,
             timeout=timeout,
@@ -529,9 +563,23 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def load_results(self) -> None:
         """Load the results of the last simulation run into the current instance."""
-        runner = self.cadet_runner
-        if runner is not None:
-            runner.load_results(self)
+        warnings.warn(
+            message="Cadet.load_results() will be removed in a future release. \n"
+            "    Please use Cadet.load_from_file() to load results from a file \n"
+            "    or use Cadet.run_simulation() to run a simulation and directly load the simulation results.",
+            category=FutureWarning
+        )
+        self.load_from_file()
+
+    def load(self) -> None:
+        """Load the results of the last simulation run into the current instance."""
+        warnings.warn(
+            message="Cadet.load() will be removed in a future release. \n"
+            "    Please use Cadet.load_from_file() to load results from a file \n"
+            "    or use Cadet.run_simulation() to run a simulation and directly load the simulation results.",
+            category=FutureWarning
+        )
+        self.load_from_file()
 
     def clear(self) -> None:
         """Clear the loaded results from the current instance."""

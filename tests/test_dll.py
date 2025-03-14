@@ -124,7 +124,7 @@ def setup_model(
         )
 
     cadet_model.filename = file_name
-    cadet_model.load()
+    cadet_model.load_from_file()
     if n_components < 4:
         unit_000 = cadet_model.root.input.model.unit_000
         unit_000.update({
@@ -182,7 +182,7 @@ def setup_model(
         cadet_model.save()
         cadet_model = Cadet(install_path=cadet_root, use_dll=use_dll)
         cadet_model.filename = file_name
-        cadet_model.load()
+        cadet_model.load_from_file()
 
     return cadet_model
 
@@ -324,7 +324,7 @@ def run_simulation_with_options(use_dll, model_options, solution_recorder_option
     model = setup_model(cadet_root, use_dll, **model_options)
     setup_solution_recorder(model, **solution_recorder_options)
 
-    return_info = model.run_load()
+    return_info = model.run_simulation()
 
     if return_info.return_code != 0:
         raise RuntimeError(return_info)
