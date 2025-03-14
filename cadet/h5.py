@@ -94,7 +94,7 @@ class H5:
         for i in data:
             self.root.update(copy.deepcopy(i))
 
-    def load(self, paths: Optional[List[str]] = None, update: bool = False, lock: bool = False) -> None:
+    def load_from_file(self, paths: Optional[List[str]] = None, update: bool = False, lock: bool = False) -> None:
         """
         Load data from the specified HDF5 file.
 
@@ -103,7 +103,8 @@ class H5:
         paths : Optional[List[str]], optional
             Specific paths to load within the HDF5 file.
         update : bool, optional
-            If True, updates the existing data with the loaded data.
+            If True, updates the existing data with the loaded data, i.e. keep existing data and ADD loaded data.
+            If False, discard existing data and only keep loaded data.
         lock : bool, optional
             If True, uses a file lock while loading.
         """

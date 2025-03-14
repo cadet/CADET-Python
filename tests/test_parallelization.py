@@ -7,7 +7,7 @@ n_jobs = 2
 
 def run_simulation(model):
     model.save()
-    data = model.run_load()
+    data = model.run_simulation()
     model.delete_file()
 
     return data
