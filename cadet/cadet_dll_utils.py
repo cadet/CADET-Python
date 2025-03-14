@@ -229,7 +229,7 @@ def param_provider_get_double_array(
 
     # Provide array data to the caller
     n_elem[0] = ctypes.c_int(o.size)
-    val[0] = np.ctypeslib.as_ctypes(o)
+    val[0] = np.ctypeslib.as_ctypes(o.ravel())
 
     log_print(f"GET array [double] {n}: {o}")
     return 0
