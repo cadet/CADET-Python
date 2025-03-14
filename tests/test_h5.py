@@ -51,7 +51,7 @@ def test_save_and_load_h5(h5_instance, temp_h5_file):
 
     new_instance = H5()
     new_instance.filename = temp_h5_file
-    new_instance.load()
+    new_instance.load_from_file()
 
     assert new_instance.root.keyString == b"value1"
     assert new_instance.root.keyInt == 42
@@ -91,7 +91,7 @@ def test_append_data(h5_instance, temp_h5_file):
 
     new_instance = H5()
     new_instance.filename = temp_h5_file
-    new_instance.load()
+    new_instance.load_from_file()
 
     assert new_instance.root.key4 == b"new_value"
 
@@ -161,7 +161,7 @@ def test_load_nonexistent_file():
     instance = H5()
     instance.filename = "nonexistent_file.h5"
     with pytest.raises(OSError):
-        instance.load()
+        instance.load_from_file()
 
 
 def test_save_without_filename(h5_instance):
