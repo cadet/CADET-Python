@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 from pathlib import Path
 import pprint
 from typing import Optional, Any
@@ -155,6 +156,14 @@ class H5:
                     recursively_save(h5file, '/', self.root, self.transform)
         else:
             raise ValueError("Filename must be set before save can be used")
+
+    def delete_file(self) -> None:
+        """Delete the file associated with the current instance."""
+        if self.filename is not None:
+            try:
+                os.remove(self.filename)
+            except FileNotFoundError:
+                pass
 
     def save_json(self, filename: str | Path) -> None:
         """

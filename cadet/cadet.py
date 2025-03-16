@@ -430,7 +430,7 @@ class Cadet(H5, metaclass=CadetMeta):
         self.load_from_file()
 
         if file_path_input is None:
-            os.remove(file_path)
+            self.delete_file()
 
         return self
 
@@ -597,13 +597,6 @@ class Cadet(H5, metaclass=CadetMeta):
         runner = self.cadet_runner
         if runner is not None:
             runner.clear()
-
-    def delete_file(self) -> None:
-        if self.filename is not None:
-            try:
-                os.remove(self.filename)
-            except FileNotFoundError:
-                pass
 
     def __del__(self):
         self.clear()
