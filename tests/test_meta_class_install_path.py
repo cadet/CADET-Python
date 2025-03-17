@@ -14,6 +14,8 @@ install_path_conda = Cadet.autodetect_cadet()
 
 @pytest.mark.local
 def test_meta_class():
+    if full_path_dll == Path("path/to/cadet"):
+        raise ValueError("This test requires a secondary CADET installation. Please set the full_path_dll variable.")
     Cadet.cadet_path = full_path_dll
     assert Cadet.use_dll
 

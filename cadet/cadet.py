@@ -31,13 +31,11 @@ def is_dll(path: os.PathLike) -> bool:
     return suffix in {'.so', '.dll'}
 
 
-def install_path_to_cadet_paths(
-        install_path: Optional[os.PathLike],
+def resolve_cadet_paths(
+        install_path: Optional[os.PathLike]
         ) -> tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]:
     """
-    Get the correct paths (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
-     from the installation path of CADET. This is extracted into a function to be used
-     in both the meta class and the cadet class itself.
+    Resolve paths from the installation path of CADET.
 
     Parameters
     ----------
@@ -48,7 +46,7 @@ def install_path_to_cadet_paths(
     Returns
     -------
     tuple[Optional[Path], Optional[Path], Optional[Path], Optional[Path]]
-        Tuple with CADET installation paths
+        tuple with CADET installation paths
         (root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path)
     """
     if install_path is None:
@@ -75,16 +73,16 @@ def install_path_to_cadet_paths(
         lwe_executable += '.exe'
 
     cadet_cli_path = cadet_root / 'bin' / cli_executable
-    if cadet_cli_path.is_file():
-        cadet_cli_path = cadet_cli_path
-    else:
+    if not cadet_cli_path.is_file():
         raise FileNotFoundError(
-            "CADET could not be found. Please check the path."
+            "CADET CLI could not be found. Please check the path."
         )
 
     cadet_create_lwe_path = cadet_root / 'bin' / lwe_executable
-    if cadet_create_lwe_path.is_file():
-        cadet_create_lwe_path = cadet_create_lwe_path.as_posix()
+    if not cadet_create_lwe_path.is_file():
+        raise FileNotFoundError(
+            "CADET createLWE could not be found. Please check the path."
+        )
 
     if platform.system() == 'Windows':
         dll_path = cadet_root / 'bin' / 'cadet.dll'
@@ -97,10 +95,7 @@ def install_path_to_cadet_paths(
     if not dll_path.is_file() and dll_debug_path.is_file():
         dll_path = dll_debug_path
 
-    if dll_path.is_file():
-        cadet_dll_path = dll_path
-    else:
-        cadet_dll_path = None
+    cadet_dll_path = dll_path if dll_path.is_file() else None
 
     return root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path
 
@@ -112,6 +107,7 @@ class CadetMeta(type):
     This meta class allows setting the `cadet_path` attribute for all instances of the
     `Cadet` class.
     """
+
     use_dll = False
     cadet_cli_path = None
     cadet_dll_path = None
@@ -166,9 +162,10 @@ class CadetMeta(type):
 
         cls.use_dll = cadet_path.suffix in [".dll", ".so"]
 
-        _install_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path = install_path_to_cadet_paths(cadet_path)
+        install_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path = \
+            resolve_cadet_paths(cadet_path)
 
-        cls._install_path = _install_path
+        cls._install_path = install_path
         cls.cadet_create_lwe_path = cadet_create_lwe_path
         cls.cadet_cli_path = cadet_cli_path
         cls.cadet_dll_path = cadet_dll_path
@@ -178,8 +175,9 @@ class Cadet(H5, metaclass=CadetMeta):
     """
     CADET interface class.
 
-    This class manages the CADET runner, whether it's based on a CLI executable or a DLL,
-    and provides methods for running simulations and loading results.
+    This class manages the CADET runner, whether it's based on the CLI executable or
+    the in-memory interface and provides methods for running simulations and loading
+    results.
 
     Attributes
     ----------
@@ -195,9 +193,15 @@ class Cadet(H5, metaclass=CadetMeta):
         Stores the information returned after a simulation run.
     """
 
-    def __init__(self, install_path: Optional[Path] = None, use_dll: bool = False, *data):
+    def __init__(
+            self,
+            install_path: Optional[Path] = None,
+            use_dll: bool = False,
+            *data
+            ) -> None:
         """
         Initialize a new instance of the Cadet class.
+
         Priority order of install_paths is:
         1. install_path set in __init__ args
         2. install_path set in CadetMeta
@@ -216,13 +220,14 @@ class Cadet(H5, metaclass=CadetMeta):
         self._cadet_cli_runner: Optional[CadetCLIRunner] = None
         self._cadet_dll_runner: Optional[CadetDLLRunner] = None
 
-        # Regardless of settings in the Meta Class, if we get an install_path, we respect the install_path
+        # Regardless of settings in the Meta Class, if we get an install_path, we
+        # respect the install_path
         if install_path is not None:
             self.use_dll = use_dll
-            self.install_path = install_path  # This will set _cadet_dll_runner and _cadet_cli_runner
+            self.install_path = install_path  # This will automatically set the runners.
             return
 
-        # If _cadet_cli_runner_class has been set in the Meta Class, use them, else instantiate Nones
+        # Use CLIRunner of the Meta class, if provided.
         if hasattr(self, "cadet_cli_path") and self.cadet_cli_path is not None:
             self._cadet_cli_runner: Optional[CadetCLIRunner] = CadetCLIRunner(
                 self.cadet_cli_path
@@ -231,6 +236,7 @@ class Cadet(H5, metaclass=CadetMeta):
             self._cadet_cli_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
 
+        # Use DLLRunner of the Meta class, if provided.
         if hasattr(self, "cadet_dll_path") and self.cadet_dll_path is not None:
             try:
                 self._cadet_dll_runner: Optional[CadetDLLRunner] = CadetDLLRunner(
@@ -244,11 +250,10 @@ class Cadet(H5, metaclass=CadetMeta):
             self._cadet_dll_runner: Optional[CadetCLIRunner] = None
             self.use_dll = use_dll
 
-        # If any runner has been set in the Meta Class, don't auto-detect Cadet, just return
         if self._cadet_cli_runner is not None or self._cadet_dll_runner is not None:
             return
 
-        # If neither Meta Class nor install_path are given: auto-detect Cadet
+        # Auto-detect Cadet if neither Meta Class nor install_path are given.
         self.install_path = self.autodetect_cadet()
 
     @property
@@ -271,7 +276,7 @@ class Cadet(H5, metaclass=CadetMeta):
         Parameters
         ----------
         install_path : Optional[os.PathLike]
-            Path to the root of the CADET installation or the executable file 'cadet-cli'.
+            Path to the root of the CADET installation or the 'cadet-cli' executable.
             If a file path is provided, the root directory will be inferred.
         """
         if install_path is None:
@@ -281,7 +286,8 @@ class Cadet(H5, metaclass=CadetMeta):
             self.cadet_create_lwe_path = None
             return
 
-        root_path, cadet_cli_path, cadet_dll_path, create_lwe_path = install_path_to_cadet_paths(install_path)
+        root_path, cadet_cli_path, cadet_dll_path, create_lwe_path = \
+            resolve_cadet_paths(install_path)
 
         self._install_path = root_path
         self.cadet_create_lwe_path = create_lwe_path
@@ -376,7 +382,6 @@ class Cadet(H5, metaclass=CadetMeta):
         Optional[CadetRunnerBase]
             The current runner instance, either a DLL or file-based runner.
         """
-
         if self.use_dll and self.found_dll:
             return self._cadet_dll_runner
 
@@ -422,10 +427,10 @@ class Cadet(H5, metaclass=CadetMeta):
 
         self.filename = file_path
 
-        self.load()
+        self.load_from_file()
 
         if file_path_input is None:
-            os.remove(file_path)
+            self.delete_file()
 
         return self
 
@@ -487,20 +492,53 @@ class Cadet(H5, metaclass=CadetMeta):
         timeout : Optional[int]
             Maximum time allowed for the simulation to run, in seconds.
         clear : bool
-            If True, clear previous results after loading new ones.
+            If True, clear the simulation results from the current runner instance.
 
         Returns
         -------
         ReturnInformation
             Information about the simulation run.
         """
-        return_information = self.run(timeout)
+        warnings.warn(
+            "Cadet.run_load() will be removed in a future release. "
+            "Please use Cadet.run_simulation()",
+            category=FutureWarning
+        )
+        return_information = self.run_simulation(timeout=timeout, clear=clear)
+
+        return return_information
+
+    def run_simulation(
+            self,
+            timeout: Optional[int] = None,
+            clear: bool = True
+    ) -> ReturnInformation:
+        """
+        Run the CADET simulation and load the results.
+
+        Parameters
+        ----------
+        timeout : Optional[int]
+            Maximum time allowed for the simulation to run, in seconds.
+        clear : bool
+            If True, clear the simulation results from the current runner instance.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the simulation run.
+        """
+        return_information = self.cadet_runner.run(
+            simulation=self,
+            timeout=timeout
+        )
 
         if return_information.return_code == 0:
-            self.load_results()
+            self.cadet_runner.load_results(self)
 
         if clear:
             self.clear()
+
         return return_information
 
     def run(
@@ -520,6 +558,11 @@ class Cadet(H5, metaclass=CadetMeta):
         ReturnInformation
             Information about the simulation run.
         """
+        warnings.warn(
+            "Cadet.run() will be removed in a future release. \n"
+            "Please use Cadet.run_simulation()",
+            category=FutureWarning
+        )
         return_information = self.cadet_runner.run(
             self,
             timeout=timeout,
@@ -529,22 +572,31 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def load_results(self) -> None:
         """Load the results of the last simulation run into the current instance."""
-        runner = self.cadet_runner
-        if runner is not None:
-            runner.load_results(self)
+        warnings.warn(
+            "Cadet.load_results() will be removed in a future release. \n"
+            "Please use Cadet.load_from_file() to load results from a file "
+            "or use Cadet.run_simulation() to run a simulation and directly load the "
+            "simulation results.",
+            category=FutureWarning
+        )
+        self.load_from_file()
+
+    def load(self) -> None:
+        """Load the results of the last simulation run into the current instance."""
+        warnings.warn(
+            "Cadet.load() will be removed in a future release. \n"
+            "Please use Cadet.load_from_file() to load results from a file or use "
+            "Cadet.run_simulation() to run a simulation and directly load the "
+            "simulation results.",
+            category=FutureWarning
+        )
+        self.load_from_file()
 
     def clear(self) -> None:
-        """Clear the loaded results from the current instance."""
+        """Clear the simulation results from the current runner instance."""
         runner = self.cadet_runner
         if runner is not None:
             runner.clear()
-
-    def delete_file(self) -> None:
-        if self.filename is not None:
-            try:
-                os.remove(self.filename)
-            except FileNotFoundError:
-                pass
 
     def __del__(self):
         self.clear()

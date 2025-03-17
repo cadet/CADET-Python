@@ -182,7 +182,7 @@ class CadetCLIRunner(CadetRunnerBase):
         sim : Cadet
             The simulation object where results will be loaded.
         """
-        sim.load(paths=["/meta", "/output"], update=True)
+        sim.load_from_file(paths=["/meta", "/output"], update=True)
 
     def _get_cadet_version(self) -> dict:
         """

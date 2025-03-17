@@ -24,6 +24,8 @@ def test_autodetection():
 
 @pytest.mark.local
 def test_install_path():
+    if full_path_dll == Path("path/to/cadet"):
+        raise ValueError("This test requires a secondary CADET installation. Please set the full_path_dll variable.")
     sim = Cadet(install_path=full_path_dll, use_dll=True)
     assert sim.cadet_dll_path == full_path_dll
     assert sim.cadet_runner.cadet_path.suffix in [".dll", ".so"]
@@ -45,6 +47,8 @@ def test_install_path():
 
 @pytest.mark.local
 def test_dll_runner_attrs():
+    if full_path_dll == Path("path/to/cadet"):
+        raise ValueError("This test requires a secondary CADET installation. Please set the full_path_dll variable.")
     cadet = Cadet(full_path_dll.parent.parent)
     cadet_runner = cadet._cadet_dll_runner
     assert re.match(r"\d\.\d\.\d", cadet_runner.cadet_version)
@@ -56,6 +60,8 @@ def test_dll_runner_attrs():
 
 @pytest.mark.local
 def test_cli_runner_attrs():
+    if full_path_dll == Path("path/to/cadet"):
+        raise ValueError("This test requires a secondary CADET installation. Please set the full_path_dll variable.")
     cadet = Cadet(full_path_dll.parent.parent)
     cadet_runner = cadet._cadet_cli_runner
     assert re.match(r"\d\.\d\.\d", cadet_runner.cadet_version)

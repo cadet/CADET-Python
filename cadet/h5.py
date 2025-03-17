@@ -1,9 +1,10 @@
-from typing import Optional, Union, Any, List
 import copy
 import json
-import pprint
-import warnings
+import os
 from pathlib import Path
+import pprint
+from typing import Optional, Any
+import warnings
 
 from addict import Dict
 with warnings.catch_warnings():
@@ -94,7 +95,12 @@ class H5:
         for i in data:
             self.root.update(copy.deepcopy(i))
 
-    def load(self, paths: Optional[List[str]] = None, update: bool = False, lock: bool = False) -> None:
+    def load_from_file(
+            self,
+            paths: Optional[list[str]] = None,
+            update: bool = False,
+            lock: bool = False
+            ) -> None:
         """
         Load data from the specified HDF5 file.
 
@@ -103,16 +109,22 @@ class H5:
         paths : Optional[List[str]], optional
             Specific paths to load within the HDF5 file.
         update : bool, optional
-            If True, updates the existing data with the loaded data.
+            If True, update the existing data with the loaded data,
+            i.e. keep existing data and ADD loaded data.
+            If False, discard existing data and only keep loaded data.
         lock : bool, optional
             If True, uses a file lock while loading.
         """
         if self.filename is not None:
-            lock_file = filelock.FileLock(self.filename + '.lock') if lock else contextlib.nullcontext()
+            lock_file = filelock.FileLock(
+                    self.filename + '.lock'
+                ) if lock else contextlib.nullcontext()
 
             with lock_file:
                 with h5py.File(self.filename, 'r') as h5file:
-                    data = Dict(recursively_load(h5file, '/', self.inverse_transform, paths))
+                    data = Dict(
+                        recursively_load(h5file, '/', self.inverse_transform, paths)
+                    )
                     if update:
                         self.root.update(data)
                     else:
@@ -128,15 +140,30 @@ class H5:
         ----------
         lock : bool, optional
             If True, uses a file lock while saving.
+
+        Raises
+        ------
+        ValueError
+            If the filename is not set before attempting to save.
         """
         if self.filename is not None:
-            lock_file = filelock.FileLock(self.filename + '.lock') if lock else contextlib.nullcontext()
+            lock_file = filelock.FileLock(
+                    self.filename + '.lock'
+                ) if lock else contextlib.nullcontext()
 
             with lock_file:
                 with h5py.File(self.filename, 'w') as h5file:
                     recursively_save(h5file, '/', self.root, self.transform)
         else:
             raise ValueError("Filename must be set before save can be used")
+
+    def delete_file(self) -> None:
+        """Delete the file associated with the current instance."""
+        if self.filename is not None:
+            try:
+                os.remove(self.filename)
+            except FileNotFoundError:
+                pass
 
     def save_json(self, filename: str | Path) -> None:
         """
@@ -180,7 +207,9 @@ class H5:
             If True, uses a file lock while appending.
         """
         if self.filename is not None:
-            lock_file = filelock.FileLock(self.filename + '.lock') if lock else contextlib.nullcontext()
+            lock_file = filelock.FileLock(
+                    self.filename + '.lock'
+                ) if lock else contextlib.nullcontext()
 
             with lock_file:
                 with h5py.File(self.filename, 'a') as h5file:
@@ -254,7 +283,7 @@ class H5:
         obj[parts[-1]] = value
 
 
-def convert_from_numpy(data: Dict, func: Optional[callable]=None) -> Dict:
+def convert_from_numpy(data: Dict, func: Optional[callable] = None) -> Dict:
     """
     Convert a dictionary with NumPy objects into native Python types.
 
@@ -294,7 +323,7 @@ def convert_from_numpy(data: Dict, func: Optional[callable]=None) -> Dict:
     return ans
 
 
-def recursively_load_dict(data: dict, func: Optional[callable]=None) -> Dict:
+def recursively_load_dict(data: dict, func: Optional[callable] = None) -> Dict:
     """
     Recursively load data from a dictionary.
 
@@ -354,7 +383,12 @@ def set_path(obj: Dict[str, Any], path: str, value: Any) -> None:
     temp[path_parts[-1]] = value
 
 
-def recursively_load(h5file: h5py.File, path: str, func: callable, paths: Optional[List[str]]) -> Dict:
+def recursively_load(
+        h5file: h5py.File,
+        path: str,
+        func: callable,
+        paths: Optional[list[str]]
+        ) -> Dict:
     """
     Recursively load data from an HDF5 file.
 
@@ -382,7 +416,9 @@ def recursively_load(h5file: h5py.File, path: str, func: callable, paths: Option
                 if isinstance(item, h5py._hl.dataset.Dataset):
                     set_path(ans, path, item[()])
                 elif isinstance(item, h5py._hl.group.Group):
-                    set_path(ans, path, recursively_load(h5file, path + '/', func, None))
+                    set_path(
+                        ans, path, recursively_load(h5file, path + '/', func, None)
+                    )
     else:
         for key_original in h5file[path].keys():
             key = func(key_original)
@@ -413,7 +449,8 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
     Raises
     ------
     ValueError
-        If path or h5file types are invalid, or if the dictionary contains unsupported data types.
+        If path or h5file types are invalid, or if the dictionary contains unsupported
+        data types.
     """
     if not isinstance(path, str):
         raise ValueError("path must be a string")
@@ -442,12 +479,17 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
             try:
                 value = numpy.array(item)
             except TypeError:
-                raise ValueError(f'Cannot save {path}/{func(key)} key with {type(item)} type.')
+                raise ValueError(
+                    f'Cannot save {path}/{func(key)} key with {type(item)} type.'
+                )
 
         try:
             h5file[path + func(key)] = value
         except OSError as e:
             if str(e) == 'Unable to create link (name already exists)':
-                raise KeyError(f'Name conflict with upper and lower case entries for key "{path}{key}".')
+                raise KeyError(
+                    'Name conflict with upper and lower case entries for key '
+                    f'"{path}{key}".'
+                )
             else:
                 raise

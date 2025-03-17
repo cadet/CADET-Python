@@ -1710,9 +1710,9 @@ class CadetDLLRunner(CadetRunnerBase):
 
     def clear(self) -> None:
         """
-        Clear the current simulation state.
+        Clear the simulation results from the current instance.
 
-        This method deletes the current simulation results and resets the driver.
+        Note, this method deletes also resets the driver.
         """
         if hasattr(self, "res"):
             del self.res
