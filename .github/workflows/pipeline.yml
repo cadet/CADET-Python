@@ -48,7 +48,6 @@ jobs:
           CACHE_NUMBER: 0
         with:
           path: ${{ env.CONDA }}/envs
-          key: python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
           key: ${{ matrix.os }}-python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ hashFiles(env.CONDA_FILE) }}-${{ env.CACHE_NUMBER }}
         id: cache
 
