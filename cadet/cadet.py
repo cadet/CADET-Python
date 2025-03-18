@@ -87,9 +87,13 @@ def resolve_cadet_paths(
     if platform.system() == 'Windows':
         dll_path = cadet_root / 'bin' / 'cadet.dll'
         dll_debug_path = cadet_root / 'bin' / 'cadet_d.dll'
+    elif platform.system() == 'Darwin':
+        dll_path = cadet_root / 'lib' / 'libcadet.dylib'
+        dll_debug_path = cadet_root / 'lib' / 'libcadet_d.dylib'
     else:
         dll_path = cadet_root / 'lib' / 'libcadet.so'
         dll_debug_path = cadet_root / 'lib' / 'libcadet_d.so'
+
 
     # Look for debug dll if dll is not found.
     if not dll_path.is_file() and dll_debug_path.is_file():
