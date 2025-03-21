@@ -95,6 +95,33 @@ class H5:
         for i in data:
             self.root.update(copy.deepcopy(i))
 
+    def load(
+            self,
+            paths: Optional[list[str]] = None,
+            update: bool = False,
+            lock: bool = False
+    ) -> None:
+        """
+        Load data from the specified HDF5 file.
+
+        Parameters
+        ----------
+        paths : Optional[List[str]], optional
+            Specific paths to load within the HDF5 file.
+        update : bool, optional
+            If True, update the existing data with the loaded data,
+            i.e. keep existing data and ADD loaded data.
+            If False, discard existing data and only keep loaded data.
+        lock : bool, optional
+            If True, uses a file lock while loading.
+        """
+        warnings.warn(
+            "Deprecation warning: Support for `load` will be removed in a future "
+            "version. Use `load_from_file` instead.",
+            FutureWarning
+        )
+        self.load_from_file(paths=paths, update=update, lock=lock)
+
     def load_from_file(
             self,
             paths: Optional[list[str]] = None,
