@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 from typing import Optional
+import warnings
 
 
 @dataclass
@@ -39,7 +40,6 @@ class CadetRunnerBase(ABC):
     def run(
             self,
             simulation: "Cadet",
-            timeout: Optional[int] = None,
     ) -> ReturnInformation:
         """
         Run a CADET simulation.
@@ -48,8 +48,6 @@ class CadetRunnerBase(ABC):
         ----------
         simulation : Cadet
             The simulation object.
-        timeout : Optional[int]
-            Maximum time allowed for the simulation to run, in seconds.
 
         Returns
         -------
@@ -152,6 +150,12 @@ class CadetCLIRunner(CadetRunnerBase):
         The `timeout` parameter is deprecated. Set the timeout in the solver options
         instead.
         """
+        if timeout is not None:
+            warnings.warn(
+                "Support for setting timeout via `run_simulation` will be removed in a "
+                " future version. Please set the value in the solver options instead.",
+                FutureWarning
+            )
         if simulation.filename is None:
             raise ValueError("Filename must be set before run can be used")
 
