@@ -9,7 +9,7 @@ on:
 
 jobs:
   test-job:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     defaults:
       run:
@@ -17,7 +17,14 @@ jobs:
 
     strategy:
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
+          - os: macos-13
+            python-version: "3.12"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +39,7 @@ jobs:
           miniforge-version: latest
           use-mamba: true
           activate-environment: cadet-python
-          channels: conda-forge,
+          channels: conda-forge
 
       - name: Cache conda
         uses: actions/cache@v3
@@ -41,26 +48,29 @@ jobs:
           CACHE_NUMBER: 0
         with:
           path: ${{ env.CONDA }}/envs
-          key: python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
+          key: ${{ matrix.os }}-python_${{ matrix.python-version }}-${{ steps.get-date.outputs.today }}-${{ hashFiles(env.CONDA_FILE) }}-${{ env.CACHE_NUMBER }}
+        id: cache
 
       - name: Set up python env
         run: |
-          mamba install python==${{ matrix.python-version }}
-          pip install .
+          conda install python=${{ matrix.python-version }}
+          conda run pip install .
+
       - name: Install pypa/build
         run: |
-          python -m pip install build --user
+          conda run python -m pip install build --user
 
       - name: Build binary wheel and source tarball
         run: |
-          python -m build --sdist --wheel --outdir dist/ .
+          conda run python -m build --sdist --wheel --outdir dist/ .
 
       - name: Test Wheel install and import
         run: |
-          python -c "import cadet; print(cadet.__version__)"
+          conda run python -c "import cadet; print(cadet.__version__)"
           cd ..
+
       - name: Test with pytest
         run: |
-          pip install .[testing]
-          mamba install -c conda-forge cadet>=5.0.3
+          conda run pip install .[testing]
+          conda install -c conda-forge cadet>=5.0.3
           pytest tests --rootdir=tests -m "not slow and not local"
