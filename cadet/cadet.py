@@ -514,7 +514,7 @@ class Cadet(H5, metaclass=CadetMeta):
             clear: bool = True
     ) -> ReturnInformation:
         """
-        Run the CADET simulation and load the results.
+        Execute the CADET simulation and load the results.
 
         Parameters
         ----------
