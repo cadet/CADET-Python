@@ -376,6 +376,11 @@ class Cadet(H5, metaclass=CadetMeta):
         return cadet_root
 
     @property
+    def version(self) -> str:
+        """str: The version of the CADET-Core installation."""
+        return self.cadet_runner.cadet_version
+
+    @property
     def cadet_runner(self) -> CadetRunnerBase:
         """
         Get the current CADET runner instance.
