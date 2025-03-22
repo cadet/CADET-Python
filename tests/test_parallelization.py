@@ -1,6 +1,7 @@
 from cadet import Cadet
 from joblib import Parallel, delayed
-from .test_dll import setup_model
+import pytest
+from tests.test_dll import setup_model
 
 n_jobs = 2
 
