@@ -3,6 +3,7 @@ import io
 import os
 from pathlib import Path
 from typing import Any, Optional
+import warnings
 
 import addict
 import numpy
@@ -1782,7 +1783,19 @@ class CadetDLLRunner(CadetRunnerBase):
         ------
         RuntimeError
             If the simulation process returns a non-zero exit code.
+
+        Warnings
+        --------
+        The `timeout` parameter is deprecated. Set the timeout in the solver options
+        instead.
         """
+        if timeout is not None:
+            warnings.warn(
+                "Support for setting timeout via `run_simulation` will be removed in a "
+                " future version. Please set the value in the solver options instead.",
+                FutureWarning
+            )
+
         pp = cadet_dll_parameterprovider.PARAMETERPROVIDER(simulation)
 
         log_buffer = self.setup_log_buffer()
