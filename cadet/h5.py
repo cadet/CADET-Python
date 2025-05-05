@@ -587,13 +587,6 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
         value_representation = repr(value)
         value_representation = value_representation.replace("array", "numpy.array")
         value_representation = value_representation.replace("float64", "numpy.float64")
-        try:
-            eval(value_representation)
-        except NameError as e:
-            raise ValueError(
-                f"Encountered a value of '{value_representation}' that can't be directly reproduced in python.\n"
-                f"Please report this to the CADET-Python developers.") from e
-
         return value_representation
 
     if current_lines_list is None:
