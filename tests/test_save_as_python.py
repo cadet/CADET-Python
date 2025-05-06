@@ -24,7 +24,7 @@ def test_save_as_python(temp_cadet_file):
     Test that the Cadet class raises a KeyError exception when duplicate keys are set on it.
     """
     # initialize "sim" variable to be overwritten by the exec lines later
-    sim = Cadet()
+    model = Cadet()
 
     # Populate temp_cadet_file with all tricky cases currently known
     temp_cadet_file.root.input.foo = 1
@@ -45,7 +45,7 @@ def test_save_as_python(temp_cadet_file):
         exec(line)
 
     # test that "sim" is equal to "temp_cadet_file"
-    recursive_equality_check(sim.root, temp_cadet_file.root)
+    recursive_equality_check(model.root, temp_cadet_file.root)
 
 
 def recursive_equality_check(dict_a: dict, dict_b: dict):
@@ -63,4 +63,4 @@ def recursive_equality_check(dict_a: dict, dict_b: dict):
 
 
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main([__file__])

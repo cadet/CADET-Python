@@ -218,22 +218,21 @@ class H5:
             )
 
         code_lines_list = [
-            "import numpy",
-            "from cadet import Cadet",
+            "import numpy as np",
+            f"from cadet import {self.__class__.__name__}",
             "",
-            "sim = Cadet()",
-            "root = sim.root",
+            f"model = {self.__class__.__name__}()",
         ]
 
         code_lines_list = recursively_turn_dict_to_python_list(
             dictionary=self.root,
             current_lines_list=code_lines_list,
-            prefix="root"
+            prefix="model.root"
         )
 
         filename_for_reproduced_h5_file = filename.replace(".py", ".h5")
-        code_lines_list.append(f"sim.filename = '{filename_for_reproduced_h5_file}'")
-        code_lines_list.append("sim.save()")
+        code_lines_list.append(f"model.filename = '{filename_for_reproduced_h5_file}'")
+        code_lines_list.append("model.save()")
 
         if not only_return_pythonic_representation:
             with open(filename, "w") as handle:
@@ -617,8 +616,8 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
 
         """
         value_representation = repr(value)
-        value_representation = value_representation.replace("array", "numpy.array")
-        value_representation = value_representation.replace("float64", "numpy.float64")
+        value_representation = value_representation.replace("array", "np.array")
+        value_representation = value_representation.replace("float64", "np.float64")
         return value_representation
 
     if current_lines_list is None:
