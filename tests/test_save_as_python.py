@@ -33,7 +33,9 @@ def test_save_as_python(temp_cadet_file):
     temp_cadet_file.root.input.bar.init_q = np.array([], dtype=np.float64)
     temp_cadet_file.root.input["return"].split_foobar = 1
 
-    code_lines = temp_cadet_file.save_as_python_script(filename="temp.py", only_return_pythonic_representation=True)
+    code_lines = temp_cadet_file.save_as_python_script(
+        filename="temp.py", only_return_pythonic_representation=True
+    )
 
     # remove code lines that save the file
     code_lines = code_lines[:-2]

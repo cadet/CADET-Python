@@ -184,9 +184,38 @@ class H5:
         else:
             raise ValueError("Filename must be set before save can be used")
 
-    def save_as_python_script(self, filename: str, only_return_pythonic_representation=False):
+    def save_as_python_script(
+            self,
+            filename: str,
+            only_return_pythonic_representation: bool = False
+            ) -> None | list[str]:
+        """
+        Save the current state as a Python script.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file to save the script to. Must end with ".py".
+        only_return_pythonic_representation : bool, optional
+            If True, returns the Python code as a list of strings instead of writing
+            to a file. Defaults to False.
+
+        Returns
+        -------
+        None | list[str]
+            If `only_return_pythonic_representation` is True, returns a list of strings
+            representing the Python code. Otherwise, returns None.
+
+        Raises
+        ------
+        Warning
+            If the filename does not end with ".py".
+
+        """
         if not filename.endswith(".py"):
-            raise Warning(f"The filename given to .save_as_python_script isn't a python file name.")
+            raise Warning(
+                "Unexpected filename extension. Consider setting a '.py' file."
+            )
 
         code_lines_list = [
             "import numpy",
@@ -196,9 +225,11 @@ class H5:
             "root = sim.root",
         ]
 
-        code_lines_list = recursively_turn_dict_to_python_list(dictionary=self.root,
-                                                               current_lines_list=code_lines_list,
-                                                               prefix="root")
+        code_lines_list = recursively_turn_dict_to_python_list(
+            dictionary=self.root,
+            current_lines_list=code_lines_list,
+            prefix="root"
+        )
 
         filename_for_reproduced_h5_file = filename.replace(".py", ".h5")
         code_lines_list.append(f"sim.filename = '{filename_for_reproduced_h5_file}'")
@@ -207,6 +238,7 @@ class H5:
         if not only_return_pythonic_representation:
             with open(filename, "w") as handle:
                 handle.writelines([line + "\n" for line in code_lines_list])
+            return
         else:
             return code_lines_list
 
