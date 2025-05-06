@@ -32,7 +32,7 @@ dependencies = [
     "filelock",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 testing = [
     "pytest",
     "joblib"
