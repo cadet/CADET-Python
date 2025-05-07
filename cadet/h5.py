@@ -650,12 +650,10 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
         Returns
         -------
         str
-            A string representation using `repr()`, with `array` replaced by `np.array`
-            and `float64` replaced by `np.float64`.
+            A string representation using `repr()`, with `array` replaced by `np.array`.
         """
         value_representation = repr(value)
         value_representation = value_representation.replace("array", "np.array")
-        value_representation = value_representation.replace("float64", "np.float64")
         return value_representation
 
     if current_lines_list is None:
