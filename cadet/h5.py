@@ -581,18 +581,40 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
 
 def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: list = None, prefix: str = None):
     """
-    Recursively turn a nested dictionary or addict.Dict into a list of Python code that
-    can generate the nested dictionary.
+    Recursively convert a nested dictionary (including addict.Dict) into a list of Python code lines
+    that can regenerate the original nested structure.
 
-    :param dictionary:
-    :param current_lines_list:
-    :param prefix_list:
-    :return: list of Python code lines
+    Parameters
+    ----------
+    dictionary : dict
+        The nested dictionary or addict.Dict to convert.
+    current_lines_list : list, optional
+        A list that accumulates the Python code lines as the recursion progresses.
+        If None, a new list is created.
+    prefix : str, optional
+        A prefix used to build fully-qualified variable names representing nested keys.
+
+    Returns
+    -------
+    list of str
+        List of Python code lines that, when executed, recreate the nested dictionary.
     """
 
     def merge_to_absolute_key(prefix, key):
         """
-        Combine key and prefix to "prefix.key" except if there is no prefix, then return key
+        Combine prefix and key into a dot-separated path unless the prefix is None.
+
+        Parameters
+        ----------
+        prefix : str or None
+            The existing path prefix.
+        key : str
+            The current key to append.
+
+        Returns
+        -------
+        str
+            Dot-separated key path if prefix is not None; otherwise, the key itself.
         """
         if prefix is None:
             return key
@@ -601,19 +623,35 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
 
     def clean_up_key(absolute_key: str):
         """
-        Remove problematic phrases from key, such as blank "return"
+        Sanitize a key path by replacing problematic substrings like '.return'.
 
-        :param absolute_key:
-        :return:
+        Parameters
+        ----------
+        absolute_key : str
+            A dot-separated key path.
+
+        Returns
+        -------
+        str
+            A cleaned key path with special keywords properly escaped.
         """
         absolute_key = absolute_key.replace(".return", "['return']")
         return absolute_key
 
     def get_pythonic_representation_of_value(value):
         """
-        Use repr() to get a pythonic representation of the value
-        and add "np." to "array" and "float64"
+        Convert a value to a Python code representation, with NumPy-style modifications.
 
+        Parameters
+        ----------
+        value : any
+            The value to be represented.
+
+        Returns
+        -------
+        str
+            A string representation using `repr()`, with `array` replaced by `np.array`
+            and `float64` replaced by `np.float64`.
         """
         value_representation = repr(value)
         value_representation = value_representation.replace("array", "np.array")
@@ -629,7 +667,11 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
         absolute_key = merge_to_absolute_key(prefix, key)
 
         if type(value) in (dict, Dict):
-            current_lines_list = recursively_turn_dict_to_python_list(value, current_lines_list, prefix=absolute_key)
+            current_lines_list = recursively_turn_dict_to_python_list(
+                value,
+                current_lines_list,
+                prefix=absolute_key
+            )
         else:
             value_representation = get_pythonic_representation_of_value(value)
 
