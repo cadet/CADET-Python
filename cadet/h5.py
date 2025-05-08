@@ -6,6 +6,7 @@ import pprint
 from typing import Optional, Any
 import warnings
 
+import numpy as np
 from addict import Dict
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -652,8 +653,13 @@ def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: l
         str
             A string representation using `repr()`, with `array` replaced by `np.array`.
         """
-        value_representation = repr(value)
-        value_representation = value_representation.replace("array", "np.array")
+        if isinstance(value, np.ndarray):
+            if len(value) > 1e7:
+                raise ValueError("Array is too long to be serialized")
+            value_representation = np.array2string(value, separator=',', threshold=int(1e7))
+            value_representation = f"np.array({value_representation})"
+        else:
+            value_representation = repr(value)
         return value_representation
 
     if current_lines_list is None:
