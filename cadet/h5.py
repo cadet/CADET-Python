@@ -6,6 +6,7 @@ import pprint
 from typing import Optional, Any
 import warnings
 
+import numpy as np
 from addict import Dict
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -183,6 +184,63 @@ class H5:
                     recursively_save(h5file, '/', self.root, self.transform)
         else:
             raise ValueError("Filename must be set before save can be used")
+
+    def save_as_python_script(
+            self,
+            filename: str,
+            only_return_pythonic_representation: bool = False
+            ) -> None | list[str]:
+        """
+        Save the current state as a Python script.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file to save the script to. Must end with ".py".
+        only_return_pythonic_representation : bool, optional
+            If True, returns the Python code as a list of strings instead of writing
+            to a file. Defaults to False.
+
+        Returns
+        -------
+        None | list[str]
+            If `only_return_pythonic_representation` is True, returns a list of strings
+            representing the Python code. Otherwise, returns None.
+
+        Raises
+        ------
+        Warning
+            If the filename does not end with ".py".
+
+        """
+        if not filename.endswith(".py"):
+            raise Warning(
+                "Unexpected filename extension. Consider setting a '.py' file."
+            )
+
+        code_lines_list = [
+            "import numpy as np",
+            f"from cadet import {self.__class__.__name__}",
+            "",
+            f"model = {self.__class__.__name__}()",
+        ]
+
+        code_lines_list = recursively_turn_dict_to_python_list(
+            dictionary=self.root,
+            current_lines_list=code_lines_list,
+            prefix="model.root"
+        )
+
+        filename_for_reproduced_h5_file = filename.replace(".py", ".h5")
+        code_lines_list.append(f"model.filename = '{filename_for_reproduced_h5_file}'")
+        code_lines_list.append("model.save()")
+
+        if not only_return_pythonic_representation:
+            with open(filename, "w") as handle:
+                handle.writelines([line + "\n" for line in code_lines_list])
+            return
+        else:
+            return code_lines_list
 
     def delete_file(self) -> None:
         """Delete the file associated with the current instance."""
@@ -520,3 +578,109 @@ def recursively_save(h5file: h5py.File, path: str, dic: Dict, func: callable) ->
                 )
             else:
                 raise
+
+
+def recursively_turn_dict_to_python_list(dictionary: dict, current_lines_list: list = None, prefix: str = None):
+    """
+    Recursively convert a nested dictionary (including addict.Dict) into a list of Python code lines
+    that can regenerate the original nested structure.
+
+    Parameters
+    ----------
+    dictionary : dict
+        The nested dictionary or addict.Dict to convert.
+    current_lines_list : list, optional
+        A list that accumulates the Python code lines as the recursion progresses.
+        If None, a new list is created.
+    prefix : str, optional
+        A prefix used to build fully-qualified variable names representing nested keys.
+
+    Returns
+    -------
+    list of str
+        List of Python code lines that, when executed, recreate the nested dictionary.
+    """
+
+    def merge_to_absolute_key(prefix, key):
+        """
+        Combine prefix and key into a dot-separated path unless the prefix is None.
+
+        Parameters
+        ----------
+        prefix : str or None
+            The existing path prefix.
+        key : str
+            The current key to append.
+
+        Returns
+        -------
+        str
+            Dot-separated key path if prefix is not None; otherwise, the key itself.
+        """
+        if prefix is None:
+            return key
+        else:
+            return f"{prefix}.{key}"
+
+    def clean_up_key(absolute_key: str):
+        """
+        Sanitize a key path by replacing problematic substrings like '.return'.
+
+        Parameters
+        ----------
+        absolute_key : str
+            A dot-separated key path.
+
+        Returns
+        -------
+        str
+            A cleaned key path with special keywords properly escaped.
+        """
+        absolute_key = absolute_key.replace(".return", "['return']")
+        return absolute_key
+
+    def get_pythonic_representation_of_value(value):
+        """
+        Convert a value to a Python code representation, with NumPy-style modifications.
+
+        Parameters
+        ----------
+        value : any
+            The value to be represented.
+
+        Returns
+        -------
+        str
+            A string representation using `repr()`, with `array` replaced by `np.array`.
+        """
+        if isinstance(value, np.ndarray):
+            if len(value) > 1e7:
+                raise ValueError("Array is too long to be serialized")
+            value_representation = np.array2string(value, separator=',', threshold=int(1e7))
+            value_representation = f"np.array({value_representation})"
+        else:
+            value_representation = repr(value)
+        return value_representation
+
+    if current_lines_list is None:
+        current_lines_list = []
+
+    for key in sorted(dictionary.keys()):
+        value = dictionary[key]
+
+        absolute_key = merge_to_absolute_key(prefix, key)
+
+        if type(value) in (dict, Dict):
+            current_lines_list = recursively_turn_dict_to_python_list(
+                value,
+                current_lines_list,
+                prefix=absolute_key
+            )
+        else:
+            value_representation = get_pythonic_representation_of_value(value)
+
+            absolute_key = clean_up_key(absolute_key)
+
+            current_lines_list.append(f"{absolute_key} = {value_representation}")
+
+    return current_lines_list
