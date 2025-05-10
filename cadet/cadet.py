@@ -52,7 +52,7 @@ def resolve_cadet_paths(
     if install_path is None:
         return None, None, None, None
 
-    install_path = Path(install_path)
+    install_path = Path(install_path).expanduser()
 
     if install_path.is_file():
         cadet_root = install_path.parent.parent
