@@ -11,6 +11,7 @@ from cadet import Cadet
 
 # Full path to cadet.dll or cadet.so, that is different from the system/conda cadet
 full_path_dll = Path("path/to/cadet")
+home_path_dll = Path("path/to/cadet")
 
 install_path_conda = Cadet.autodetect_cadet()
 
@@ -22,6 +23,7 @@ def test_autodetection():
     assert sim.cadet_cli_path.parent.parent == install_path_conda
     assert sim.cadet_runner.cadet_path.suffix not in [".dll", ".so"]
 
+
 @pytest.mark.local
 def test_install_path():
     if full_path_dll == Path("path/to/cadet"):
@@ -30,12 +32,21 @@ def test_install_path():
     assert sim.cadet_dll_path == full_path_dll
     assert sim.cadet_runner.cadet_path.suffix in [".dll", ".so"]
 
+    # Set root directory of CADET installation
     sim = Cadet()
     sim.install_path = full_path_dll.parent.parent
     sim.use_dll = True
     assert sim.cadet_dll_path == full_path_dll
     assert sim.cadet_runner.cadet_path.suffix in [".dll", ".so"]
 
+    # Set root directory of CADET installation (with user home (`~`))
+    sim = Cadet()
+    sim.install_path = home_path_dll.parent.parent
+    sim.use_dll = True
+    assert sim.cadet_dll_path == full_path_dll
+    assert sim.cadet_runner.cadet_path.suffix in [".dll", ".so"]
+
+    # Set cli/dll path (deprecated)
     sim = Cadet()
     with pytest.deprecated_call():
         sim.cadet_path = full_path_dll.parent.parent
