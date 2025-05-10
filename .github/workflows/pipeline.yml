@@ -71,6 +71,6 @@ jobs:
 
       - name: Test with pytest
         run: |
-          conda run pip install .[testing]
+          conda run pip install . --group testing
           conda install -c conda-forge cadet>=5.0.3
           pytest tests --rootdir=tests -m "not slow and not local"
