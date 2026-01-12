@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from typing import Optional
 import warnings
+import sys
 
 from addict import Dict
 
@@ -366,9 +367,21 @@ class Cadet(H5, metaclass=CadetMeta):
         path = shutil.which(executable)
 
         if path is None:
-            raise FileNotFoundError(
-                "Could not autodetect CADET installation. Please provide path."
-            )
+
+            dll_paths = [
+                str(Path(sys.prefix) / 'Library' / 'bin'),
+                str(Path(sys.prefix) / 'bin'),
+            ]
+            current_path = os.environ.get('PATH', '')
+            new_path = os.pathsep.join(dll_paths) + os.pathsep + current_path
+            os.environ['PATH'] = new_path
+
+            path = shutil.which(executable)
+
+            if path is None:
+                raise FileNotFoundError(
+                    "Could not autodetect CADET installation. Please provide path."
+                )
 
         cli_path = Path(path)
         cadet_root = cli_path.parent.parent if cli_path else None
