@@ -209,7 +209,7 @@ class CadetCLIRunner(CadetRunnerBase):
             version_output = result.stdout.strip()
 
             version_match = re.search(
-                r'cadet-cli version ([\d.]+) \((.*) branch\)\n',
+                r'This is cadet-cli version ([\w.]+) \((.*) branch\)',
                 version_output
             )
 
