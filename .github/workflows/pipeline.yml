@@ -22,7 +22,7 @@ jobs:
         include:
           - os: windows-latest
             python-version: "3.12"
-          - os: macos-13
+          - os: macos-latest
             python-version: "3.12"
 
     steps:
@@ -74,3 +74,4 @@ jobs:
           conda run pip install .[testing]
           conda install -c conda-forge cadet>=5.0.3
           pytest tests --rootdir=tests -m "not slow and not local"
+
