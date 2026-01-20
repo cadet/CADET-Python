@@ -1,11 +1,11 @@
-import os
-import pathlib
-import re
-import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import os
 from pathlib import Path
+import re
+import subprocess
 from typing import Optional
+import warnings
 
 
 @dataclass
@@ -16,12 +16,14 @@ class ReturnInformation:
     Parameters
     ----------
     return_code : int
-        An integer representing the return code. 0 indicates success, non-zero values indicate errors.
+        An integer representing the return code.
+        0 indicates success, non-zero values indicate errors.
     error_message : str
         A string containing the error message if an error occurred. Empty if no error.
     log : str
         A string containing log information.
     """
+
     return_code: int
     error_message: str
     log: str
@@ -38,7 +40,6 @@ class CadetRunnerBase(ABC):
     def run(
             self,
             simulation: "Cadet",
-            timeout: Optional[int] = None,
     ) -> ReturnInformation:
         """
         Run a CADET simulation.
@@ -47,8 +48,6 @@ class CadetRunnerBase(ABC):
         ----------
         simulation : Cadet
             The simulation object.
-        timeout : Optional[int]
-            Maximum time allowed for the simulation to run, in seconds.
 
         Returns
         -------
@@ -59,9 +58,7 @@ class CadetRunnerBase(ABC):
 
     @abstractmethod
     def clear(self) -> None:
-        """
-        Clear the simulation data.
-        """
+        """Clear the simulation data."""
         pass
 
     @abstractmethod
@@ -147,7 +144,18 @@ class CadetCLIRunner(CadetRunnerBase):
         -------
         ReturnInformation
             Information about the simulation run.
+
+        Warnings
+        --------
+        The `timeout` parameter is deprecated. Set the timeout in the solver options
+        instead.
         """
+        if timeout is not None:
+            warnings.warn(
+                "Support for setting timeout via `run_simulation` will be removed in a "
+                " future version. Please set the value in the solver options instead.",
+                FutureWarning
+            )
         if simulation.filename is None:
             raise ValueError("Filename must be set before run can be used")
 
@@ -187,10 +195,12 @@ class CadetCLIRunner(CadetRunnerBase):
     def _get_cadet_version(self) -> dict:
         """
         Get version and branch name of the currently instanced CADET build.
+
         Returns
         -------
         dict
-            Dictionary containing: cadet_version as x.x.x, cadet_branch, cadet_build_type, cadet_commit_hash
+            Dictionary containing: cadet_version as x.x.x,
+            cadet_branch, cadet_build_type, cadet_commit_hash
         Raises
         ------
         ValueError

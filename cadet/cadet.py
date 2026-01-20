@@ -522,20 +522,33 @@ class Cadet(H5, metaclass=CadetMeta):
             clear: bool = True
     ) -> ReturnInformation:
         """
-        Run the CADET simulation and load the results.
+        Execute the CADET simulation and load the results.
 
         Parameters
         ----------
-        timeout : Optional[int]
-            Maximum time allowed for the simulation to run, in seconds.
-        clear : bool
-            If True, clear the simulation results from the current runner instance.
+        timeout : Optional[int], default=None
+            Maximum simulation runtime in seconds.
+
+        clear : bool, default=True
+            Clear previous results before loading new ones.
 
         Returns
         -------
         ReturnInformation
-            Information about the simulation run.
+            Simulation run details and results.
+
+        Warnings
+        --------
+        The `timeout` parameter is deprecated. Set the timeout in the solver options
+        instead.
         """
+        if timeout is not None:
+            warnings.warn(
+                "Support for setting timeout via `run_simulation` will be removed in a "
+                " future version. Please set the value in the solver options instead.",
+                FutureWarning
+            )
+
         return_information = self.cadet_runner.run(
             simulation=self,
             timeout=timeout
