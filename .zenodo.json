@@ -1,5 +1,5 @@
 {
-    "title": "CADET-Python: Version 1.0.3",
+    "title": "CADET-Python: Version 1.1.2",
     "upload_type": "software",
     "creators": [
         {
@@ -44,7 +44,7 @@
         "general rate model",
         "Python"
     ],
-    "version": "1.0.3",
+    "version": "1.1.2",
     "access_right": "open",
     "communities": [{"identifier": "open-source"}]
 }
