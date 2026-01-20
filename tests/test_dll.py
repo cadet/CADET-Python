@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 import pytest
+import numpy as np
 
 from cadet import Cadet
 
@@ -177,6 +178,16 @@ def setup_model(
              }
          }
         )
+
+        if model == 'MULTI_CHANNEL_TRANSPORT':
+            cadet_model.root.input.model.unit_001.update({
+                'n_channel': 2,
+                'exchange_matrix': np.array([
+                    [[0.0], [1e-4]],
+                    [[0.0], [0.0]],
+                ])
+            })
+
         # if we don't save and re-load the model we get windows access violations.
         # Interesting case for future tests, not what I want to test now.
         cadet_model.save()
@@ -393,6 +404,11 @@ _2dgrm_template = {
     'ncol': 10,
     'npar': 5,
     'include_sensitivity': False,
+}
+
+mct_template = {
+    'model': 'MULTI_CHANNEL_TRANSPORT',
+    'ncol' :10,
 }
 
 
@@ -1229,6 +1245,48 @@ _2dgrm_split_all = Case(
     },
 )
 
+#TODO: Fill in expected solution for MCT
+mct = Case(
+    name='mct',
+    model_options=mct_template,
+    solution_recorder_options=no_split,
+    expected_results={
+        'solution_times': (1501,),
+        'last_state_y': (92,),
+        'last_state_ydot': (92,),
+        'coordinates_unit_000': {
+            'axial_coordinates': (10,),
+        },
+        'coordinates_unit_001': {},
+        'solution_unit_000': {
+            'last_state_y': (84,),
+            'last_state_ydot': (84,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+            'solution_bulk': (1501, 10, 4),
+            'solution_solid': (1501, 10, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+            'soldot_bulk': (1501, 10, 4),
+            'soldot_solid': (1501, 10, 4),
+        },
+        'solution_unit_001': {
+            'last_state_y': (4,),
+            'last_state_ydot': (4,),
+
+            'solution_inlet': (1501, 4),
+            'solution_outlet': (1501, 4),
+
+            'soldot_inlet': (1501, 4),
+            'soldot_outlet': (1501, 4),
+
+        },
+    },
+)
+
+
 
 
 # %% Testing utils
@@ -1315,7 +1373,8 @@ test_cases = [
     grm_par_types,
     _2dgrm,
     _2dgrm_split_ports,
-    _2dgrm_split_all
+    _2dgrm_split_all,
+    mct
 ]
 
 
