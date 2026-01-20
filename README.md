@@ -1,6 +1,6 @@
 # CADET-Python
 
-**CADET-Python** provides a file-based Python interface for **CADET-Core**, which must be installed separately. For this, please refer to the [installation instructions](https://cadet.github.io/master/getting_started/installation.html) and the [CADET-Core repository](https://github.com/cadet/CADET-Core).
+**CADET-Python** provides a file-based Python interface for **CADET-Core**, which must be installed separately. For this, please refer to the [installation instructions](https://cadet.github.io/master/getting_started/installation_frontend.html) and the [CADET-Core repository](https://github.com/cadet/CADET-Core).
 
 The CADET-Python package simplifies access by mapping to the [CADET interface](https://cadet.github.io/master/interface/index.html#), **with all dataset names in lowercase**.
 
