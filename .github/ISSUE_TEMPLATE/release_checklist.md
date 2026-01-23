@@ -22,7 +22,7 @@ The following checklist describes the steps to execute sequentially for creating
 - [ ] Create a version bump commit `Bump version to vX.X.X`:
   - Update the version number in 
   - `__init__.py`
-  - `zenodo.json` (two places), `cadet.hpp` and 
+  - `zenodo.json` (two places)
 
 ---
 
