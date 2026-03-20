@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
+from typing import Union
 import addict
 import numpy
 
@@ -26,7 +27,7 @@ _CDT_ERROR_INVALID_INPUTS = -2
 _CDT_DATA_NOT_STORED = -3
 
 
-class CADETAPIV010000_DATA:
+class CADET_API_V1_SIGNATURES:
     """
     Definition of CADET-C-API v1.0 function signatures and type mappings.
 
@@ -42,65 +43,68 @@ class CADETAPIV010000_DATA:
 
     # API function signatures
     # Note, order is important, it has to match the cdtAPIv010000 struct of the C-API
-    signatures = {}
+    signatures_1_0_0 = {}
 
-    signatures['getFileFormat'] = ('return', 'fileFormat')
+    signatures_1_0_0['getFileFormat'] = ('return', 'fileFormat')
 
-    signatures['createDriver'] = ('drv',)
-    signatures['deleteDriver'] = (None, 'drv')
-    signatures['runSimulation'] = ('return', 'drv', 'parameterProvider')
+    signatures_1_0_0['createDriver'] = ('drv',)
+    signatures_1_0_0['deleteDriver'] = (None, 'drv')
+    signatures_1_0_0['runSimulation'] = ('return', 'drv', 'parameterProvider')
 
-    signatures['getNumUnitOp'] = ('return', 'drv', 'nUnits')
-    signatures['getNumParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
-    signatures['getNumSensitivities'] = ('return', 'drv', 'nSens')
+    signatures_1_0_0['getNumUnitOp'] = ('return', 'drv', 'nUnits')
+    signatures_1_0_0['getNumParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
+    signatures_1_0_0['getNumSensitivities'] = ('return', 'drv', 'nSens')
 
-    signatures['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
-    signatures['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
-    signatures['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
-    signatures['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
-    signatures['getLastState'] = ('return', 'drv', 'state', 'nStates')
-    signatures['getLastStateTimeDerivative'] = ('return', 'drv', 'state', 'nStates')
-    signatures['getLastUnitState'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
-    signatures['getLastUnitStateTimeDerivative'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
-    signatures['getLastSensitivityState'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
-    signatures['getLastSensitivityStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
-    signatures['getLastSensitivityUnitState'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
-    signatures['getLastSensitivityUnitStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastState'] = ('return', 'drv', 'state', 'nStates')
+    signatures_1_0_0['getLastStateTimeDerivative'] = ('return', 'drv', 'state', 'nStates')
+    signatures_1_0_0['getLastUnitState'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastUnitStateTimeDerivative'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityState'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityUnitState'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityUnitStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
 
-    signatures['getPrimaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
-    signatures['getSecondaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
-    signatures['getParticleCoordinates'] = ('return', 'drv', 'unitOpId', 'parType', 'coords', 'nCoords')
-    signatures['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
+    signatures_1_0_0['getPrimaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
+    signatures_1_0_0['getSecondaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
+    signatures_1_0_0['getParticleCoordinates'] = ('return', 'drv', 'unitOpId', 'parType', 'coords', 'nCoords')
+    signatures_1_0_0['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
 
-    signatures['getTimeSim'] = ('return', 'drv', 'timeSim')
+    signatures_1_0_0['getTimeSim'] = ('return', 'drv', 'timeSim')
+    
+    signatures_1_1_0a_1 = {}
+    signatures_1_1_0a_1['timeout'] = ('return', 'drv', 'timeout')
 
     # Mappings for common ctypes parameters
     lookup_prototype = {
@@ -131,6 +135,7 @@ class CADETAPIV010000_DATA:
         'keepAxialSingletonDimension': point_bool,
         'keepParticleSingletonDimension': point_bool,
         'timeSim': point_double,
+        'timeout': point_double,
     }
 
     lookup_output_argument_type = {
@@ -154,31 +159,57 @@ class CADETAPIV010000_DATA:
         'keepAxialSingletonDimension': ctypes.c_bool,
         'keepParticleSingletonDimension': ctypes.c_bool,
         'timeSim': ctypes.c_double,
+        'timeout': ctypes.c_double,
     }
 
-
-def _setup_api() -> list[tuple[str, ctypes.CFUNCTYPE]]:
+def _get_api_signatures(api: Any) -> dict[str, tuple[str, ...]]:
+    if isinstance(api, CADETAPI_V1_1_0a_1):
+        sigs = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+        sigs.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
+        return sigs
+    elif isinstance(api, CADETAPI_V1_0_0):
+        return CADET_API_V1_SIGNATURES.signatures_1_0_0
+    else:
+        raise TypeError(f"Unsupported API type: {type(api).__name__}")
+        
+def _setup_api(signatures: dict[str, tuple[str, ...]]) -> list[tuple[str, ctypes.CFUNCTYPE]]:
     """
-    Set up the API function prototypes for CADETAPIV010000.
-
-    Returns
-    -------
-    list of tuple
-        List of function names and corresponding ctypes function prototypes.
+    Set up the API function prototypes for a given CADET API signature table.
     """
-    _fields_ = []
-    for key, value in CADETAPIV010000_DATA.signatures.items():
-        args = tuple(CADETAPIV010000_DATA.lookup_prototype[key] for key in value)
-        _fields_.append((key, ctypes.CFUNCTYPE(*args)))
+    fields = []
 
-    return _fields_
+    for name, value in signatures.items():
+        args = tuple(CADET_API_V1_SIGNATURES.lookup_prototype[arg_name] for arg_name in value)
+        fields.append((name, ctypes.CFUNCTYPE(*args)))
+
+    return fields
+
+SIGNATURES_V1_0_0 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+
+SIGNATURES_V1_1_0A_1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+SIGNATURES_V1_1_0A_1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
 
 
-class CADETAPIV010000(ctypes.Structure):
-    """Mimic cdtAPIv010000 struct of CADET C-API in ctypes."""
-    _fields_ = _setup_api()
+class CADETAPI_V1_0_0(ctypes.Structure):
+    """Mimic cdtAPIv1.0.0 struct of CADET C-API in ctypes."""
+    _signatures_ = SIGNATURES_V1_0_0
+    _fields_ = _setup_api(_signatures_)
 
 
+CADETAPIV010000 = CADETAPI_V1_0_0
+
+
+class CADETAPI_V1_1_0a_1(ctypes.Structure):
+    """Mimic cdtAPIv1.1.0a.1 struct of CADET C-API in ctypes."""
+    _signatures_ = SIGNATURES_V1_1_0A_1
+    _fields_ = _setup_api(_signatures_)
+
+
+class CADETAPI_V1_0_0(ctypes.Structure):
+    """Mimic cdtAPIv1.0.0 struct of CADET C-API in ctypes."""
+    _fields_ = _setup_api("1.0.0")
+
+    
 class SimulationResult:
     """
     Handles reading results from a CADET simulation.
@@ -192,7 +223,10 @@ class SimulationResult:
 
     """
 
-    def __init__(self, api: CADETAPIV010000, driver: CadetDriver) -> None:
+    def __init__(
+            self,
+            api: Union[CADETAPI_V1_0_0, CADETAPI_V1_1_0a_1], driver: CadetDriver
+            ) -> None:
         self._api = api
         self._driver = driver
 
@@ -228,21 +262,29 @@ class SimulationResult:
         call_args = []
         call_outputs = {}
 
+        signatures = _get_api_signatures(self._api)
+
         # Construct API call function arguments
-        for key in CADETAPIV010000_DATA.signatures[get_solution_str]:
+        for key in signatures[get_solution_str]:
             if key == 'return':
                 # Skip, this is the actual return value of the API function
                 continue
             elif key == 'drv':
                 call_args.append(self._driver)
-            elif key == 'unitOpId' and unitOpId is not None:
+            elif key == 'unitOpId':
+                if unitOpId is None:
+                    raise ValueError(f"{get_solution_str} requires unitOpId")
                 call_args.append(unitOpId)
             elif key == 'sensIdx':
+                if sensIdx is None:
+                    raise ValueError(f"{get_solution_str} requires sensIdx")
                 call_args.append(sensIdx)
             elif key == 'parType':
+                if parType is None:
+                    raise ValueError(f"{get_solution_str} requires parType")
                 call_args.append(parType)
             else:
-                _obj = CADETAPIV010000_DATA.lookup_output_argument_type[key]()
+                _obj = CADET_API_V1_SIGNATURES.lookup_output_argument_type[key]()
                 call_outputs[key] = _obj
                 call_args.append(ctypes.byref(_obj))
 
