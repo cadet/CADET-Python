@@ -518,7 +518,7 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def run_simulation(
             self,
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
             clear: bool = True
     ) -> ReturnInformation:
         """
@@ -526,7 +526,7 @@ class Cadet(H5, metaclass=CadetMeta):
 
         Parameters
         ----------
-        timeout : Optional[int]
+        timeout : Optional[float]
             Maximum time allowed for the simulation to run, in seconds.
         clear : bool
             If True, clear the simulation results from the current runner instance.
@@ -551,14 +551,14 @@ class Cadet(H5, metaclass=CadetMeta):
 
     def run(
             self,
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
     ) -> ReturnInformation:
         """
         Run the CADET simulation.
 
         Parameters
         ----------
-        timeout : Optional[int]
+        timeout : Optional[float]
             Maximum time allowed for the simulation to run, in seconds.
 
         Returns

@@ -2,9 +2,9 @@ import ctypes
 import io
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
-from typing import Union
+from packaging.version import Version
 import addict
 import numpy
 
@@ -1811,7 +1811,7 @@ class CadetDLLRunner(CadetRunnerBase):
     def run(
             self,
             simulation: Optional["Cadet"] = None,
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
             ) -> ReturnInformation:
         """
         Run a CADET simulation using the DLL interface.
@@ -1828,6 +1828,12 @@ class CadetDLLRunner(CadetRunnerBase):
         RuntimeError
             If the simulation process returns a non-zero exit code.
         """
+        if timeout is not None:
+            if(self._cadet_capi_version < Version("1.1.0a1")):
+                raise TypeError(
+                    "timeout is not support CADET-CAPI version: "
+                    f"({self._cadet_capi_version})."
+                )
         pp = cadet_dll_parameterprovider.PARAMETERPROVIDER(simulation)
 
         log_buffer = self.setup_log_buffer()

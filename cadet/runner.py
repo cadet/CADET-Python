@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from packaging.version import Version
 
 
 @dataclass
@@ -38,7 +39,7 @@ class CadetRunnerBase(ABC):
     def run(
             self,
             simulation: "Cadet",
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
     ) -> ReturnInformation:
         """
         Run a CADET simulation.
@@ -126,7 +127,7 @@ class CadetCLIRunner(CadetRunnerBase):
     def run(
             self,
             simulation: "Cadet",
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
     ) -> ReturnInformation:
         """
         Run a CADET simulation using the CLI executable.
@@ -135,7 +136,7 @@ class CadetCLIRunner(CadetRunnerBase):
         ----------
         simulation : Cadet
             Not used in this runner.
-        timeout : Optional[int]
+        timeout : Optional[float]
             Maximum time allowed for the simulation to run, in seconds.
 
         Raises
