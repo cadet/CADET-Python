@@ -162,20 +162,22 @@ class CADET_API_V1_SIGNATURES:
         'timeout': ctypes.c_double,
     }
 
+_VERSION_SIGNATURES: dict[Version, dict] = {}
+_VERSION_SIGNATURES[Version("1.0.0")] = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+
+_sigs_1_1_0a_1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+_sigs_1_1_0a_1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
+_VERSION_SIGNATURES[Version("1.1.0a1")] = _sigs_1_1_0a_1
+
 def _get_api_signatures(api: Any) -> dict[str, tuple[str, ...]]:
-    if isinstance(api, CADETAPI_V1_1_0a_1):
-        sigs = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
-        sigs.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
-        return sigs
-    elif isinstance(api, CADETAPI_V1_0_0):
-        return CADET_API_V1_SIGNATURES.signatures_1_0_0
-    else:
-        raise TypeError(f"Unsupported API type: {type(api).__name__}")
+    return _VERSION_SIGNATURES[api._version]
         
-def _setup_api(signatures: dict[str, tuple[str, ...]]) -> list[tuple[str, ctypes.CFUNCTYPE]]:
+def _setup_api(version: Version) -> list[tuple[str, ctypes.CFUNCTYPE]]:
     """
     Set up the API function prototypes for a given CADET API signature table.
     """
+    
+    signatures = _VERSION_SIGNATURES[version]
     fields = []
 
     for name, value in signatures.items():
@@ -184,30 +186,19 @@ def _setup_api(signatures: dict[str, tuple[str, ...]]) -> list[tuple[str, ctypes
 
     return fields
 
-SIGNATURES_V1_0_0 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
-
-SIGNATURES_V1_1_0A_1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
-SIGNATURES_V1_1_0A_1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
-
 
 class CADETAPI_V1_0_0(ctypes.Structure):
     """Mimic cdtAPIv1.0.0 struct of CADET C-API in ctypes."""
-    _signatures_ = SIGNATURES_V1_0_0
-    _fields_ = _setup_api(_signatures_)
-
+    _version = Version("1.0.0")
+    _fields_ = _setup_api(_version)
 
 CADETAPIV010000 = CADETAPI_V1_0_0
 
 
 class CADETAPI_V1_1_0a_1(ctypes.Structure):
     """Mimic cdtAPIv1.1.0a.1 struct of CADET C-API in ctypes."""
-    _signatures_ = SIGNATURES_V1_1_0A_1
-    _fields_ = _setup_api(_signatures_)
-
-
-class CADETAPI_V1_0_0(ctypes.Structure):
-    """Mimic cdtAPIv1.0.0 struct of CADET C-API in ctypes."""
-    _fields_ = _setup_api("1.0.0")
+    _version = Version("1.1.0a1")
+    _fields_ = _setup_api(_version)
 
     
 class SimulationResult:
@@ -1714,23 +1705,35 @@ class CadetDLLRunner(CadetRunnerBase):
 
         # Query API
         try:
-            cdtGetLatestCAPIVersion = self._lib.cdtGetLatestCAPIVersion#
+            cdtGetLatestCAPIVersion = self._lib.cdtGetLatestCAPIVersion
         except AttributeError:
             raise ValueError(
                 "CADET-Python does not support CADET-CAPI at all."
             )
         cdtGetLatestCAPIVersion.restype = ctypes.c_char_p
-        self._cadet_capi_version = cdtGetLatestCAPIVersion().decode('utf-8')
+        self._cadet_capi_version = Version(cdtGetLatestCAPIVersion().decode('utf-8'))
 
         # Check which C-API is provided by CADET (given the current install path)
-        if self._cadet_capi_version == "1.0.0":
-            cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
+        #current supported versions are: 1.0.0 and 1.1.0a1
+        #TODO: write in developer guide to update LATEST_CAPI_VERSION in VersionInfo.cpp.in (Cadet-Core)
+        if self._cadet_capi_version == Version("1.1.0a1"):
+            cdtGetAPIv1_1_0a_1 = self._lib.cdtGetAPIv1_1_0a1
+            cdtGetAPIv1_1_0a_1.argtypes = [ctypes.POINTER(CADETAPI_V1_1_0a_1)]
+            cdtGetAPIv1_1_0a_1.restype = c_cadet_result
+            self._api = CADETAPI_V1_1_0a_1()
+            cdtGetAPIv1_1_0a_1(ctypes.byref(self._api))
+        elif self._cadet_capi_version < Version("1.1.0a1"):
+            cdtGetAPIv010000 = self._lib.cdtGetAPIv1_0_0
             cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
             cdtGetAPIv010000.restype = c_cadet_result
             self._api = CADETAPIV010000()
             cdtGetAPIv010000(ctypes.byref(self._api))
+            #TODO if version 1.1.0 is realeased
+            #raise Warning (
+            #    "A newer C-API version is available you are using the fallback version 1.0.0"
+            #)
         else:
-            raise ValueError(
+            raise TypeError(
                 "CADET-Python does not support CADET-CAPI version "
                 f"({self._cadet_capi_version})."
             )
@@ -2016,11 +2019,6 @@ class CadetDLLRunner(CadetRunnerBase):
                 solution[unit_index]['last_state_y'] = solution_last_unit
                 soldot_last_unit = self.res.last_state_ydot_unit(unit)
                 solution[unit_index]['last_state_ydot'] = soldot_last_unit
-
-    @staticmethod
-    def _get_index_string(prefix: str, index: int) -> str:
-        """Get a formatted string index (e.g., ('unit', 0) -> 'unit_000')."""
-        return f'{prefix}_{index:03d}'
 
     def _checks_if_write_is_true(func):
         """Decorator to check if unit operation solution should be written out."""
