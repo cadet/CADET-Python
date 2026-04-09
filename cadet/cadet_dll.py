@@ -1713,29 +1713,41 @@ class CadetDLLRunner(CadetRunnerBase):
         cdtGetLatestCAPIVersion.restype = ctypes.c_char_p
         self._cadet_capi_version = Version(cdtGetLatestCAPIVersion().decode('utf-8'))
 
-        # Check which C-API is provided by CADET (given the current install path)
-        #current supported versions are: 1.0.0 and 1.1.0a1
-        #TODO: write in developer guide to update LATEST_CAPI_VERSION in VersionInfo.cpp.in (Cadet-Core)
-        if self._cadet_capi_version == Version("1.1.0a1"):
+        # Use the latest supported C-API if applicable, i.e.
+        # - unsupported major version -> error
+        # - minor/patch versions later than the last supported version fall back to the last supported version
+        if self._cadet_capi_version < Version("1.0.0") or self._cadet_capi_version >= Version("2.0.0"):
+            
+            raise TypeError(
+                "This version of CADET-Python does not support CADET-CAPI version "
+                f"({self._cadet_capi_version})."
+            )
+            
+        elif self._cadet_capi_version >= Version("1.1.0a1"):
             cdtGetAPIv1_1_0a_1 = self._lib.cdtGetAPIv1_1_0a1
             cdtGetAPIv1_1_0a_1.argtypes = [ctypes.POINTER(CADETAPI_V1_1_0a_1)]
             cdtGetAPIv1_1_0a_1.restype = c_cadet_result
             self._api = CADETAPI_V1_1_0a_1()
             cdtGetAPIv1_1_0a_1(ctypes.byref(self._api))
-        elif self._cadet_capi_version < Version("1.1.0a1"):
-            cdtGetAPIv010000 = self._lib.cdtGetAPIv1_0_0
-            cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
-            cdtGetAPIv010000.restype = c_cadet_result
-            self._api = CADETAPIV010000()
-            cdtGetAPIv010000(ctypes.byref(self._api))
-            #TODO if version 1.1.0 is realeased
-            #raise Warning (
-            #    "A newer C-API version is available you are using the fallback version 1.0.0"
-            #)
-        else:
+            
+        elif self._cadet_capi_version == Version("1.0.0"):
+            
+            # Support of old CAPI version semantic
+            if Version(self._cadet_version) < Version("6.0.0a3"):
+                cdtGetAPIv1_0_0 = self._lib.cdtGetAPIv010000
+            else:
+                cdtGetAPIv1_0_0 = self._lib.cdtGetAPIv1_0_0
+
+            cdtGetAPIv1_0_0.argtypes = [ctypes.POINTER(CADETAPI_V1_0_0)]
+            cdtGetAPIv1_0_0.restype = c_cadet_result
+            self._api = CADETAPI_V1_0_0()
+            cdtGetAPIv1_0_0(ctypes.byref(self._api))
+
+        else: # this case must not happen and if it happens, the above logic is incomplete.
+            
             raise TypeError(
-                "CADET-Python does not support CADET-CAPI version "
-                f"({self._cadet_capi_version})."
+                "This version of CADET-Python does not support CADET-CAPI version "
+                f"({self._cadet_capi_version}). Check CADET-Python implementation of CAPI support logic."
             )
 
         self._driver = self._api.createDriver()
