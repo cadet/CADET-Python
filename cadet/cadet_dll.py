@@ -103,8 +103,8 @@ class CADET_API_V1_SIGNATURES:
 
     signatures_1_0_0['getTimeSim'] = ('return', 'drv', 'timeSim')
     
-    signatures_1_1_0a_1 = {}
-    signatures_1_1_0a_1['timeout'] = ('return', 'drv', 'timeout')
+    signatures_1_1_0a1 = {}
+    signatures_1_1_0a1['timeout'] = ('return', 'drv', 'timeout')
 
     # Mappings for common ctypes parameters
     lookup_prototype = {
@@ -165,9 +165,9 @@ class CADET_API_V1_SIGNATURES:
 _VERSION_SIGNATURES: dict[Version, dict] = {}
 _VERSION_SIGNATURES[Version("1.0.0")] = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
 
-_sigs_1_1_0a_1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
-_sigs_1_1_0a_1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a_1)
-_VERSION_SIGNATURES[Version("1.1.0a1")] = _sigs_1_1_0a_1
+_sigs_1_1_0a1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+_sigs_1_1_0a1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a1)
+_VERSION_SIGNATURES[Version("1.1.0a1")] = _sigs_1_1_0a1
 
 def _get_api_signatures(api: Any) -> dict[str, tuple[str, ...]]:
     return _VERSION_SIGNATURES[api._version]
@@ -195,7 +195,7 @@ class CADETAPI_V1_0_0(ctypes.Structure):
 CADETAPIV010000 = CADETAPI_V1_0_0
 
 
-class CADETAPI_V1_1_0a_1(ctypes.Structure):
+class CADETAPI_V1_1_0a1(ctypes.Structure):
     """Mimic cdtAPIv1.1.0a.1 struct of CADET C-API in ctypes."""
     _version = Version("1.1.0a1")
     _fields_ = _setup_api(_version)
@@ -216,7 +216,7 @@ class SimulationResult:
 
     def __init__(
             self,
-            api: Union[CADETAPI_V1_0_0, CADETAPI_V1_1_0a_1], driver: CadetDriver
+            api: Union[CADETAPI_V1_0_0, CADETAPI_V1_1_0a1], driver: CadetDriver
             ) -> None:
         self._api = api
         self._driver = driver
@@ -1724,11 +1724,11 @@ class CadetDLLRunner(CadetRunnerBase):
             )
             
         elif self._cadet_capi_version >= Version("1.1.0a1"):
-            cdtGetAPIv1_1_0a_1 = self._lib.cdtGetAPIv1_1_0a1
-            cdtGetAPIv1_1_0a_1.argtypes = [ctypes.POINTER(CADETAPI_V1_1_0a_1)]
-            cdtGetAPIv1_1_0a_1.restype = c_cadet_result
-            self._api = CADETAPI_V1_1_0a_1()
-            cdtGetAPIv1_1_0a_1(ctypes.byref(self._api))
+            cdtGetAPIv1_1_0a1 = self._lib.cdtGetAPIv1_1_0a1
+            cdtGetAPIv1_1_0a1.argtypes = [ctypes.POINTER(CADETAPI_V1_1_0a1)]
+            cdtGetAPIv1_1_0a1.restype = c_cadet_result
+            self._api = CADETAPI_V1_1_0a1()
+            cdtGetAPIv1_1_0a1(ctypes.byref(self._api))
             
         elif self._cadet_capi_version == Version("1.0.0"):
             
