@@ -2,8 +2,9 @@ import ctypes
 import io
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
+from packaging.version import Version
 import addict
 import numpy
 
@@ -26,7 +27,7 @@ _CDT_ERROR_INVALID_INPUTS = -2
 _CDT_DATA_NOT_STORED = -3
 
 
-class CADETAPIV010000_DATA:
+class CADET_API_V1_SIGNATURES:
     """
     Definition of CADET-C-API v1.0 function signatures and type mappings.
 
@@ -42,65 +43,68 @@ class CADETAPIV010000_DATA:
 
     # API function signatures
     # Note, order is important, it has to match the cdtAPIv010000 struct of the C-API
-    signatures = {}
+    signatures_1_0_0 = {}
 
-    signatures['getFileFormat'] = ('return', 'fileFormat')
+    signatures_1_0_0['getFileFormat'] = ('return', 'fileFormat')
 
-    signatures['createDriver'] = ('drv',)
-    signatures['deleteDriver'] = (None, 'drv')
-    signatures['runSimulation'] = ('return', 'drv', 'parameterProvider')
+    signatures_1_0_0['createDriver'] = ('drv',)
+    signatures_1_0_0['deleteDriver'] = (None, 'drv')
+    signatures_1_0_0['runSimulation'] = ('return', 'drv', 'parameterProvider')
 
-    signatures['getNumUnitOp'] = ('return', 'drv', 'nUnits')
-    signatures['getNumParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
-    signatures['getNumSensitivities'] = ('return', 'drv', 'nSens')
+    signatures_1_0_0['getNumUnitOp'] = ('return', 'drv', 'nUnits')
+    signatures_1_0_0['getNumParTypes'] = ('return', 'drv', 'unitOpId', 'nParTypes')
+    signatures_1_0_0['getNumSensitivities'] = ('return', 'drv', 'nSens')
 
-    signatures['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSolutionInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
-    signatures['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSolutionDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSolutionDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSolutionDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'time', 'data', 'nTime')
 
-    signatures['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSensitivityInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivitySolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
-    signatures['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
-    signatures['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
-    signatures['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
-    signatures['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
+    signatures_1_0_0['getSensitivityDerivativeInlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityDerivativeOutlet'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nPort', 'nComp')
+    signatures_1_0_0['getSensitivityDerivativeBulk'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeParticle'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nComp', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeSolid'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'parType', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParShells', 'nBound', 'keepAxialSingletonDimension', 'keepParticleSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeFlux'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime', 'nAxialCells', 'nRadialCells', 'nParTypes', 'nComp', 'keepAxialSingletonDimension')
+    signatures_1_0_0['getSensitivityDerivativeVolume'] = ('return', 'drv', 'unitOpId', 'sensIdx', 'time', 'data', 'nTime')
 
-    signatures['getLastState'] = ('return', 'drv', 'state', 'nStates')
-    signatures['getLastStateTimeDerivative'] = ('return', 'drv', 'state', 'nStates')
-    signatures['getLastUnitState'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
-    signatures['getLastUnitStateTimeDerivative'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
-    signatures['getLastSensitivityState'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
-    signatures['getLastSensitivityStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
-    signatures['getLastSensitivityUnitState'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
-    signatures['getLastSensitivityUnitStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastState'] = ('return', 'drv', 'state', 'nStates')
+    signatures_1_0_0['getLastStateTimeDerivative'] = ('return', 'drv', 'state', 'nStates')
+    signatures_1_0_0['getLastUnitState'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastUnitStateTimeDerivative'] = ('return', 'drv', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityState'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityUnitState'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
+    signatures_1_0_0['getLastSensitivityUnitStateTimeDerivative'] = ('return', 'drv', 'sensIdx', 'unitOpId', 'state', 'nStates')
 
-    signatures['getPrimaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
-    signatures['getSecondaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
-    signatures['getParticleCoordinates'] = ('return', 'drv', 'unitOpId', 'parType', 'coords', 'nCoords')
-    signatures['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
+    signatures_1_0_0['getPrimaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
+    signatures_1_0_0['getSecondaryCoordinates'] = ('return', 'drv', 'unitOpId', 'coords', 'nCoords')
+    signatures_1_0_0['getParticleCoordinates'] = ('return', 'drv', 'unitOpId', 'parType', 'coords', 'nCoords')
+    signatures_1_0_0['getSolutionTimes'] = ('return', 'drv', 'time', 'nTime')
 
-    signatures['getTimeSim'] = ('return', 'drv', 'timeSim')
+    signatures_1_0_0['getTimeSim'] = ('return', 'drv', 'timeSim')
+    
+    signatures_1_1_0a1 = {}
+    signatures_1_1_0a1['timeout'] = ('return', 'drv', 'timeout')
 
     # Mappings for common ctypes parameters
     lookup_prototype = {
@@ -131,6 +135,7 @@ class CADETAPIV010000_DATA:
         'keepAxialSingletonDimension': point_bool,
         'keepParticleSingletonDimension': point_bool,
         'timeSim': point_double,
+        'timeout': point_double,
     }
 
     lookup_output_argument_type = {
@@ -154,31 +159,48 @@ class CADETAPIV010000_DATA:
         'keepAxialSingletonDimension': ctypes.c_bool,
         'keepParticleSingletonDimension': ctypes.c_bool,
         'timeSim': ctypes.c_double,
+        'timeout': ctypes.c_double,
     }
 
+_VERSION_SIGNATURES: dict[Version, dict] = {}
+_VERSION_SIGNATURES[Version("1.0.0")] = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
 
-def _setup_api() -> list[tuple[str, ctypes.CFUNCTYPE]]:
+_sigs_1_1_0a1 = dict(CADET_API_V1_SIGNATURES.signatures_1_0_0)
+_sigs_1_1_0a1.update(CADET_API_V1_SIGNATURES.signatures_1_1_0a1)
+_VERSION_SIGNATURES[Version("1.1.0a1")] = _sigs_1_1_0a1
+
+def _get_api_signatures(api: Any) -> dict[str, tuple[str, ...]]:
+    return _VERSION_SIGNATURES[api._version]
+        
+def _setup_api(version: Version) -> list[tuple[str, ctypes.CFUNCTYPE]]:
     """
-    Set up the API function prototypes for CADETAPIV010000.
-
-    Returns
-    -------
-    list of tuple
-        List of function names and corresponding ctypes function prototypes.
+    Set up the API function prototypes for a given CADET API signature table.
     """
-    _fields_ = []
-    for key, value in CADETAPIV010000_DATA.signatures.items():
-        args = tuple(CADETAPIV010000_DATA.lookup_prototype[key] for key in value)
-        _fields_.append((key, ctypes.CFUNCTYPE(*args)))
+    
+    signatures = _VERSION_SIGNATURES[version]
+    fields = []
 
-    return _fields_
+    for name, value in signatures.items():
+        args = tuple(CADET_API_V1_SIGNATURES.lookup_prototype[arg_name] for arg_name in value)
+        fields.append((name, ctypes.CFUNCTYPE(*args)))
 
-
-class CADETAPIV010000(ctypes.Structure):
-    """Mimic cdtAPIv010000 struct of CADET C-API in ctypes."""
-    _fields_ = _setup_api()
+    return fields
 
 
+class CADETAPI_V1_0_0(ctypes.Structure):
+    """Mimic cdtAPIv1.0.0 struct of CADET C-API in ctypes."""
+    _version = Version("1.0.0")
+    _fields_ = _setup_api(_version)
+
+CADETAPIV010000 = CADETAPI_V1_0_0
+
+
+class CADETAPI_V1_1_0a1(ctypes.Structure):
+    """Mimic cdtAPIv1.1.0a.1 struct of CADET C-API in ctypes."""
+    _version = Version("1.1.0a1")
+    _fields_ = _setup_api(_version)
+
+    
 class SimulationResult:
     """
     Handles reading results from a CADET simulation.
@@ -192,7 +214,10 @@ class SimulationResult:
 
     """
 
-    def __init__(self, api: CADETAPIV010000, driver: CadetDriver) -> None:
+    def __init__(
+            self,
+            api: Union[CADETAPI_V1_0_0, CADETAPI_V1_1_0a1], driver: CadetDriver
+            ) -> None:
         self._api = api
         self._driver = driver
 
@@ -228,21 +253,29 @@ class SimulationResult:
         call_args = []
         call_outputs = {}
 
+        signatures = _get_api_signatures(self._api)
+
         # Construct API call function arguments
-        for key in CADETAPIV010000_DATA.signatures[get_solution_str]:
+        for key in signatures[get_solution_str]:
             if key == 'return':
                 # Skip, this is the actual return value of the API function
                 continue
             elif key == 'drv':
                 call_args.append(self._driver)
-            elif key == 'unitOpId' and unitOpId is not None:
+            elif key == 'unitOpId':
+                if unitOpId is None:
+                    raise ValueError(f"{get_solution_str} requires unitOpId")
                 call_args.append(unitOpId)
             elif key == 'sensIdx':
+                if sensIdx is None:
+                    raise ValueError(f"{get_solution_str} requires sensIdx")
                 call_args.append(sensIdx)
             elif key == 'parType':
+                if parType is None:
+                    raise ValueError(f"{get_solution_str} requires parType")
                 call_args.append(parType)
             else:
-                _obj = CADETAPIV010000_DATA.lookup_output_argument_type[key]()
+                _obj = CADET_API_V1_SIGNATURES.lookup_output_argument_type[key]()
                 call_outputs[key] = _obj
                 call_args.append(ctypes.byref(_obj))
 
@@ -1672,25 +1705,49 @@ class CadetDLLRunner(CadetRunnerBase):
 
         # Query API
         try:
-            cdtGetLatestCAPIVersion = self._lib.cdtGetLatestCAPIVersion#
+            cdtGetLatestCAPIVersion = self._lib.cdtGetLatestCAPIVersion
         except AttributeError:
             raise ValueError(
                 "CADET-Python does not support CADET-CAPI at all."
             )
         cdtGetLatestCAPIVersion.restype = ctypes.c_char_p
-        self._cadet_capi_version = cdtGetLatestCAPIVersion().decode('utf-8')
+        self._cadet_capi_version = Version(cdtGetLatestCAPIVersion().decode('utf-8'))
 
-        # Check which C-API is provided by CADET (given the current install path)
-        if self._cadet_capi_version == "1.0.0":
-            cdtGetAPIv010000 = self._lib.cdtGetAPIv010000
-            cdtGetAPIv010000.argtypes = [ctypes.POINTER(CADETAPIV010000)]
-            cdtGetAPIv010000.restype = c_cadet_result
-            self._api = CADETAPIV010000()
-            cdtGetAPIv010000(ctypes.byref(self._api))
-        else:
-            raise ValueError(
-                "CADET-Python does not support CADET-CAPI version "
+        # Use the latest supported C-API if applicable, i.e.
+        # - unsupported major version -> error
+        # - minor/patch versions later than the last supported version fall back to the last supported version
+        if self._cadet_capi_version < Version("1.0.0") or self._cadet_capi_version >= Version("2.0.0"):
+            
+            raise TypeError(
+                "This version of CADET-Python does not support CADET-CAPI version "
                 f"({self._cadet_capi_version})."
+            )
+            
+        elif self._cadet_capi_version >= Version("1.1.0a1"):
+            cdtGetAPIv1_1_0a1 = self._lib.cdtGetAPIv1_1_0a1
+            cdtGetAPIv1_1_0a1.argtypes = [ctypes.POINTER(CADETAPI_V1_1_0a1)]
+            cdtGetAPIv1_1_0a1.restype = c_cadet_result
+            self._api = CADETAPI_V1_1_0a1()
+            cdtGetAPIv1_1_0a1(ctypes.byref(self._api))
+            
+        elif self._cadet_capi_version == Version("1.0.0"):
+            
+            # Support of old CAPI version semantic
+            if Version(self._cadet_version) < Version("6.0.0a3"):
+                cdtGetAPIv1_0_0 = self._lib.cdtGetAPIv010000
+            else:
+                cdtGetAPIv1_0_0 = self._lib.cdtGetAPIv1_0_0
+
+            cdtGetAPIv1_0_0.argtypes = [ctypes.POINTER(CADETAPI_V1_0_0)]
+            cdtGetAPIv1_0_0.restype = c_cadet_result
+            self._api = CADETAPI_V1_0_0()
+            cdtGetAPIv1_0_0(ctypes.byref(self._api))
+
+        else: # this case must not happen and if it happens, the above logic is incomplete.
+            
+            raise TypeError(
+                "This version of CADET-Python does not support CADET-CAPI version "
+                f"({self._cadet_capi_version}). Check CADET-Python implementation of CAPI support logic."
             )
 
         self._driver = self._api.createDriver()
@@ -1766,7 +1823,7 @@ class CadetDLLRunner(CadetRunnerBase):
     def run(
             self,
             simulation: Optional["Cadet"] = None,
-            timeout: Optional[int] = None,
+            timeout: Optional[float] = None,
             ) -> ReturnInformation:
         """
         Run a CADET simulation using the DLL interface.
@@ -1783,6 +1840,12 @@ class CadetDLLRunner(CadetRunnerBase):
         RuntimeError
             If the simulation process returns a non-zero exit code.
         """
+        if timeout is not None:
+            if(self._cadet_capi_version < Version("1.1.0a1")):
+                raise TypeError(
+                    "timeout is not support CADET-CAPI version: "
+                    f"({self._cadet_capi_version})."
+                )
         pp = cadet_dll_parameterprovider.PARAMETERPROVIDER(simulation)
 
         log_buffer = self.setup_log_buffer()
@@ -1974,11 +2037,6 @@ class CadetDLLRunner(CadetRunnerBase):
                 solution[unit_index]['last_state_y'] = solution_last_unit
                 soldot_last_unit = self.res.last_state_ydot_unit(unit)
                 solution[unit_index]['last_state_ydot'] = soldot_last_unit
-
-    @staticmethod
-    def _get_index_string(prefix: str, index: int) -> str:
-        """Get a formatted string index (e.g., ('unit', 0) -> 'unit_000')."""
-        return f'{prefix}_{index:03d}'
 
     def _checks_if_write_is_true(func):
         """Decorator to check if unit operation solution should be written out."""
