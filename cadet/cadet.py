@@ -627,3 +627,46 @@ class Cadet(H5, metaclass=CadetMeta):
         # Restore the state and cast to addict.Dict() to add __frozen attributes
         state = Dict(state)
         self.__dict__.update(state)
+
+    def initialize_simulation(self) -> ReturnInformation:
+        """
+        Initialize a CADET simulation without running it.
+
+        Returns
+        -------
+        ReturnInformation
+            Information about the initialization result.
+        """
+
+        return_information = self.cadet_runner.initialize_simulation(self)
+
+        return return_information
+
+    def perform_simulation_step(self, t_end: float) -> tuple[ReturnInformation, float]:
+        """
+        Perform a single simulation step until time t_end.
+
+        Parameters
+        ----------
+        t_end : float
+            Target end time for this simulation step.
+
+        Returns
+        -------
+        tuple[ReturnInformation, float]
+            - ReturnInformation: Information about the step result
+            - float: Actually reached time (may differ from t_end)
+        """
+        nsec = len(self.root.input.solver.sections.section_times)
+
+        if nsec > 2:
+            raise ValueError(
+                "perform_simulation_step() only supports single-section integration. "
+                f"Found {nsec - 1} sections."
+            )
+
+        return self.cadet_runner.perform_simulation_step(t_end)
+
+    def end_simulation(self) -> ReturnInformation:
+
+        return self.cadet_runner.end_simulation()
