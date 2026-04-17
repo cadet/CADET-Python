@@ -11,7 +11,7 @@ assignees: ''
 
 CADET-Python follows the semantic versioning system described at [semver.org](https://semver.org/).
 
-CADET-Python is released direcntly from the master branch and deployed to PyPi via a GitHub workflow automatically, and to conda-forge semi-automatically.
+CADET-Python is released directly from the master branch and deployed to PyPi via a GitHub workflow automatically, and to conda-forge semi-automatically.
 
 The following checklist describes the steps to execute sequentially for creating a new release.
 
@@ -28,7 +28,7 @@ The following checklist describes the steps to execute sequentially for creating
 
 ## Creating the release on GitHub
 
-- [ ] Go to [GitHub Releases](https://github.com/cadet/CADET-Core/releases/new):
+- [ ] Go to [GitHub Releases](https://github.com/cadet/CADET-Python/releases/new):
   - Set the release branch as the target
   - Specify the tag `vX.X.X` according to semantic versioning
   - Add release notes with sections for Added, Fixed, Changed, and Updated
