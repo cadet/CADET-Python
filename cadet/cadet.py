@@ -72,14 +72,22 @@ def resolve_cadet_paths(
         cli_executable += '.exe'
         lwe_executable += '.exe'
 
-    cadet_cli_path = cadet_root / 'bin' / cli_executable
-    if not cadet_cli_path.is_file():
+    # On Windows PyPI installs, scripts land in Scripts/ instead of bin/.
+    def _find_in_prefix(name: str) -> Optional[Path]:
+        for subdir in ('bin', 'Scripts'):
+            p = cadet_root / subdir / name
+            if p.is_file():
+                return p
+        return None
+
+    cadet_cli_path = _find_in_prefix(cli_executable)
+    if cadet_cli_path is None:
         raise FileNotFoundError(
             "CADET CLI could not be found. Please check the path."
         )
 
-    cadet_create_lwe_path = cadet_root / 'bin' / lwe_executable
-    if not cadet_create_lwe_path.is_file():
+    cadet_create_lwe_path = _find_in_prefix(lwe_executable)
+    if cadet_create_lwe_path is None:
         raise FileNotFoundError(
             "CADET createLWE could not be found. Please check the path."
         )
