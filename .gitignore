@@ -10,3 +10,4 @@
 /CADET_Python.egg-info
 .idea
 *tmp*
+/tests/__pycache__
