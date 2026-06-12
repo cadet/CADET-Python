@@ -389,6 +389,11 @@ class Cadet(H5, metaclass=CadetMeta):
         return self.cadet_runner.cadet_version
 
     @property
+    def commit_hash(self) -> str:
+        """str: The commit hash of the CADET-Core installation."""
+        return self.cadet_runner.cadet_commit_hash
+
+    @property
     def cadet_runner(self) -> CadetRunnerBase:
         """
         Get the current CADET runner instance.
