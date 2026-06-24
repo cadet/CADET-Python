@@ -75,3 +75,33 @@ jobs:
           conda install -c conda-forge cadet>=5.0.3
           pytest tests --rootdir=tests -m "not slow and not local"
 
+  test-pypi-job:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12", "3.13"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.12"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install CADET-Python and cadet-core (PyPI)
+        run: |
+          pip install . --group testing
+          pip install cadet-core
+
+      - name: Test with pytest
+        run: |
+          pytest tests --rootdir=tests -m "not slow and not local"
+
