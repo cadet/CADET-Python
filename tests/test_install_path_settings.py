@@ -19,8 +19,11 @@ install_path_conda = Cadet.autodetect_cadet()
 def test_autodetection():
     sim = Cadet()
     assert sim.install_path == install_path_conda
-    assert sim.cadet_dll_path.parent.parent == install_path_conda
-    assert sim.cadet_cli_path.parent.parent == install_path_conda
+    # On some installs (e.g. cadet-core from PyPI), cadet-cli and the shared library
+    # are not necessarily nested under the same root, so only check that both were
+    # actually found rather than asserting a shared parent directory.
+    assert sim.cadet_dll_path is not None and sim.cadet_dll_path.is_file()
+    assert sim.cadet_cli_path is not None and sim.cadet_cli_path.is_file()
     assert sim.cadet_runner.cadet_path.suffix not in [".dll", ".so"]
 
 
