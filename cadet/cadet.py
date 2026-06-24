@@ -93,20 +93,47 @@ def resolve_cadet_paths(
         )
 
     if platform.system() == 'Windows':
-        dll_path = cadet_root / 'bin' / 'cadet.dll'
-        dll_debug_path = cadet_root / 'bin' / 'cadet_d.dll'
+        dll_dir = cadet_root / 'bin'
+        dll_names = ['cadet.dll']
+        dll_debug_names = ['cadet_d.dll']
     elif platform.system() == 'Darwin':
-        dll_path = cadet_root / 'lib' / 'libcadet.dylib'
-        dll_debug_path = cadet_root / 'lib' / 'libcadet_d.dylib'
+        dll_dir = cadet_root / 'lib'
+        # The unversioned name is a symlink to the SONAME-versioned file and may not
+        # survive wheel packaging, so also look for the versioned file directly.
+        dll_names = ['libcadet.dylib', 'libcadet.0.dylib']
+        dll_debug_names = ['libcadet_d.dylib', 'libcadet_d.0.dylib']
     else:
-        dll_path = cadet_root / 'lib' / 'libcadet.so'
-        dll_debug_path = cadet_root / 'lib' / 'libcadet_d.so'
+        dll_dir = cadet_root / 'lib'
+        dll_names = ['libcadet.so']
+        dll_debug_names = ['libcadet_d.so']
+
+    def _find_dll(directory: Path, names: list[str]) -> Optional[Path]:
+        for name in names:
+            p = directory / name
+            if p.is_file():
+                return p
+        return None
 
     # Look for debug dll if dll is not found.
-    if not dll_path.is_file() and dll_debug_path.is_file():
-        dll_path = dll_debug_path
+    cadet_dll_path = _find_dll(dll_dir, dll_names) or _find_dll(dll_dir, dll_debug_names)
 
-    cadet_dll_path = dll_path if dll_path.is_file() else None
+    # On PyPI cadet-core installs, cadet-cli/createLWE may be console-script wrappers
+    # whose enclosing prefix does not match the prefix that the cadet_core package
+    # (and its shared library) was actually installed into. If the dll could not be
+    # found under cadet_root, fall back to the cadet_core package directory directly.
+    if cadet_dll_path is None:
+        try:
+            import cadet_core
+            package_dir = Path(cadet_core.__file__).parent
+        except ImportError:
+            package_dir = None
+
+        if package_dir is not None:
+            package_dll_dir = package_dir / dll_dir.name
+            cadet_dll_path = (
+                _find_dll(package_dll_dir, dll_names)
+                or _find_dll(package_dll_dir, dll_debug_names)
+            )
 
     return root_path, cadet_cli_path, cadet_dll_path, cadet_create_lwe_path
 
